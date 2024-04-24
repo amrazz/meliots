@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/3.0.8/css/elevatezoom.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/3.0.8/jquery.elevatezoom.min.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+
+<style>
+    .product__details__button {
+        width: 100%;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .product__details__button form {
+        width: 100%;
+    }
+
+    .value-button {
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        margin: 0 5px;
+        border-radius: 5px;
+    }
+
+    .value-button:hover {
+        background-color: #0056b3;
+    }
+
+    .prod_quantity {
+        width: 50px;
+        text-align: center;
+    }
+
+    .cart-btn {
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 5px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    .product__details__pic__slider .product__big__img {
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .product__details__pic__slider .product__big__img:hover {
+        transform: scale(1.9);
+    }
+
+    .value-button {
+        display: inline-table;
+        margin: 0px;
+        width: 40px;
+        height: 25px;
+        text-align: center;
+        background: #ffffff;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .value-button:hover {
+        cursor: pointer;
+    }
+
+
+
+    input#number {
+        text-align: center;
+        border: white;
+        margin: 0px;
+        width: 40px;
+        height: 27px;
+    }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .product__details__button {
+        width: 100%;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .product__details__button form {
+        width: 100%;
+    }
+
+    .value-button {
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        margin: 0 5px;
+        border-radius: 5px;
+    }
+
+    .value-button:hover {
+        background-color: #0056b3;
+    }
+
+    .prod_quantity {
+        width: 50px;
+        text-align: center;
+    }
+
+    .cart-btn {
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 5px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+</style>
+
+<!-- Your HTML content here -->
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+<script>
+    {% if messages %}
+    {% for message in messages %}
+    {% if message.tags == 'error' %}
+    swal("Error!", "{{ message }}", "error");
+    {% elif message.tags == 'success' %}
+    swal("Success!", "{{ message }}", "success");
+    {% else %}
+    swal("Message", "{{ message }}");
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+</script>
+<br />
+<!-- Breadcrumb Begin -->
+<div class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__links">
+                    <a href="{% url 'index' %}">Home</a>
+                    {% if products_color.product.category.name == "Men's" %}
+                    <a href="{% url 'mens_page' %}">Men's</a>
+                    {% elif products_color.product.category.name == "Women's" %}
+                    <a href="{% url 'womens_page' %}">Women's</a>
+                    {% elif products_color.product.category.name == "Kid's" %}
+                    <a href="{% url 'kids_page' %}">Kid's</a>
+                    {% else %}
+                    <a href="{% url 'shop_page' %}">Shop</a>
+                    {% endif %}
+                    <a href="">{{ products_color.product.name }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Breadcrumb End -->
+
+<!-- Product Details Section Begin -->
+<section class="product-details spad">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="product__details__pic">
+                    <div class="product__details__pic__left product__thumb nice-scroll">
+                        <a class="pt" href="">
+                            <img src="{{products_color.image1.url}}" alt="">
+                        </a>
+                        <a class="pt" href="">
+                            <img src="{{products_color.image2.url}}" alt="">
+                        </a>
+                        <a class="pt" href="">
+                            <img src="{{products_color.image3.url}}" alt="">
+                        </a>
+                        <a class="pt" href="">
+                            <img src="{{products_color.image4.url}}" alt="">
+                        </a>
+                    </div>
+                    <div class="product__details__slider__content">
+                        <div class="product__details__pic__slider owl-carousel">
+                            <img data-hash="product-1" class="product__big__img" src="{{products_color.image1.url}}"
+                                alt="">
+                            <img data-hash="product-2" class="product__big__img" src="{{products_color.image2.url}}"
+                                alt="">
+                            <img data-hash="product-3" class="product__big__img" src="{{products_color.image3.url}}"
+                                alt="">
+                            <img data-hash="product-4" class="product__big__img" src="{{products_color.image4.url}}"
+                                alt="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="product__details__text">
+                    <h3>{{products_color.product.name}}-{{products_color.color}} </h3>
+                    <div class="rating">
+                        <i class="fa fa-star"></i>
+                        <i class="fa fa-star"></i>
+                        <i class="fa fa-star"></i>
+                        <i class="fa fa-star"></i>
+                        <i class="fa fa-star"></i>
+                        <span>( 138 reviews )</span>
+
+                        <div class=" " style="width: 150px; font-size:30px;margin-top: 20px;color: red;">
+                            <strong>{{ products_color.product.percentage }} % OFF</strong>
+                        </div>
+                    </div>
+                    <div class="product__details__price">₹ {{products_color.product.offer_price}}.00 <span>₹
+                            {{ products_color.product.price }}</span></div>
+
+                    <div class="product__details__button d-flex">
+                        {% if products_color.is_listed and products_color.product.category.is_listed %}
+                        <form style="width: auto; padding-top: 12px; display: flex;" method="post"
+                            action="{% url 'add_to_cart' products_color.id %}">
+                            {% csrf_token %}
+
+                            <div class="d-flex align-items-center justify-content-center mb-3">
+                                <div class="value-button" id="decrease" onclick="updateQuantity('decrease')"
+                                    value="Decrease Value">-</div>
+                                <input type="text" style="background-color: #f8f9fa;height: 50px;" id="number"
+                                    class="prod_quantity form-control text-center mx-2" name="quantity" value="1"
+                                    max="9" readonly>
+                                <div class="value-button" id="increase" onclick="updateQuantity('increase')"
+                                    value="Increase Value">+</div>
+                            </div>
+
+                            <div class="d-flex">
+                                <button type="submit" class="btn btn-primary cart-btn"><span
+                                        class="icon_bag_alt"></span> Add to cart</button>
+
+                            </div>
+
+                            {% else %}
+                            <a href="#" class="btn btn-secondary cart-btn">Out of Stock</a>
+                            {% endif %}
+                       
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <label for="size" class="mr-2">Size:</label>
+                        <select name="size" id="size" required class="form-select mr-2">
+                            <option value="">Select Size</option>
+                            {% for size in products_color.size.all %}
+                                <option value="{{ size.size }}">{{ size.size }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    </form>
+                    <div class="d-flex justify-content-end ">
+                        <a class="text-light" href="{% url 'wishlist_add' products_color.id %}"><button style="border-radius: 50px;padding: 14px 30px 9px;" 
+                        type="submit" class="btn btn-primary wishlist-btn"><i class="fas fa-heart">
+                        </i>
+                    </button></a>
+                    </div>
+
+
+
+                    <!-- <div class="product__details__widget">
+                        <ul>
+                            <li>
+                                <span>Availability:</span>
+                                <div class="stock__checkbox">
+                                    <label for="stockin">
+                                        In Stock
+                                        <input type="checkbox" id="stockin">
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </div>
+                            </li>
+                            <li>
+                                <span>Available color:</span>
+                                <div class="color__checkbox">
+                                    <label for="red">
+                                        <input type="radio" name="color__radio" id="red" checked>
+                                        <span class="checkmark"></span>
+                                    </label>
+                                    <label for="black">
+                                        <input type="radio" name="color__radio" id="black">
+                                        <span class="checkmark black-bg"></span>
+                                    </label>
+                                    <label for="grey">
+                                        <input type="radio" name="color__radio" id="grey">
+                                        <span class="checkmark grey-bg"></span>
+                                    </label>
+                                </div>
+                            </li>
+                            <li>
+                                <span>Available size:</span>
+                                <div class="size__btn">
+                                    <label for="xs-btn" class="active">
+                                        <input type="radio" id="xs-btn">
+                                        xs
+                                    </label>
+                                    <label for="s-btn">
+                                        <input type="radio" id="s-btn">
+                                        s
+                                    </label>
+                                    <label for="m-btn">
+                                        <input type="radio" id="m-btn">
+                                        m
+                                    </label>
+                                    <label for="l-btn">
+                                        <input type="radio" id="l-btn">
+                                        l
+                                    </label>
+                                </div>
+                            </li>
+                            <li>
+                                <span>Promotions:</span>
+                                <p>Free shipping</p>
+                            </li>
+                        </ul>
+                    </div> -->
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <div class="product__details__tab">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-toggle="tab" href="#tabs-1" role="tab">Description</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="tab" href="#tabs-3" role="tab">Reviews ( 2 )</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="tabs-1" role="tabpanel">
+                            <h6>Description</h6>
+                            <p>{{products_color.product.description}}</p>
+                        </div>
+
+                        <div class="tab-pane" id="tabs-3" role="tabpanel">
+                            <h6>Reviews ( 2 )</h6>
+                            <p></p>
+                            <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget
+                                dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes,
+                                nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium
+                                quis, sem.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <div class="related__title">
+                    <h5>RELATED PRODUCTS</h5>
+                </div>
+            </div>
+            {% for rp in related_product %}
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="product__item">
+                    <div class="product__item__pic set-bg" data-setbg="{{rp.image1.url}}">
+                        <div class="label new">New</div>
+                        <ul class="product__hover">
+                            <li><a href="{{rp.image1.url}}" class="image-popup"><span class="arrow_expand"></span></a>
+                            </li>
+                            <li><a href="#"><span class="icon_heart_alt"></span></a></li>
+                            <li><a href="#"><span class="icon_bag_alt"></span></a></li>
+                        </ul>
+                    </div>
+                    <div class="product__item__text">
+                        <h6><a href="{% url 'product_detail' rp.id %}">{{rp.product.name}}</a></h6>
+                        <div class="rating">
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                        </div>
+                        <div class="product__price">$ {{rp.product.price}} </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+</section>
+<!-- Product Details Section End -->
+
+<script>
+    $(document).ready(function () {
+        // Initialize the carousel
+        var owl = $('.product__details__pic__slider').owlCarousel({
+            // Your carousel options here
+        });
+        // Add click event listener to thumbnail images
+        $('.product__details__pic__left .pt').on('click', function (e) {
+            e.preventDefault(); // Prevent the default action
+            var imgSrc = $(this).find('img').attr('src'); // Get the src of the clicked thumbnail
+            $('.product__details__pic__slider .product__big__img').attr('src', imgSrc); // Update the main image viewer
+            $('.product__details__pic__slider .product__big__img').data('elevateZoom').swipeTracker.update(); // Update the zoom
+        });
+    });
+
+
+</script>
+<script>
+    function updateQuantity(operation) {
+        var quantityInput = document.getElementById('number');
+        var currentQuantity = parseInt(quantityInput.value, 10);
+        if (isNaN(currentQuantity)) {
+            currentQuantity = 0; // Default to 0 if the current value is not a number
+        }
+
+        if (operation === 'increase' && currentQuantity < 9) {
+            currentQuantity++;
+        } else if (operation === 'decrease' && currentQuantity > 0) {
+            currentQuantity--;
+        }
+
+        quantityInput.value = currentQuantity;
+    }
+</script>
+<script>
+    function updateQuantity(operation) {
+        var quantityInput = document.getElementById('number');
+        var currentQuantity = parseInt(quantityInput.value, 10);
+        if (isNaN(currentQuantity)) {
+            currentQuantity = 0; // Default to 0 if the current value is not a number
+        }
+
+        if (operation === 'increase' && currentQuantity < 9) {
+            currentQuantity++;
+        } else if (operation === 'decrease' && currentQuantity > 1) {
+            currentQuantity--; // Prevent decreasing below 1
+        }
+
+        quantityInput.value = currentQuantity;
+    }
+</script>
+
+
+
+
+
+{% endblock %}

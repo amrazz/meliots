@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+    /* Example CSS for category checkboxes */
+    .sidebar__categories input[type="checkbox"] {
+        display: none;
+        /* Hide the default checkbox */
+    }
+
+    .sidebar__categories input[type="checkbox"]+label {
+        position: relative;
+        padding-left: 25px;
+        cursor: pointer;
+        display: inline-block;
+        margin-bottom: 12px;
+    }
+
+    .sidebar__categories input[type="checkbox"]+label:before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 3px;
+        width: 10px;
+        height: 10px;
+        border: 1px solid #000000;
+        background-color: #fff;
+    }
+
+    .sidebar__categories input[type="checkbox"]:checked+label:before {
+        background-color: #fcfcfc;
+        /* Change background color when checked */
+    }
+
+    .sidebar__categories input[type="checkbox"]+label:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+
+    .sidebar__categories input[type="checkbox"]:checked+label:after {
+        display: block;
+    }
+
+    .sidebar__categories input[type="checkbox"]+label:after {
+        left: 6px;
+        top: -4px;
+        width: 5px;
+        height: 15px;
+        border: solid #ff0000;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+
+    .filter-range-wrap .range-slider .price-input input {
+        font-size: 16px;
+        color: #0d0d0d;
+        max-width: 42%;
+        border: none;
+    }
+</style>
+<!-- Breadcrumb Begin -->
+<div class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__links">
+                    <a href="{% url 'index' %}"></i> Home</a>
+                    <a href="{% url 'shop_page' %}"></i>Shop</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Breadcrumb End -->
+
+<!-- Shop Section Begin -->
+<section class="shop spad">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3 col-md-3">
+                <div class="shop__sidebar">
+
+                    <br>
+                    <div class="sidebar__sort">
+                        <form action="{% url 'search_pro' %}" method="post" class="search-form">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Search" name="query">
+                                <div class="input-group-append">
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="fas fa-search text-dark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        <br><br>
+                        <div class="section-title">
+                            <h4>Sort By</h4>
+                        </div>
+                        <select name="ordering" onchange="location.href=finalurl();" id="sort-by" class="form-control">
+                            <option value="" id="placeholder" disabled selected hidden>Sort</option>
+                            <option id="name" value="name">A-Z</option>
+                            <option id="-name" value="-name">Z-A</option>
+                            <option id="price" value="price">Price: Low to High</option>
+                            <option id="-price" value="-price">Price: High to Low</option>
+                            <option id="created_at" value="created_at">New arrivals</option>
+                        </select>
+                    </div>
+                    <br><br>
+                    <div class="sidebar__categories">
+                        <div class="section-title">
+                            <h4>Categories</h4>
+                        </div>
+                        <form action="{% url 'shop_page' %}" method="get">
+                            {% csrf_token %}
+                            {% for category in categories %}
+                            <div class="card-heading">
+                                <input class="filter-checkbox category-checkbox" type="checkbox" id="category-{{ category.id }}" name="category" value="{{ category.name }}">
+                                <label for="category-{{ category.id }}">
+                                    {{ category.name }}
+                                    <span class="checkmark"></span>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </form>
+                    </div>
+
+
+                    <div class="sidebar__filter">
+                        <div class="section-title">
+                            <h4>Shop by price</h4>
+                        </div>
+                        <div class="filter-range-wrap">
+                            <div class="price-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content"
+                                data-min="500" data-max="50000"></div>
+                            <div class="range-slider">
+                                <div class="price-input">
+                                    <input type="text" id="minamount">
+                                    <input type="text" id="maxamount">
+                                </div>
+                            </div><br>
+                            <button class="btn btn-outline-danger" id="filter">Filter</button>
+                        </div>
+                        <br>
+                    </div>
+                    
+                    <div class="sidebar__color">
+                        <div class="section-title"> 
+                            <h4>Shop by Color</h4>
+                        </div>
+                        <div class="size__list color__list">
+                            <label for="black">
+                                Blacks
+                                <input type="checkbox" id="black">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label for="whites">
+                                Whites
+                                <input type="checkbox" id="whites">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label for="reds">
+                                Reds
+                                <input type="checkbox" id="reds">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label for="greys">
+                                Greys
+                                <input type="checkbox" id="greys">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label for="blues">
+                                Blues
+                                <input type="checkbox" id="blues">
+                                <span class="checkmark"></span>
+                            </label>
+
+                            <label for="greens">
+                                Greens
+                                <input type="checkbox" id="greens">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label for="yellows">
+                                Yellows
+                                <input type="checkbox" id="yellows">
+                                <span class="checkmark"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-9 col-md-9">
+                <div class="row">
+                    {% for color in products_color %}
+
+                    <div class="col-lg-4 col-md-6">
+                        <div class="product__item">
+
+                            <div class="product__item__pic set-bg" data-setbg="{{color.image1.url}}">
+
+                                {% if color.is_listed and color.product.category.is_listed %}
+                                <div class="label new">New</div>
+                                {% else %}
+                                <div class="label new" style="background-color: red;">Out Of Stock</div>
+                                {% endif %}
+
+
+                                <ul class="product__hover">
+                                    <li><a href="{{ color.image1.url }}" class="image-popup"><span
+                                                class="arrow_expand"></span></a></li>
+                                    <li><a href=""><span class="icon_heart_alt"></span></a></li>
+                                    <li><a href="{% url 'add_to_cart' color.id %}"><span
+                                                class="icon_bag_alt"></span></a></li>
+                                </ul>
+                            </div>
+                            </a>
+                            <div class="product__item__text">
+                                <h6><a href="{% url 'product_detail' color.id %}">{{ color.product.name }}</a></h6>
+                                <!-- Product rating -->
+                                <div class="rating">
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                </div>
+                                <!-- Product price -->
+                                <div class="product__price">₹ {{color.product.offer_price}}
+                                    <a href="" class="text-muted text-decoration-line-through"
+                                        style="text-decoration: line-through;">{{color.product.price}}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div><br>
+                <div class="d-flex justify-content-center">
+                    {% if is_paginated %}
+                    <nav aria-label="pagination">
+                        <ul class="pagination">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" tabindex="-1"
+                                    href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                            </li>
+                            {% endif %}
+                            {% for i in paginator.page_range %}
+                            {% if i == page_obj.number %}
+                            <li class="page-item active" aria-current="page">
+                                <a class="page-link" href="?page={{i}}" class="visually-hidden">{{i}}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{i}}">{{i}}</a></li>
+                            {% endif %}
+                            {% endfor %}
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" tabindex="-1" href="?page={{ page_obj.next_page_number }}">Next</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</section>
+<!-- Shop Section End -->
+
+<script>
+    function finalurl() {
+        var url = new URL(window.location.href);
+        var search_params = url.searchParams;
+        var selectedOrdering = document.getElementById("sort-by").value;
+        search_params.set('ordering', selectedOrdering);
+        url.search = search_params.toString();
+        // Update the placeholder text to show the current sorting option
+        document.getElementById('placeholder').innerHTML = "Sort: " + document.getElementById(selectedOrdering).innerHTML;
+        return url.toString();
+    }
+</script>
+
+
+<script>
+    document.getElementById('filter').addEventListener('click', function (event) {
+        event.preventDefault();
+        var minPrice = document.getElementById('minamount').value.replace(/\D/g, '');
+        var maxPrice = document.getElementById('maxamount').value.replace(/\D/g, '');
+        var url = window.location.href + `?min_price=${minPrice}&max_price=${maxPrice}`;
+        window.location.href = url;
+    });
+    document.querySelectorAll('.filter-checkbox').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+        let form = this.closest('form');
+        form.submit();
+    });
+});
+</script>
+
+
+{% endblock content %}

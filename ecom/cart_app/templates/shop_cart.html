@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<style>
+    .shop__cart__table tbody tr .cart__product__item {
+        overflow: hidden;
+        width: 420px;
+    }
+
+    .shop__cart__table tbody tr .cart__price {
+        font-size: 16px;
+        color: #ca1515;
+        font-weight: 600;
+        width: 156px;
+    }
+
+    .value-button {
+        display: inline-table;
+        margin: 0px;
+        width: 40px;
+        height: 25px;
+        text-align: center;
+        background: #ffffff;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .value-button:hover {
+        cursor: pointer;
+    }
+
+    .shop__cart__table tbody tr .cart__product__item {
+        overflow: hidden;
+        width: 419px;
+
+
+
+        input#number {
+            text-align: center;
+            border: white;
+            margin: 0px;
+            width: 40px;
+            height: 27px;
+        }
+
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+</style>
+
+
+<!-- Breadcrumb Begin -->
+<div class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__links">
+                    <a href="{% url 'index' %}"><i class="fa fa-home"></i> Home</a>
+                    <a href="{% url 'shop_cart' %}">Shopping Cart</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Breadcrumb End -->
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+                        <script>
+                            {% if messages %}
+                            {% for message in messages %}
+                            {% if message.tags == 'error' %}
+                            swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
+                            {% elif message.tags == 'success' %}
+                            swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
+                            {% else %}
+                            swal("Message", "{{ message }}"); // Display general message
+                            {% endif %}
+                            {% endfor %}
+                            {% endif %}
+                        </script>
+                    
+<!-- Shop Cart Section Begin -->
+<section class="shop-cart spad">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="shop__cart__table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sl</th>
+                                <th>Product</th>
+                                <th>Size</th>
+                                <th>Price</th>
+                                <th style="padding-left: 40px;">Quantity</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart_items %}
+                            <tr>
+                                <td>{{forloop.counter}}</td>
+                                <td class="cart__product__item">
+                                    <img style="width: 50px; height: 70px;" src="{{item.product.image1.url}}" alt="">
+                                    <div class="cart__product__item__title">
+                                        <h6>{{item.product.product.name}}</h6>
+                                        <div class="rating">
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{item.product_size}}</td>
+
+                                <td class="cart__price">₹ {{item.product.product.offer_price}}.0</td>
+
+                                <td class="cart__quantity">
+                                    <form>
+                                        <div class="d-flex align-items-center justify-content-center mb-3">
+                                            <div class="value-button" id="decrease_{{item.id}}"
+                                                onclick="updateQuantity('decrease', '{{item.id}}')"
+                                                value="Decrease Value">-</div>
+                                            <input style="border: #000000;background-color: #ffffff; width: 65px;" type="text"
+                                                id="number_{{item.id}}"
+                                                class="prod_quantity form-control text-center mx-2" name="quantity"
+                                                value="{{item.quantity}}" max="9" readonly>
+                                            <div class="value-button" id="increase_{{item.id}}"
+                                                onclick="updateQuantity('increase', '{{item.id}}')"
+                                                value="Increase Value">+</div>
+                                        </div>
+                                    </form>
+                                </td>
+                                <td>
+                                    <span id="total_price_{{item.id}}"
+                                        style="font-size: 16px;color: #ca1515;font-weight: 600;width: 156px;">₹{{item.total_price}}.0</span>
+                                </td>
+
+                                <td class="cart__close">
+                                    <a href="{% url 'delete_cart_items' item.id %}">
+                                        <span class="icon_close"></span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6 col-md-6 col-sm-6">
+                <div class="cart__btn">
+                    <a href="{% url 'shop_page' %}">Continue Shopping</a>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-6 col-sm-6">
+                <div class="cart__btn update__btn">
+                    <a href=""><span class="icon_loading"></span> Update cart</a>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="discount__content">
+                    <h6>Discount codes</h6>
+                    <form action="#">
+                        <input type="text" placeholder="Enter your coupon code">
+                        <button type="submit" class="site-btn">Apply</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-lg-4 offset-lg-2">
+                <div class="cart__total__procced">
+                    <h6 class="text-center font">Cart total</h6><br>
+                    <ul>
+                        <li id="sub_total">Subtotal : <span>₹ {{ sub_total }}.0</span></li><br>
+                        <li>
+                            {% if shipping_fee == 'Free' %}
+                            Shipping fee :<span id="shipping_fee">{{ shipping_fee }}</span>
+                            {% else %}
+                            Shipping fee :<span id="shipping_fee">₹ {{ shipping_fee }}.0</span>
+                            {% endif %}
+                        </li><br>
+                        <li id="total">Total :<span>₹ {{ total }}.0</span></li>
+                    </ul>
+                    <a href="{% url 'checkout' %}" class="btn primary-btn">Proceed to checkout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Shop Cart Section End -->
+
+<!-- JavaScript to handle quantity update -->
+<script>
+    function updateQuantity(operation, cartItemId) {
+        var quantityInputId = 'number_' + cartItemId;
+        var totalPriceId = 'total_price_' + cartItemId;
+        var quantityInput = document.getElementById(quantityInputId);
+        var totalPriceElement = document.getElementById(totalPriceId);
+        var currentQuantity = parseInt(quantityInput.value, 10);
+        if (isNaN(currentQuantity)) {
+            currentQuantity = 1; // Default to 1 if the current value is not a number
+        }
+
+        if (operation === 'increase' && currentQuantity < 9) {
+            currentQuantity++;
+        } else if (operation === 'decrease' && currentQuantity > 1) {
+            currentQuantity--;
+        }
+
+        quantityInput.value = currentQuantity;
+
+        // Send AJAX request to update the total price and shipping fee
+        $.ajax({
+            url: "{% url 'update_total_price' %}",
+            type: "POST",
+            data: {
+                'cart_item_id': cartItemId,
+                'new_quantity': currentQuantity,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function (response) {
+                if (response.new_total_price) {
+                    // Update the total price and shipping fee in the HTML
+                    totalPriceElement.textContent = '₹ ' + response.new_total_price;
+                    document.querySelector('.cart__total__procced ul li:first-child span').textContent = '₹ ' + response.subtotal + '.0';
+                    if (response.shipping_fee === 'Free'){
+                        document.getElementById('shipping_fee').textContent = response.shipping_fee;
+
+                    }else{
+                        document.getElementById('shipping_fee').textContent = '₹ ' + response.shipping_fee + '.0';
+
+                    }
+                    document.querySelector('.cart__total__procced ul li:last-child span').textContent = '₹ ' + response.total + '.0';
+                } else {
+                    // If the new total price is not provided, set it to 0 with the ₹ symbol
+                    totalPriceElement.textContent = '₹ 0';
+                }
+            },
+            error: function (xhr, status, error) {
+                // Do not show an alert for errors when the quantity is 0
+                if (currentQuantity > 1) {
+                    alert('Error updating total price: ' + error);
+                }
+            }
+        });
+    }
+
+</script>
+
+
+
+{% endblock content %}
