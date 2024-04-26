@@ -155,16 +155,15 @@
                                 </video>
 
                                 <label for="visa">COD</label>
-                                <input checked id="visa" name="payment_method"  value="COD" type="radio" />
+                                <input checked id="visa" name="payment_method"  value="COD" type="radio" >
                             </div>
 
                             <div class="form__radio">
                                 <img style="width: 58px;height: 14px;padding-right: 7px;" src="{% static 'img/Razorpay-icon.png' %}" alt="">
                                 <label for="razorpay">Razor Pay</label>
-                                <input id="razorpay" name="payment_method" type="radio" value="Razorpay" />     
+                                <input id="razorpay" name="payment_method" type="radio" value="Razorpay" >     
                             </div>
                         </div><br><br>
-
 
                         <button type="submit" class="site-btn">Place order</button>
                     </form>
@@ -174,5 +173,6 @@
     </div>
 </section>
 <!-- Checkout Section End -->
+
 
 {% endblock content %}

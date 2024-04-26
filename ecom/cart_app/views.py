@@ -13,9 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 # authorize razorpay client with API Keys.
-razorpay_client = razorpay.Client(
-    auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET))
-
+razorpay_client = razorpay.Client(auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET))
 
 # Create your views here.
 
@@ -70,10 +68,10 @@ def add_to_cart(request, pro_id):
             if int(quantity) <= 0:
                 messages.error(request, 'Invalid quantity.')
                 return redirect('product_detail', pro_id)
-            # size = ProductSize.objects.get(productcolor__id = pro_id)
-            # if size.quantity < quantity:
-            #     messages.error(request, 'Selected quantity exceeds available stock.')
-            #     return redirect('product_detail', pro_id)
+            size = ProductSize.objects.get(productcolor__id = pro_id)
+            if size.quantity < quantity:
+                messages.error(request, 'Selected quantity exceeds available stock.')
+                return redirect('product_detail', pro_id)
             product_size = request.POST.get('size')
             print(product_size, quantity)
             if not product_size:
@@ -184,7 +182,7 @@ def checkout(request):
             return redirect('login')
     except Exception as e:
         messages.error(request, 'Something went wrong please try again.')
-        return redirect('checkout')
+        return total,  redirect('checkout')
 
     
     
@@ -195,6 +193,7 @@ def place_order(request):
                 address_id = request.POST.get('select_address')
                 address = Address.objects.get(id=address_id)
                 pm = request.POST.get('payment_method')
+                print(pm)
                 
                 if not address_id:
                     messages.error(request, 'Please select an address.')
@@ -202,53 +201,45 @@ def place_order(request):
                 if not pm:
                     messages.error(request, 'Please select a Payment Method.')
                     return redirect('checkout')
-                
+                    
                 customer = Customer.objects.get(user=request.user.pk)
                 cart = CartItem.objects.filter(user_cart__customer=customer)
-                
-                if not cart.exists():
-                    messages.error(request, 'The Cart is empty.')
-                    return redirect('shop_cart')
-                
-                
-                subtotal = sum(total.total_price() for total in cart)
-                qty = sum(qty.quantity for qty in cart)
-                if qty > 5:
-                    total = subtotal
+                subtotal = sum(item.total_price() for item in cart)
+                total_qty = sum(item.quantity for item in cart)
+                if total_qty <= 5:
+                    shipping_fee = 99
                 else:
-                    total = 99 + subtotal
+                    shipping_fee = 0
+                total = subtotal if total_qty > 5 else 99 + subtotal
                     
                 tk_id = get_random_string(10, 'ABCDEFGHIJKLMOZ0123456789')
                 while Order.objects.filter(tracking_id=tk_id).exists():
                     tk_id = get_random_string(10, 'ABCDEFGHIJKLMOZ0123456789')
-
 
                 order = Order.objects.create(
                     customer=customer,
                     address=address,
                     payment_method=pm,
                     status='Order Placed',
+                    subtotal = subtotal,
+                    shipping_charge = shipping_fee,
                     total=total,
                     tracking_id=tk_id
                 )
-                
+                    
                 for cart_item in cart:
-                    order_item = OrderItem.objects.create(
+                    OrderItem.objects.create(
                         order=order,
                         product=cart_item.product, 
-                        qty = cart_item.quantity,
-                        size = cart_item.product_size
+                        qty=cart_item.quantity,
+                        size=cart_item.product_size
                     )
-                product_size = ProductSize.objects.get(productcolor=cart_item.product, size=cart_item.product_size)
-                product_size.quantity -= cart_item.quantity
-                product_size.save()
-                
                     
                 cart.delete()
 
                 messages.success(request, 'Order placed successfully.')
                 return redirect('order_detail')  
-                
+
             else:
                 return redirect('checkout')
             
@@ -260,7 +251,10 @@ def place_order(request):
     
 
 def order_detail(request):
-    return render(request, 'op.html')
+    return render(request, 'op.html') # order purchased
+    
+
+
 
 
 

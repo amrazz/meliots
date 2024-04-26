@@ -11,6 +11,10 @@
   <title>MELIOTIS</title>
   <link rel="icon" type="image/png" href="{% static 'img/fotor-2024041518653.png' %}">
 
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+  </script>
+
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Cookie&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap"
@@ -217,6 +221,7 @@
                 </a>
                 <div class="dropdown-menu bg-black " aria-labelledby="username">
                   <a class="dropdown-item" href="{% url 'profile' %}">Profile</a>
+                  <a class="dropdown-item" href="{% url 'checkout' %}">Checkout</a>
                   <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
                 </div>
               </div>

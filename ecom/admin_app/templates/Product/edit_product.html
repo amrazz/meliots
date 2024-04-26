@@ -20,7 +20,7 @@
                 <div class="form-group">
                     <label for="productName">Product Name</label>
                     <input type="text" name="name" id="productName" class="form-control"
-                        value="{{ color_image.product.name }}" required>
+                        value="{{ color_image.product.name }}" >
                 </div>
                 <div class="form-group">
                     <label for="productCategory">Category</label>
@@ -32,24 +32,40 @@
                 <div class="form-group">
                     <label for="productName">Product Type</label>
                     <input type="text" name="type" id="productName" class="form-control"
-                        value="{{ color_image.product.type }}" required>
+                        value="{{ color_image.product.type }}" >
                 </div>
 
                 <div class="form-group">
                     <label for="productPrice">Price</label>
                     <input type="number" step="0" name="price" id="productPrice" class="form-control"
-                        value="{{ color_image.product.price }}" required>
+                        value="{{ color_image.product.price }}" >
                 </div>
                 <div class="form-group">
                     <label for="productOldPrice">percentage</label>
                     <input type="number" step="0" name="percentage" id="productPrice" class="form-control"
-                        value="{{ color_image.product.percentage }}" required>
+                        value="{{ color_image.product.percentage }}" >
                 </div>
-                
+
+                <div class="form-group">
+                    <label for="productOldPrice">Expiry Date</label>
+                    <input type="date" name="exp_date" id="producPriceExpDate" class="form-control"
+                        value="{{ color_image.product.per_expiry_date }}">
+                </div>
+                <div class="form-group">
+                    <label for="productSizes">Sizes & Quantities</label>
+                    {% for size in sizes %}
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">{{ size.size }}</span>
+                            </div>
+                            <input type="number" step="1" name="quantity_{{ size.productcolor.id }}" id="quantity_{{ size.productcolor.id }}" class="form-control" value="{{ size.quantity }}">
+                        </div>
+                    {% endfor %}
+                </div>
                 <div class="form-group">
                     <label for="productDescription">Description</label>
                     <textarea name="description" id="productDescription" class="form-control" rows="8"
-                        required>{{ color_image.product.description }}</textarea>
+                        >{{ color_image.product.description }}</textarea>
                 </div>
                 <div class="d-flex">
                     <div class="form-group">
@@ -78,11 +94,11 @@
                 {% if messages %}
                 {% for message in messages %}
                 {% if message.tags == 'error' %}
-                swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
+                swal("Error!", "{{ message }}", "error");
                 {% elif message.tags == 'success' %}
-                swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
+                swal("Success!", "{{ message }}", "success");
                 {% else %}
-                swal("Message", "{{ message }}"); // Display general message
+                swal("Message", "{{ message }}");
                 {% endif %}
                 {% endfor %}
                 {% endif %}

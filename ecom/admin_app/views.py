@@ -11,6 +11,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from .models import *
 from cart_app.models import *
+from datetime import datetime
 from django.http import JsonResponse
 
 
@@ -252,7 +253,8 @@ def is_valid_image(file):
 def edit_product(request, product_id):
     try:
         color_image = ProductColorImage.objects.get(id=product_id)
-        product = color_image.product
+        sizes = ProductSize.objects.filter(productcolor_id = color_image.pk)
+
         if request.method == 'POST':
             name = request.POST.get('name')
             category_id = request.POST.get('category')
@@ -264,8 +266,19 @@ def edit_product(request, product_id):
                 return redirect('product') 
 
 
+            exp_date = request.POST.get('exp_date')
+            if exp_date:
+                try:
+                    exp_date = datetime.strptime(exp_date, '%Y-%m-%d').date()
+                except ValueError:
+                    messages.error(request, 'Invalid date format for expiry date.')
+                    return redirect('product')
+            else:
+                exp_date = None
+                
+                
             description = request.POST.get('description')
-            if int(price) < 0:
+            if float(price) < 0:
                 messages.error(request, 'The price cannot be negative number.')
                 return redirect('product')
             image1 = request.FILES.get('image1')
@@ -273,16 +286,16 @@ def edit_product(request, product_id):
             image3 = request.FILES.get('image3')
             image4 = request.FILES.get('image4')
             
-            if not is_valid_image(image1):
+            if image1 and not is_valid_image(image1):
                 messages.error(request, 'This is not a valid image file.')
                 return redirect('product')
-            elif not is_valid_image(image2):
+            elif image2 and not is_valid_image(image2):
                 messages.error(request, 'This is not a valid image file.')
                 return redirect('product')
-            elif not is_valid_image(image3):
+            elif image3 and not is_valid_image(image3):
                 messages.error(request, 'This is not a valid image file.')
                 return redirect('product')
-            elif not is_valid_image(image4):
+            elif image4 and not is_valid_image(image4):
                 messages.error(request, 'This is not a valid image file.')
                 return redirect('product')
             
@@ -292,6 +305,7 @@ def edit_product(request, product_id):
             
             
             color_image.product.name = name
+            color_image.product.per_expiry_date = exp_date
             color_image.product.description = description
             color_image.product.type = type
             color_image.product.price = price
@@ -310,10 +324,17 @@ def edit_product(request, product_id):
                 if image4:
                     color_image.image4 = image4
                 color_image.save()
+                
+            for size in sizes:
+                quantity = request.POST.get(f'quantity_{size.productcolor.id}')
+                if quantity:
+                    size.quantity = quantity
+                    size.save()
+                                    
                 messages.success(request, "Product updated successfully.")
                 return redirect('product')
         else:    
-            return render(request, 'product/edit_product.html', {'color_image': color_image})
+            return render(request, 'product/edit_product.html', {'color_image': color_image, 'sizes' : sizes})
     except Product.DoesNotExist:
         messages.error(request, "Product not found.")
         return redirect('product')
@@ -347,6 +368,7 @@ def add_product(request):
                 type = request.POST.get('type')
                 price = request.POST.get('price')
                 percentage = request.POST.get('percentage')
+                exp_date = request.POST.get('exp_date')
 
                 description = request.POST.get('description')
                 
@@ -365,7 +387,7 @@ def add_product(request):
                 except ValueError:
                     messages.error(request, "Please enter a valid positive price.")
                     return redirect('add_product')
-                add_product = Product.objects.create(name=name, category_id=category,type = type, price=price, percentage = percentage, description=description)
+                add_product = Product.objects.create(name=name, category_id=category,type = type, price=price, percentage = percentage,per_expiry_date = exp_date ,  description=description)
                 add_product.save()
                 print('product added successfully')
                 return redirect('product_image')
@@ -522,8 +544,8 @@ def update_status(request):
     return JsonResponse({'status': 'error'})
 
 def admin_order(request, order_id):
-    if request.user.is_superuser:  
-        order = Order.objects.get(id=order_id)
+    if request.user.is_superuser:
+        order = Order.objects.get(id=order_id).order_by('tracking_id')
         item = OrderItem.objects.filter(order = order)
         context = {
             'item': item,
@@ -533,3 +555,115 @@ def admin_order(request, order_id):
     else:
         return redirect('admin_login')
 
+def admin_coupon(request):
+    if request.user.is_superuser:
+        coupons = Coupon.objects.filter(is_active = True).order_by('id')
+        context = {
+            'coupons' : coupons
+        }
+        return render(request, 'coupon/admin_coupon.html', context)
+    else:
+        return redirect('admin_login')
+
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from .models import Coupon
+
+def add_coupon(request):
+    try:
+        if request.user.is_superuser:
+            if request.method == 'POST':
+                code = request.POST.get('coupon_code')
+                if Coupon.objects.filter(coupon_code=code).exists():
+                    messages.error(request, 'This coupon already exists. Please add a new one.')
+                    return redirect('add_coupon')
+                
+                name = request.POST.get('name')
+                dis = request.POST.get('discount_percentage')
+                
+                if float(dis) < 0 or float(dis) > 100:
+                    messages.error(request, 'Please provide a valid discount between 0 and 100.')
+                    return redirect('add_coupon')
+                
+                minimum_amount = request.POST.get('minimum_amount')
+                maximum_amount = request.POST.get('maximum_amount')
+                
+                if float(minimum_amount) < 0 or float(maximum_amount) < 0:
+                    messages.error(request, 'Price must be a positive value.')
+                    return redirect('add_coupon')
+                
+                end_date = request.POST.get('end_date')
+                usage_limit = request.POST.get('usage_limit')
+                
+                if not all([code, name, dis, minimum_amount, maximum_amount, end_date, usage_limit]):
+                    messages.error(request, 'All fields are required for adding the coupon.')
+                    return redirect('add_coupon')
+                
+                coupon = Coupon.objects.create(
+                    coupon_code=code,
+                    coupon_name=name,
+                    discount_percentage=dis, 
+                    minimum_amount=minimum_amount,
+                    maximum_amount=maximum_amount,
+                    expiry_date=end_date,
+                    usage_limit=usage_limit
+                )
+                messages.success(request, 'Coupon added successfully.')
+                return redirect('admin_coupon')
+        else:
+            messages.error(request, 'You do not have permission to access this page.')
+            return redirect('admin_login')  
+    except Exception as e:
+        messages.error(request, str(e))  
+    
+    return render(request, 'coupon/add_coupon.html')
+
+
+
+
+def edit_coupon(request, coupon_id):
+    if request.user.is_superuser:
+        coupon = get_object_or_404(Coupon, id=coupon_id)
+        if request.method == 'POST':
+            code = request.POST.get('coupon_code')
+            name = request.POST.get('name')
+            dis = request.POST.get('discount_percentage')
+            min_amount = request.POST.get('minimum_amount')
+            max_amount = request.POST.get('maximum_amount')
+            end_date = request.POST.get('end_date')
+            usage_limit = request.POST.get('usage_limit')
+            
+            if dis:
+                if float(dis) < 0 or float(dis) > 100:
+                    messages.error(request, 'Please provide a valid discount percentage between 0 and 100.')
+                    return redirect('edit_coupon', coupon_id=coupon_id)
+                coupon.discount_percentage = dis
+            
+            if min_amount:
+                if float(min_amount) < 0:
+                    messages.error(request, 'Minimum amount must be a positive value.')
+                    return redirect('edit_coupon', coupon_id=coupon_id)
+                coupon.minimum_amount = min_amount
+            if max_amount:
+                if float(max_amount) < 0:
+                    messages.error(request, 'Maximum amount must be a positive value.')
+                    return redirect('edit_coupon', coupon_id=coupon_id)
+                coupon.maximum_amount = max_amount
+            
+            if code:
+                coupon.coupon_code = code
+            if name:
+                coupon.coupon_name = name
+            if end_date:
+                coupon.expiry_date = end_date
+            if usage_limit:
+                coupon.usage_limit = usage_limit
+            
+            coupon.save()
+            messages.success(request, 'Coupon edited successfully.')
+            return redirect('admin_coupon')
+        
+        return render(request, 'coupon/edit_coupon.html', {'coupon': coupon})
+    else:
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('admin_login')

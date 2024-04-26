@@ -32,7 +32,7 @@
         <!-- Sidebar scroll -->
         <div>
             <div class="brand-logo d-flex align-items-center justify-content-between">
-                <a href="./dashboard.html" class="text-nowrap logo-img"><img
+                <a href="{% url 'dashboard' %}" class="text-nowrap logo-img"><img
                         src="{% static 'images/logos/logo.png' %}" width="180" alt="" /></a>
                 <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
                     
@@ -107,7 +107,7 @@
     </li>
 
     <li class="sidebar-item">
-        <a class="sidebar-link" href="#" aria-expanded="false">
+        <a class="sidebar-link" href="{% url 'admin_coupon' %}" aria-expanded="false">
             <span><i class="fas fa-tags"></i></span>
             <span class="hide-menu">Coupons</span>
         </a>

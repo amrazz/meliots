@@ -34,7 +34,10 @@ urlpatterns = [
     path('order/',views.order, name = 'order'),
     path('update_status/', views.update_status, name='update_status'),
     path('admin_order/<int:order_id>/', views.admin_order, name='admin_order'),
-    
+    path('admin_coupon/', views.admin_coupon, name='admin_coupon'),
+    path('add_coupon/', views.add_coupon, name='add_coupon'),
+    path('edit_coupon/<int:coupon_id>/', views.edit_coupon, name='edit_coupon'),
+
 
     
 ]

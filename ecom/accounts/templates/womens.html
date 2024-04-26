@@ -190,9 +190,16 @@
                                     <i class="fa fa-star"></i>
                                 </div>
                                 <!-- Product price -->
+                                {% if color.product.percentage == 0 %}
                                 <div class="product__price">₹ {{color.product.offer_price}}
-                                    <a href="" class="text-muted text-decoration-line-through" style="text-decoration: line-through;" >{{color.product.price}}</a>
-                                  </div>
+                                    
+                                </div>
+                                {% else %}
+                                <div class="product__price">₹ {{color.product.offer_price}}
+                                    <a href="" class="text-muted text-decoration-line-through"
+                                        style="text-decoration: line-through;">{{color.product.price}}</a>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>  
                     </div>

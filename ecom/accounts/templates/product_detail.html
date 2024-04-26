@@ -57,13 +57,7 @@
         border-color: #6c757d;
     }
 
-    .product__details__pic__slider .product__big__img {
-        transition: transform 0.3s ease-in-out;
-    }
 
-    .product__details__pic__slider .product__big__img:hover {
-        transform: scale(1.9);
-    }
 
     .value-button {
         display: inline-table;
@@ -197,7 +191,7 @@
                 <div class="product__details__pic">
                     <div class="product__details__pic__left product__thumb nice-scroll">
                         <a class="pt" href="">
-                            <img src="{{products_color.image1.url}}" alt="">
+                            <img  src="{{products_color.image1.url}}" alt="">
                         </a>
                         <a class="pt" href="">
                             <img src="{{products_color.image2.url}}" alt="">
@@ -211,13 +205,13 @@
                     </div>
                     <div class="product__details__slider__content">
                         <div class="product__details__pic__slider owl-carousel">
-                            <img data-hash="product-1" class="product__big__img" src="{{products_color.image1.url}}"
+                            <img data-hash="product-1" id="zoom" class="product__big__img" src="{{products_color.image1.url}}"
                                 alt="">
-                            <img data-hash="product-2" class="product__big__img" src="{{products_color.image2.url}}"
+                            <img data-hash="product-2" id="zoom" class="product__big__img" src="{{products_color.image2.url}}"
                                 alt="">
-                            <img data-hash="product-3" class="product__big__img" src="{{products_color.image3.url}}"
+                            <img data-hash="product-3" id="zoom" class="product__big__img" src="{{products_color.image3.url}}"
                                 alt="">
-                            <img data-hash="product-4" class="product__big__img" src="{{products_color.image4.url}}"
+                            <img data-hash="product-4" id="zoom" class="product__big__img" src="{{products_color.image4.url}}"
                                 alt="">
                         </div>
                     </div>
@@ -233,14 +227,22 @@
                         <i class="fa fa-star"></i>
                         <i class="fa fa-star"></i>
                         <span>( 138 reviews )</span>
-
+                        {% if products_color.product.percentage == 0 %}
+                        <div class=" " style="width: 150px; font-size:30px;margin-top: 20px;color: red;">
+                            
+                        </div>
+                        {% else %}
                         <div class=" " style="width: 150px; font-size:30px;margin-top: 20px;color: red;">
                             <strong>{{ products_color.product.percentage }} % OFF</strong>
                         </div>
+                        {% endif %}
                     </div>
+                    {% if products_color.product.percentage == 0 %}
+                    <div class="product__details__price">₹ {{products_color.product.offer_price}}.00</div>
+                        {% else %}
                     <div class="product__details__price">₹ {{products_color.product.offer_price}}.00 <span>₹
                             {{ products_color.product.price }}</span></div>
-
+                        {% endif %}
                     <div class="product__details__button d-flex">
                         {% if products_color.is_listed and products_color.product.category.is_listed %}
                         <form style="width: auto; padding-top: 12px; display: flex;" method="post"
@@ -266,23 +268,24 @@
                             {% else %}
                             <a href="#" class="btn btn-secondary cart-btn">Out of Stock</a>
                             {% endif %}
-                       
+
                     </div>
                     <div class="d-flex align-items-center mb-3">
                         <label for="size" class="mr-2">Size:</label>
                         <select name="size" id="size" required class="form-select mr-2">
                             <option value="">Select Size</option>
                             {% for size in products_color.size.all %}
-                                <option value="{{ size.size }}">{{ size.size }}</option>
+                            <option value="{{ size.size }}">{{ size.size }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     </form>
-                    <div class="d-flex justify-content-end ">
-                        <a class="text-light" href="{% url 'wishlist_add' products_color.id %}"><button style="border-radius: 50px;padding: 14px 30px 9px;" 
-                        type="submit" class="btn btn-primary wishlist-btn"><i class="fas fa-heart">
-                        </i>
-                    </button></a>
+                    <div class="d-flex justify-content-end " style="margin-top: -156px;margin-right: 90px;">
+                        <a class="text-light" href="{% url 'wishlist_add' products_color.id %}"><button
+                                style="border-radius: 50px;padding: 14px 30px 9px;" type="submit"
+                                class="btn btn-primary wishlist-btn"><i class="fas fa-heart">
+                                </i>
+                            </button></a>
                     </div>
 
 
@@ -408,6 +411,16 @@
         </div>
 </section>
 <!-- Product Details Section End -->
+
+    <script
+    
+        src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/2.2.3/jquery.elevatezoom.min.js">
+        
+    </script>
+
+    <script>
+        $("#zoom").elevateZoom()
+    </script>
 
 <script>
     $(document).ready(function () {

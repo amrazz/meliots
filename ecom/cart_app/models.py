@@ -27,6 +27,7 @@ class CartItem(models.Model):
     product = models.ForeignKey(ProductColorImage, on_delete=models.CASCADE)
     product_size = models.CharField(max_length=10, null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1, null=True, blank=True)
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -51,11 +52,19 @@ class Order(models.Model):
     ('Returned', 'Returned'),
     ('Refunded', 'Refunded'),
     ('Cancelled', 'Cancelled')
-) 
+    ) 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     tracking_id = models.CharField(max_length=100, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    subtotal = models.PositiveBigIntegerField(default=0, blank=True, null=True)
+    shipping_charge = models.PositiveBigIntegerField(default=0, blank=True, null=True)
     total = models.IntegerField(default=0)
+    paid = models.BooleanField(default=False)
+    coupon_applied = models.BooleanField(default=False)
+    coupon_name = models.CharField(blank=True, null=True)
+    coupon_discount_percentage = models.PositiveBigIntegerField(blank=True, null=True)
+    discounted_price = models.PositiveBigIntegerField(blank=True, default=0)
+
     
 
     

@@ -1,4 +1,4 @@
-{% extends "header.html" %}
+  {% extends "header.html" %}
 {% load static %}
 {% block content %}
 
@@ -65,10 +65,17 @@
                     id="exampleInputPrice">
             </div>
             <div>
-                <label for="exampleInputOldPrice" class="form-label ">percentage </label>
+                <label for="exampleInputPercentage" class="form-label ">percentage </label>
                 <input type="number" required autocomplete="off" class="form-control"
-                    onkeydown="moveToNext(event, 'exampleInputDescription')" name="percentage" placeholder="%"
-                    id="exampleInputPrice">
+                    onkeydown="moveToNext(event, 'exampleInputExp_date')" name="percentage" placeholder="%"
+                    id="exampleInputPercentage">
+            </div>
+            <br><br>
+            <div>
+                <label for="exampleInputExp_date" class="form-label ">Expiry Date </label>
+                <input type="date" required autocomplete="off" class="form-control"
+                    onkeydown="moveToNext(event, 'exampleInputDescription')" name="exp_date" placeholder="DD/MM/YY"
+                    id="exampleInputExp_date">
             </div>
             <br><br>
 
