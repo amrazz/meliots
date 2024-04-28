@@ -133,10 +133,14 @@
                         
                                 <td class="cart__price">₹ {{item.product.product.offer_price}}.0</td>
                                     {% csrf_token %}
-                                    <td class="cart__close">
-                                        <input value="1" name="quantity" type="hidden">
-                                        <button class="btn" type="submit"><i class="fas fa-cart-plus"></i></button>
-                                    </td>
+                                   {% if item.product.is_listed %}
+                                   <td class="cart__close">
+                                    <input value="1" name="quantity" type="hidden">
+                                    <button style="margin-right: 110px;" class="btn" type="submit"><i class="fas fa-cart-plus"></i></button>
+                                </td>
+                                {% else %}
+                                <td><h6 style="margin-right: 11px;">The product is out of Stock</h6></td>
+                                {% endif %}
                                 </form>
                                 <td class="cart__close">
                                     <a href="{% url 'wishlist_del' item.id %}">

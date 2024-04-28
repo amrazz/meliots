@@ -83,12 +83,32 @@
 <!-- Checkout Section Begin -->
 <section class="checkout spad">
     <div class="container">
+        <div class="d-flex justify-content-between ">
+            <a href="{% url 'address' %}" style="height: 40px;" class="btn btn-outline-primary">Add Address</a><br><br>
+            <form action="{% url 'checkout' %}" method="post">
+                {% csrf_token %}
+                <select name="coupon_code" style="width: 253px; height: 56px; border-radius: 55px;">
+                    <option value="" class="text-center">Select a coupon</option>
+                    {% for coupon in coupons %}
+                    <option class="text-center" value="{{ coupon.coupon_code }}">{{ coupon.coupon_code }} - {{ coupon.coupon_name }}</option>
+                    {% endfor %}
+                </select>
+                {% if coupon_applied == False %}
+                <button type="submit" class="site-btn">Apply</button>
+                
+                {% else %}
+                <button type="submit" class="site-btn">Remove</button>
+                <input type="hidden" name="action" value="remove_coupon">
+                {% endif %}
+            </form>
+            
+           </div><br><br>
         <form action="{% url 'place_order' %}" class="checkout__form" method = 'post'>
             {% csrf_token %}
             <div class="row">
                 <div class="col-lg-8">
                     <h5 class="text-center">Billing detail</h5>
-                    <a href="{% url 'address' %}" class="btn btn-outline-primary">Add Address</a><br><br>
+                   
 
                     <div class="row address">
                         {% for i in addresses %}
@@ -137,9 +157,14 @@
 
                         <div class="checkout__order__total">
                             <ul>
-                                <li>Subtotal <span>₹ {{sub_total}}.0</span></li><br><br>
-                                <li>Shipping Fee <span>₹ {{shipping_fee}}</span></li><br><br>
-                                <li>Total <span>₹ {{total}}.0</span></li>
+                                <li>Subtotal : <span>₹ {{sub_total}}.0</span></li><br>
+                                 {% if discount_amount %}
+                                <li>Discounted Price : <span>₹ {{ discount_amount }}.0</span></li>
+                                
+                                <br>
+                                {% endif %}
+                                <li>Shipping Fee : <span>₹ {{shipping_fee}}</span></li><br>
+                                <li>Total : <span>₹ {{total}}.0</span></li>
                             </ul>
                         </div>
 

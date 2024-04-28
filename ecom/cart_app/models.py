@@ -71,7 +71,6 @@ class Order(models.Model):
     def __str__(self) -> str:
         return f"{self.id} : {self.tracking_id}"
     
-    
 class OrderItem(models.Model):
     order = models.ForeignKey(Order,related_name='order', on_delete=models.CASCADE)
     product = models.ForeignKey(ProductColorImage, on_delete=models.CASCADE)

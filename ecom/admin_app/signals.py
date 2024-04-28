@@ -2,11 +2,21 @@ from django.dispatch import receiver
 from django.db.models.signals import *
 from .models import *
 
+
+
 @receiver(pre_save, sender=Coupon)
 def update_coupon_status(sender, instance, **kwargs):
-    if instance.expiry_date and timezone.now() > instance.expiry_date:
+    today = timezone.now()
+    
+    # Correctly compare expiry_date with today
+    if str(instance.expiry_date) and str(instance.expiry_date) < str(today):
+        print('Coupon has expired.')
         instance.is_active = False
-    elif instance.usage_limit and instance.used_count >= instance.usage_limit:
+    
+        # Assuming usage_limit is the correct field to compare with used_count
+    elif int(instance.usage_limit) is not None and int(instance.used_count) >= int(instance.usage_limit):
+        print('Coupon usage limit reached.')
         instance.is_active = False
     else:
+        print('Coupon is active.')
         instance.is_active = True

@@ -253,8 +253,9 @@ def is_valid_image(file):
 def edit_product(request, product_id):
     try:
         color_image = ProductColorImage.objects.get(id=product_id)
-        sizes = ProductSize.objects.filter(productcolor_id = color_image.pk)
-
+        print(color_image.color)
+        sizes = ProductSize.objects.filter(productcolor_id=color_image.pk)
+        print('sizes', ' :', sizes)
         if request.method == 'POST':
             name = request.POST.get('name')
             category_id = request.POST.get('category')
@@ -326,13 +327,15 @@ def edit_product(request, product_id):
                 color_image.save()
                 
             for size in sizes:
-                quantity = request.POST.get(f'quantity_{size.productcolor.id}')
+                field_name = f'quantity_{size.productcolor.id}'
+                quantity = request.POST.get(field_name)
+                print(f"Field Name: {field_name}, Quantity: {quantity}") # Debugging statement
                 if quantity:
                     size.quantity = quantity
                     size.save()
-                                    
-                messages.success(request, "Product updated successfully.")
-                return redirect('product')
+                                                
+            messages.success(request, "Product updated successfully.")
+            return redirect('product')
         else:    
             return render(request, 'product/edit_product.html', {'color_image': color_image, 'sizes' : sizes})
     except Product.DoesNotExist:
@@ -570,8 +573,10 @@ from django.shortcuts import render, redirect
 from .models import Coupon
 
 def add_coupon(request):
-    try:
+    # try:
         if request.user.is_superuser:
+            today = timezone.now().date()
+
             if request.method == 'POST':
                 code = request.POST.get('coupon_code')
                 if Coupon.objects.filter(coupon_code=code).exists():
@@ -593,12 +598,13 @@ def add_coupon(request):
                     return redirect('add_coupon')
                 
                 end_date = request.POST.get('end_date')
+                print(end_date, '==', today)
                 usage_limit = request.POST.get('usage_limit')
                 
                 if not all([code, name, dis, minimum_amount, maximum_amount, end_date, usage_limit]):
                     messages.error(request, 'All fields are required for adding the coupon.')
                     return redirect('add_coupon')
-                
+                print('reached')
                 coupon = Coupon.objects.create(
                     coupon_code=code,
                     coupon_name=name,
@@ -606,17 +612,20 @@ def add_coupon(request):
                     minimum_amount=minimum_amount,
                     maximum_amount=maximum_amount,
                     expiry_date=end_date,
+                    
                     usage_limit=usage_limit
                 )
+                print(coupon)
+                print('oiii oiii')
                 messages.success(request, 'Coupon added successfully.')
                 return redirect('admin_coupon')
         else:
             messages.error(request, 'You do not have permission to access this page.')
             return redirect('admin_login')  
-    except Exception as e:
-        messages.error(request, str(e))  
+    # except Exception as e:
+    #     messages.error(request, str(e))  
     
-    return render(request, 'coupon/add_coupon.html')
+        return render(request, 'coupon/add_coupon.html')
 
 
 
@@ -664,6 +673,16 @@ def edit_coupon(request, coupon_id):
             return redirect('admin_coupon')
         
         return render(request, 'coupon/edit_coupon.html', {'coupon': coupon})
+    else:
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('admin_login')
+    
+def del_coupon(request, coupon_id):
+    if request.user.is_superuser:
+        coupon = Coupon.objects.get(id = coupon_id)
+        coupon.delete()
+        messages.success(request, 'The coupon has been deleted Successfully.')
+        return redirect('admin_coupon')
     else:
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('admin_login')

@@ -22,9 +22,9 @@ razorpay_client = razorpay.Client(auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KE
 @login_required(login_url = 'login')
 def shop_cart(request):
     if request.user.is_authenticated:
-        user = Customer.objects.get(user = request.user.pk)
-        customer = User_Cart.objects.get(customer = user)
-        cart_items = CartItem.objects.filter(user_cart = customer,product__product__is_listed = True,product__product__is_deleted = False).distinct()
+        user = Customer.objects.get(user=request.user.pk)
+        customer = User_Cart.objects.get(customer=user)
+        cart_items = CartItem.objects.filter(user_cart=customer, product__product__is_listed=True, product__product__is_deleted=False).distinct()
         
         sub_total = sum(item.total_price() for item in cart_items)
         total = sub_total
@@ -37,13 +37,15 @@ def shop_cart(request):
         if shipping_fee == 99:
             total += shipping_fee
         
-
+        
+                        
+             
         context = {
             'cart_items' : cart_items,
             'sub_total': sub_total,
             'total' :total,
-            'shipping_fee':shipping_fee
-          
+            'shipping_fee':shipping_fee,
+  
             
         }
         
@@ -55,34 +57,28 @@ def shop_cart(request):
 def add_to_cart(request, pro_id):
     if request.user.is_authenticated:
         if request.method == 'POST':
-            print('reached here at post')
-            product = ProductColorImage.objects.get(id = pro_id)
-            
-            
-            if CartItem.objects.filter(product = product).exists():
-                messages.error(request, 'Product already exists in the Cart.')
+            product = ProductColorImage.objects.get(id=pro_id)
+            selected_size = request.POST.get('size')
+            size = ProductSize.objects.filter(productcolor__id=pro_id, size=selected_size).first()
+
+            if not size:
+                messages.error(request, 'Selected size is not available.')
                 return redirect('product_detail', pro_id)
-            
-            
+
             quantity = int(request.POST.get('quantity'))
             if int(quantity) <= 0:
                 messages.error(request, 'Invalid quantity.')
                 return redirect('product_detail', pro_id)
-            size = ProductSize.objects.get(productcolor__id = pro_id)
+
             if size.quantity < quantity:
                 messages.error(request, 'Selected quantity exceeds available stock.')
                 return redirect('product_detail', pro_id)
-            product_size = request.POST.get('size')
-            print(product_size, quantity)
-            if not product_size:
-                messages.error(request, 'Please select a size for the product.')
-                return redirect('product_detail', pro_id)
+
             user = Customer.objects.get(user=request.user.pk)
-            user_cart = User_Cart.objects.get(customer=user) 
-            cart_item = CartItem.objects.create(user_cart=user_cart, product=product, quantity=quantity, product_size = product_size)
+            user_cart = User_Cart.objects.get(customer=user)
+            cart_item = CartItem.objects.create(user_cart=user_cart, product=product, quantity=quantity, product_size=selected_size)
             cart_item.save()
-            print(cart_item)
-            print('successfully added')
+
             messages.success(request, 'Product added to Cart.')
             return redirect('shop_cart')
         return redirect('shop_cart')
@@ -139,6 +135,9 @@ def checkout(request):
         if request.user.is_authenticated:
             user = Customer.objects.get(user=request.user.pk)
             cart = CartItem.objects.filter(user_cart__customer=user)
+            coupons = Coupon.objects.filter(is_active=True)
+
+            today = timezone.now()
             
             if not cart.exists():
                 messages.error(request, 'Your cart is empty.')
@@ -151,6 +150,7 @@ def checkout(request):
             
             sub_total = sum(price.total_price() for price in cart)
             total = sub_total
+            discount_amount = 0
             
             cart_qty = sum(item.quantity for item in cart)
             if cart_qty > 5:
@@ -158,7 +158,50 @@ def checkout(request):
                 total = sub_total
             elif cart_qty <= 5:
                 shipping_fee = 99
-                total = sub_total + shipping_fee            
+                total = sub_total + shipping_fee
+                
+            if request.method == 'POST':
+                get_coupon = request.POST.get('coupon_code')
+                action = request.POST.get('action')
+                
+                if action == 'remove_coupon':
+                    if request.session.get('coupon_applied', False):
+                        del request.session['coupon_applied']
+                        del request.session['coupon_name']
+                        del request.session['coupon_discount_percentage']
+                        del request.session['discounted_price']
+                        messages.success(request, 'Coupon has been removed successfully.')
+                        return redirect('checkout')
+                    else:
+                        messages.error(request, 'No coupon has been applied.')
+                        return redirect('checkout')
+                
+                if get_coupon:
+                    if request.session.get('coupon_applied', False):
+                        messages.error(request, 'You have already applied a Coupon.')
+                        return redirect('checkout')
+                    
+                    if not Coupon.objects.filter(coupon_code=get_coupon, is_active=True).exists():
+                        messages.error(request, 'There is no Coupon with This name.')
+                        return redirect('checkout')
+                    
+                    if not Coupon.objects.filter(coupon_code=get_coupon, expiry_date__gt=today).exists():
+                        messages.error(request, 'The coupon has expired.') 
+                        return redirect('checkout')
+
+                    cpn = Coupon.objects.filter(coupon_code=get_coupon, is_active=True).first()
+                    if cpn:
+                        if total >= cpn.minimum_amount and total <= cpn.maximum_amount:
+                            discount_amount = (total * cpn.discount_percentage) / 100
+                            total -= round(discount_amount)
+                            request.session['coupon_applied'] = True
+                            request.session['coupon_name'] = cpn.coupon_name
+                            request.session['coupon_discount_percentage'] = cpn.discount_percentage
+                            request.session['discounted_price'] = round(discount_amount)
+                            messages.success(request, 'Coupon has been applied successfully.')
+                        else:
+                            messages.error(request, f'Your total must be between ₹ {cpn.minimum_amount} and ₹ {cpn.maximum_amount} to apply this coupon.')
+                            return redirect('checkout')
         
             custom = Customer.objects.get(user=request.user.pk)
             user_cart = User_Cart.objects.get(customer=custom)
@@ -166,7 +209,7 @@ def checkout(request):
             addresses = Address.objects.filter(user=request.user)
 
             if not addresses.exists():
-                messages.warning(request, 'You have no saved address. Please add an address first.')
+                messages.warning(request, 'You have no saved address. Please add an Address first.')
                 return redirect('address')
             
             context = {
@@ -174,7 +217,10 @@ def checkout(request):
                 'addresses': addresses,
                 'total': total,
                 'sub_total': sub_total,
-                'shipping_fee': shipping_fee
+                'shipping_fee': shipping_fee,
+                'coupons' : coupons,
+                'discount_amount' : round(discount_amount),
+                'coupon_applied' : request.session.get('coupon_applied', False)
             }
                 
             return render(request, 'checkout.html', context)
@@ -182,12 +228,13 @@ def checkout(request):
             return redirect('login')
     except Exception as e:
         messages.error(request, 'Something went wrong please try again.')
-        return total,  redirect('checkout')
+        return redirect('checkout')
+
+
 
     
-    
 def place_order(request):
-    try:
+    # try:
         if request.user.is_authenticated:
             if request.method == 'POST':
                 address_id = request.POST.get('select_address')
@@ -215,7 +262,19 @@ def place_order(request):
                 tk_id = get_random_string(10, 'ABCDEFGHIJKLMOZ0123456789')
                 while Order.objects.filter(tracking_id=tk_id).exists():
                     tk_id = get_random_string(10, 'ABCDEFGHIJKLMOZ0123456789')
-
+                
+                coupon_applied = request.session.get('coupon_applied')
+                coupon_name = request.session.get('coupon_name')
+                coupon_discount_percentage = request.session.get('coupon_discount_percentage')
+                discounted_price = request.session.get('discounted_price')
+                
+                if 'coupon_applied' in request.session:
+                    total -= discounted_price
+                    used_coupon = Coupon.objects.filter(coupon_name=coupon_name).first()
+                    if used_coupon:
+                        used_coupon.used_count += 1
+                        used_coupon.save()
+                    
                 order = Order.objects.create(
                     customer=customer,
                     address=address,
@@ -224,7 +283,11 @@ def place_order(request):
                     subtotal = subtotal,
                     shipping_charge = shipping_fee,
                     total=total,
-                    tracking_id=tk_id
+                    tracking_id=tk_id,
+                    coupon_applied = coupon_applied,
+                    coupon_name = coupon_name,
+                    coupon_discount_percentage = coupon_discount_percentage,
+                    discounted_price = discounted_price
                 )
                     
                 for cart_item in cart:
@@ -236,6 +299,11 @@ def place_order(request):
                     )
                     
                 cart.delete()
+                
+                del request.session['coupon_applied']
+                del request.session['coupon_name']
+                del request.session['coupon_discount_percentage']
+                del request.session['discounted_price']
 
                 messages.success(request, 'Order placed successfully.')
                 return redirect('order_detail')  
@@ -245,23 +313,20 @@ def place_order(request):
             
         else:
             return redirect('login')
-    except Exception as e:
-        messages.error(request, 'Something went wrong please try again.')
-        return redirect('checkout')
+    # except Exception as e:
+    #     messages.error(request, 'Something went wrong please try again.')
+    #     return redirect('checkout')
     
+
+
 
 def order_detail(request):
     return render(request, 'op.html') # order purchased
-    
-
-
-
-
 
 def view_order(request):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user=request.user.pk)
-        items=OrderItem.objects.filter(order__customer=customer)       
+        items=OrderItem.objects.filter(order__customer=customer).order_by('created_at')      
         context = {
             'items' : items
         }
@@ -343,3 +408,8 @@ def wishlist_del(request, pro_id):
         return redirect('wishlist_view')
     else:
         return redirect('login')
+    
+#___________________________________________________________________________________________________________________________________________________________________
+
+#                                                   COUPONS SECTION
+

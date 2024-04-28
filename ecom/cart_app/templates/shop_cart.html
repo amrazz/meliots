@@ -4,7 +4,80 @@
 
 {% block content %}
 
+<link rel="stylesheet" href="{% static 'js/cust.js' %}">
 <style>
+    .form-select {
+    width: 200px;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    background-color: #fff;
+}
+
+.btn-primary {
+    background-color: #ca1515;
+    border-color: #ca1515;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 5px;
+}
+
+.btn-primary:hover {
+    background-color: #b80d0d;
+    border-color: #b80d0d;
+}
+    .modal-content {
+        border-radius: 10px;
+    }
+
+    .modal-header {
+        background-color: #f5f5f5;
+        border-bottom: none;
+    }
+
+    .modal-title {
+        color: #333;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card-title {
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .card-text {
+        color: #666;
+    }
+
+    .modal-footer {
+        border-top: none;
+        background-color: #f5f5f5;
+    }
+
+    .btn-primary {
+        background-color: #ca1515;
+        border-color: #ca1515;
+    }
+
+    .btn-primary:hover {
+        background-color: #b80d0d;
+        border-color: #b80d0d;
+    }
+
     .shop__cart__table tbody tr .cart__product__item {
         overflow: hidden;
         width: 420px;
@@ -74,20 +147,23 @@
 <!-- Breadcrumb End -->
 <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
-                        <script>
-                            {% if messages %}
-                            {% for message in messages %}
-                            {% if message.tags == 'error' %}
-                            swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
-                            {% elif message.tags == 'success' %}
-                            swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
-                            {% else %}
-                            swal("Message", "{{ message }}"); // Display general message
-                            {% endif %}
-                            {% endfor %}
-                            {% endif %}
-                        </script>
-                    
+<script>
+    {% if messages %}
+    {% for message in messages %}
+    {% if message.tags == 'error' %}
+    swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
+    {% elif message.tags == 'success' %}
+    swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
+    {% else %}
+    swal("Message", "{{ message }}"); // Display general message
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+</script>
+
+
+
+
 <!-- Shop Cart Section Begin -->
 <section class="shop-cart spad">
     <div class="container">
@@ -133,8 +209,8 @@
                                             <div class="value-button" id="decrease_{{item.id}}"
                                                 onclick="updateQuantity('decrease', '{{item.id}}')"
                                                 value="Decrease Value">-</div>
-                                            <input style="border: #000000;background-color: #ffffff; width: 65px;" type="text"
-                                                id="number_{{item.id}}"
+                                            <input style="border: #000000;background-color: #ffffff; width: 65px;"
+                                                type="text" id="number_{{item.id}}"
                                                 class="prod_quantity form-control text-center mx-2" name="quantity"
                                                 value="{{item.quantity}}" max="9" readonly>
                                             <div class="value-button" id="increase_{{item.id}}"
@@ -172,15 +248,11 @@
                     <a href=""><span class="icon_loading"></span> Update cart</a>
                 </div>
             </div>
-        </div>
+        </div><br>
         <div class="row">
             <div class="col-lg-6">
-                <div class="discount__content">
-                    <h6>Discount codes</h6>
-                    <form action="#">
-                        <input type="text" placeholder="Enter your coupon code">
-                        <button type="submit" class="site-btn">Apply</button>
-                    </form>
+                <div class="discount__content d-flex ">
+                   
                 </div>
             </div>
             <div class="col-lg-4 offset-lg-2">
@@ -188,6 +260,7 @@
                     <h6 class="text-center font">Cart total</h6><br>
                     <ul>
                         <li id="sub_total">Subtotal : <span>₹ {{ sub_total }}.0</span></li><br>
+                       
                         <li>
                             {% if shipping_fee == 'Free' %}
                             Shipping fee :<span id="shipping_fee">{{ shipping_fee }}</span>
@@ -239,10 +312,10 @@
                     // Update the total price and shipping fee in the HTML
                     totalPriceElement.textContent = '₹ ' + response.new_total_price;
                     document.querySelector('.cart__total__procced ul li:first-child span').textContent = '₹ ' + response.subtotal + '.0';
-                    if (response.shipping_fee === 'Free'){
+                    if (response.shipping_fee === 'Free') {
                         document.getElementById('shipping_fee').textContent = response.shipping_fee;
 
-                    }else{
+                    } else {
                         document.getElementById('shipping_fee').textContent = '₹ ' + response.shipping_fee + '.0';
 
                     }
@@ -262,6 +335,19 @@
     }
 
 </script>
+
+
+<script>
+    // Add an event listener to the button
+    document.getElementById('showAvailableCouponBtn').addEventListener('click', function () {
+        // Open the modal when the button is clicked
+        var myModal = new bootstrap.Modal(document.getElementById('exampleModal'), {
+            keyboard: false
+        });
+        myModal.show();
+    });
+</script>
+
 
 
 

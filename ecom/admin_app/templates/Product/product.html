@@ -124,8 +124,6 @@
                         <form action="{% url 'product_is_unlisted' product.id %}" method="post">
                             {% csrf_token %}
                             <div class="d-flex">
-                                <a href="{% url 'edit_product' product.product.id %}"
-                                    class="btn btn-outline-primary me-4">Edit</a>
                                 <a href="{% url 'product_is_deleted' product.id %}"
                                     class="btn btn-outline-danger me-4">Delete</a>
                                 <button class="btn btn-outline-success" type="submit">Unlist</button>
@@ -135,7 +133,7 @@
                         <form action="{% url 'product_is_listed' product.id %}" method="post">
                             {% csrf_token %}
                             <div class="d-flex">
-                                <a href="{% url 'edit_product' product.product.id %}"
+                                <a href="{% url 'edit_product' product.id %}"
                                     class="btn btn-outline-primary me-4">Edit</a>
                                 <a href="{% url 'product_is_deleted' product.id %}"
                                     class="btn btn-outline-danger me-4">Delete</a>
