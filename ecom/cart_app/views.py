@@ -1,4 +1,4 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect, HttpResponse
 from django.http import JsonResponse
 from .models import *
 from django.contrib import messages,auth
@@ -10,9 +10,12 @@ from django.utils.crypto import get_random_string
 import razorpay
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from datetime import timedelta
 
 # authorize razorpay client with API Keys.
+
 razorpay_client = razorpay.Client(auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET))
 
 # Create your views here.
@@ -231,92 +234,163 @@ def checkout(request):
         return redirect('checkout')
 
 
-
+def initiate_payment(items):
+    data = {
+        'currency': "INR",
+        'payment_capture': '1',
+        'amount': items[0]['amount'] * 100 
+    }
+    
+    razorpay_order = razorpay_client.order.create(data=data)
+    razorpay_order_id = razorpay_order['id']
+    for item in items:
+        item_data = {
+            'amount' : item['amount'] * 100, 
+            'currency' : 'INR',
+        }
+        razorpay_client.order.create(data=item_data)
+    return razorpay_order_id
     
 def place_order(request):
-    # try:
-        if request.user.is_authenticated:
-            if request.method == 'POST':
-                address_id = request.POST.get('select_address')
-                address = Address.objects.get(id=address_id)
-                pm = request.POST.get('payment_method')
-                print(pm)
-                
-                if not address_id:
-                    messages.error(request, 'Please select an address.')
-                    return redirect('checkout')
-                if not pm:
-                    messages.error(request, 'Please select a Payment Method.')
-                    return redirect('checkout')
-                    
-                customer = Customer.objects.get(user=request.user.pk)
-                cart = CartItem.objects.filter(user_cart__customer=customer)
-                subtotal = sum(item.total_price() for item in cart)
-                total_qty = sum(item.quantity for item in cart)
-                if total_qty <= 5:
-                    shipping_fee = 99
-                else:
-                    shipping_fee = 0
-                total = subtotal if total_qty > 5 else 99 + subtotal
-                    
-                tk_id = get_random_string(10, 'ABCDEFGHIJKLMOZ0123456789')
-                while Order.objects.filter(tracking_id=tk_id).exists():
-                    tk_id = get_random_string(10, 'ABCDEFGHIJKLMOZ0123456789')
-                
-                coupon_applied = request.session.get('coupon_applied')
-                coupon_name = request.session.get('coupon_name')
-                coupon_discount_percentage = request.session.get('coupon_discount_percentage')
-                discounted_price = request.session.get('discounted_price')
-                
-                if 'coupon_applied' in request.session:
-                    total -= discounted_price
-                    used_coupon = Coupon.objects.filter(coupon_name=coupon_name).first()
-                    if used_coupon:
-                        used_coupon.used_count += 1
-                        used_coupon.save()
-                    
-                order = Order.objects.create(
-                    customer=customer,
-                    address=address,
-                    payment_method=pm,
-                    status='Order Placed',
-                    subtotal = subtotal,
-                    shipping_charge = shipping_fee,
-                    total=total,
-                    tracking_id=tk_id,
-                    coupon_applied = coupon_applied,
-                    coupon_name = coupon_name,
-                    coupon_discount_percentage = coupon_discount_percentage,
-                    discounted_price = discounted_price
-                )
-                    
-                for cart_item in cart:
-                    OrderItem.objects.create(
-                        order=order,
-                        product=cart_item.product, 
-                        qty=cart_item.quantity,
-                        size=cart_item.product_size
-                    )
-                    
-                cart.delete()
-                
-                del request.session['coupon_applied']
-                del request.session['coupon_name']
-                del request.session['coupon_discount_percentage']
-                del request.session['discounted_price']
-
-                messages.success(request, 'Order placed successfully.')
-                return redirect('order_detail')  
-
-            else:
-                return redirect('checkout')
-            
+    if request.method == 'POST':
+        address_id = request.POST.get('select_address')
+        address = Address.objects.get(id=address_id)
+        pm = request.POST.get('payment_method')
+        
+        if not address_id:
+            messages.error(request, 'Please select an address.')
+            return redirect('checkout')
+        if not pm:
+            messages.error(request, 'Please select a Payment Method.')
+            return redirect('checkout')
+        
+        customer = Customer.objects.get(user=request.user.pk)
+        cart = CartItem.objects.filter(user_cart__customer=customer)
+        subtotal = sum(item.total_price() for item in cart)
+        total_qty = sum(item.quantity for item in cart)
+        
+        if total_qty <= 5:
+            shipping_fee = 99
         else:
-            return redirect('login')
-    # except Exception as e:
-    #     messages.error(request, 'Something went wrong please try again.')
-    #     return redirect('checkout')
+            shipping_fee = 0
+        total = subtotal if total_qty > 5 else 99 + subtotal
+        
+        tk_id = get_random_string(10, 'ABCDEFGHIJKLMOZ0123456789')
+        while Order.objects.filter(tracking_id=tk_id).exists():
+            tk_id = get_random_string(10, 'ABCDEFGHIJKLMOZ0123456789')
+        
+        coupon_applied = request.session.get('coupon_applied')
+        coupon_name = request.session.get('coupon_name')
+        coupon_discount_percentage = request.session.get('coupon_discount_percentage')
+        discounted_price = request.session.get('discounted_price')
+        
+        if 'coupon_applied' in request.session:
+            total -= discounted_price
+            used_coupon = Coupon.objects.filter(coupon_name=coupon_name).first()
+            if used_coupon:
+                used_coupon.used_count += 1
+                used_coupon.save()
+        else:
+            coupon_applied = False
+            coupon_name = None
+            coupon_discount_percentage = None
+            discounted_price = 0 
+            
+        if request.POST.get('payment_method') == 'Razorpay':
+            items = [{
+                'amount' : total * 100,
+                
+            }]
+            order_id = initiate_payment(items)
+            order = Order.objects.create(
+                customer=customer,
+                address=address,
+                payment_method=pm,
+                subtotal=subtotal,
+                shipping_charge=shipping_fee,
+                total=total,
+                tracking_id=tk_id,
+                coupon_applied=coupon_applied,
+                coupon_name=coupon_name,
+                coupon_discount_percentage=coupon_discount_percentage,
+                discounted_price=discounted_price,
+                payment_transaction_id=order_id
+            )
+            for cart_item in cart:
+                OrderItem.objects.create(
+                    order=order,
+                    status='Order Placed',
+                    product=cart_item.product, 
+                    qty=cart_item.quantity,
+                    size=cart_item.product_size
+            )
+            cart.delete()
+        
+            keys_to_delete = ['coupon_applied', 'coupon_name', 'coupon_discount_percentage', 'discounted_price']
+            for key in keys_to_delete:
+                if key in request.session:
+                    del request.session[key]
+            
+            return redirect('order_detail')
+        else:
+            order = Order.objects.create(
+                customer=customer,
+                address=address,
+                payment_method=pm,
+                subtotal=subtotal,
+                shipping_charge=shipping_fee,
+                total=total,
+                tracking_id=tk_id,
+                coupon_applied=coupon_applied,
+                coupon_name=coupon_name,
+                coupon_discount_percentage=coupon_discount_percentage,
+                discounted_price=discounted_price,
+            )
+        
+        for cart_item in cart:
+            OrderItem.objects.create(
+                order=order,
+                status='Order Placed',
+                product=cart_item.product, 
+                qty=cart_item.quantity,
+                size=cart_item.product_size
+            )
+        
+        cart.delete()
+        
+        keys_to_delete = ['coupon_applied', 'coupon_name', 'coupon_discount_percentage', 'discounted_price']
+        for key in keys_to_delete:
+            if key in request.session:
+                del request.session[key]
+        
+        messages.success(request, 'Order placed successfully.')
+        return redirect('order_detail')  
+    else:
+        return redirect('checkout')
     
+    
+def payment_success(request):
+    if request.method == 'POST':
+        order_id = request.POST.get('razorpay_order_id')
+        payment_id = request.POST.get('order_id')
+        signature = request.POST.get('razorpay_signature')
+    else:
+        messages.error(request, 'Something went wrong in the payment section please try again.')
+        return redirect('checkout')
+    params_dict = {
+        'razorpay_order_id': order_id,
+        'razorpay_payment_id': payment_id,
+        'razorpay_signature': signature
+    }
+    try:
+       razorpay_client.utility.verify_payment_signature(params_dict)
+       # Payment signature verification successful
+       # Perform any required actions (e.g., update the order status)
+       return render(request, 'op.html')
+    except razorpay.errors.SignatureVerificationError as e:
+       # Payment signature verification failed
+       # Handle the error accordingly
+       return HttpResponse(f'The payment is failed due to the {str(e)} reasons')
 
 
 
@@ -354,13 +428,26 @@ def cancel_order(request,order_id):
     print(order_id)
     if request.user.is_authenticated:
         order_item = OrderItem.objects.get(pk = order_id)
-        order = order_item.order
-        if order.customer.user == request.user:
-            order.status = 'Cancelled'
-            order.save()
+        if order_item.order.customer.user == request.user:
+            order_item.status = 'Cancelled'
+            order_item.save()
             return render(request, 'view_status.html',{'order_items' : order_item})
     return redirect('login')
     
+def request_return_product(request,order_id):
+    if request.user.is_authenticated:
+        seven_days = timezone.now() - timedelta(days = 7)
+        order_item = OrderItem.objects.get(pk = order_id)
+        check = OrderItem.objects.filter(created_at__gt = seven_days)
+        order_item = OrderItem.objects.get(pk = order_id)
+        if order_item in check:
+            order_item.request_return = True
+            order_item.save()
+            return render(request, 'view_status.html',{'order_items' : order_item})
+        else:
+            messages.info(request, 'You can only request for return product within 7 days.')
+            return redirect('view_status', order_id)
+    return redirect('login')
     
 def wishlist_view(request):
     if request.user.is_authenticated:

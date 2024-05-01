@@ -326,14 +326,28 @@ def edit_product(request, product_id):
                     color_image.image4 = image4
                 color_image.save()
                 
-            for size in sizes:
-                field_name = f'quantity_{size.productcolor.id}'
-                quantity = request.POST.get(field_name)
-                print(f"Field Name: {field_name}, Quantity: {quantity}") # Debugging statement
-                if quantity:
-                    size.quantity = quantity
-                    size.save()
-                                                
+            s = request.POST.get('S')
+            m = request.POST.get('M')
+            l = request.POST.get('L')
+
+            if ProductSize.objects.filter(
+                productcolor=color_image, size='S').exists():
+                ProductSize.objects.filter(
+                    productcolor=color_image,
+                    size='S'
+                    ).update(quantity=s)
+            if ProductSize.objects.filter(
+                productcolor=color_image, size='M').exists():
+                ProductSize.objects.filter(
+                    productcolor=color_image,
+                    size='M'
+                    ).update(quantity=m)
+            if ProductSize.objects.filter(productcolor=color_image, size='L').exists():
+                ProductSize.objects.filter(
+                    productcolor=color_image,
+                    size='L'
+                    ).update(quantity=l)
+                                                            
             messages.success(request, "Product updated successfully.")
             return redirect('product')
         else:    
@@ -522,7 +536,7 @@ def product_is_unlisted(request, product_id):
 def order(request):
     if request.user.is_superuser:
         order_details = Order.objects.all()
-        status_choices = dict(Order.STATUS_CHOICES)
+        status_choices = dict(OrderItem.STATUS_CHOICES)
 
         context = {
             'order_details' : order_details,
@@ -548,7 +562,7 @@ def update_status(request):
 
 def admin_order(request, order_id):
     if request.user.is_superuser:
-        order = Order.objects.get(id=order_id).order_by('tracking_id')
+        order = Order.objects.get(id=order_id)
         item = OrderItem.objects.filter(order = order)
         context = {
             'item': item,

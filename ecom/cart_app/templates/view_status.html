@@ -7,6 +7,9 @@
 {% block content %}
 
 <style>
+    a{
+        text-decoration: none;
+    }
     video{
         position: absolute;
         margin-left: 206px;
@@ -61,7 +64,7 @@
                     height="180">
             </div>
             <div class="active">
-                {% if order_items.order.status == 'Order Placed' %}
+                {% if order_items.status == 'Order Placed' %}
                 <div class="track-step">
                     <div class="track_dot"
                         style=" width: 20px;height: 20px;background-color: #009608;border-radius: 50%;">
@@ -94,7 +97,7 @@
                     </div>
                     <h5>Delivered</h5>
                 </div>
-                {% elif order_items.order.status == 'Shipped' %}
+                {% elif order_items.status == 'Shipped' %}
                 <div class="track-step">
                     <div class="track_dot"
                         style=" width: 20px;height: 20px;background-color: #009608;border-radius: 50%;">
@@ -127,7 +130,7 @@
                     </div>
                     <h5>Delivered</h5>
                 </div>
-                {% elif order_items.order.status == 'Out for Delivery' %}
+                {% elif order_items.status == 'Out for Delivery' %}
                 <div class="track-step">
                     <div class="track_dot"
                         style=" width: 20px;height: 20px;background-color: #009608;border-radius: 50%;">
@@ -160,7 +163,7 @@
                     </div>
                     <h5>Delivered</h5>
                 </div>
-                {% elif order_items.order.status == 'Delivered' %}
+                {% elif order_items.status == 'Delivered' %}
                 <div class="track-step">
                     <div class="track_dot"
                         style=" width: 20px;height: 20px;background-color: #009608;border-radius: 50%;"></div>
@@ -197,12 +200,14 @@
                 {% endif %}
             </div><br><br>      
             <div class="d-flex justify-content-center ">
-               {% if not order_items.order.status == 'Cancelled' %}
-               {% if not order_items.order.status == 'Delivered' %}
+               {% if not order_items.status == 'Cancelled' %}
+               {% if not order_items.status == 'Delivered' %}
                <a href="{% url 'cancel_order' order_items.pk %}" class="btn btn-outline-danger ">Cancel</a>
                
                {% else %}
+               
                <a href="" class="btn btn-outline-secondary ">Return</a>
+                
                {% endif %}
                {% else %}
                <h3>Your Order has beed Cancelled.</h3>

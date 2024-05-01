@@ -36,24 +36,36 @@ class CartItem(models.Model):
     def total_price(self):
         offer_price = self.product.product.offer_price()
         return int(round(self.quantity * offer_price))
+
+   
+ 
+class Payment(models.Model):
+    method_name = models.CharField(max_length=100)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    paid_at = models.DateTimeField(null=True)
+    pending = models.BooleanField(default=True)
+    failed = models.BooleanField(default=False)
+    success = models.BooleanField(default=False)
     
+    def __str__(self) -> str:
+        status = ""
+        if self.pending:
+            status += "Pending "
+        if self.failed:
+            status += "Failed "
+        if self.success:
+            status += "Success "
+        
+        return f"{self.method_name} - {status} Payment"
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
     payment_method = models.CharField(max_length=100, null=False)
-    payment_id = models.CharField(max_length=100, null=True)
-    STATUS_CHOICES = (
-    ('Order Placed', 'Order Placed'),
-    ('Pending', 'Pending'),
-    ('Shipped', 'Shipped'),
-    ('Out for Delivery', 'Out for Delivery'),
-    ('Delivered', 'Delivered'),
-    ('Returned', 'Returned'),
-    ('Refunded', 'Refunded'),
-    ('Cancelled', 'Cancelled')
-    ) 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    payment_transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    payment = models.ForeignKey(Payment,on_delete=models.PROTECT, null=True, blank=True)
+
     tracking_id = models.CharField(max_length=100, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     subtotal = models.PositiveBigIntegerField(default=0, blank=True, null=True)
@@ -63,22 +75,35 @@ class Order(models.Model):
     coupon_applied = models.BooleanField(default=False)
     coupon_name = models.CharField(blank=True, null=True)
     coupon_discount_percentage = models.PositiveBigIntegerField(blank=True, null=True)
-    discounted_price = models.PositiveBigIntegerField(blank=True, default=0)
-
-    
+    discounted_price = models.PositiveBigIntegerField(blank=True, default=0,  null=True)
 
     
     def __str__(self) -> str:
-        return f"{self.id} : {self.tracking_id}"
+        return f"Order ID: {self.id}, Tracking ID: {self.tracking_id}, Customer: {self.customer}"
+
     
 class OrderItem(models.Model):
     order = models.ForeignKey(Order,related_name='order', on_delete=models.CASCADE)
+    STATUS_CHOICES = (
+    ('Order Placed', 'Order Placed'),
+    ('Pending', 'Pending'),
+    ('Shipped', 'Shipped'),
+    ('Out for Delivery', 'Out for Delivery'),
+    ('Delivered', 'Delivered'),
+    ('Returned', 'Returned'),
+    ('Refunded', 'Refunded'),
+    ('Cancelled', 'Cancelled')
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     product = models.ForeignKey(ProductColorImage, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     size = models.CharField(max_length = 12, default = 'S')
     qty = models.PositiveIntegerField(default=0)
+    return_product = models.BooleanField(default=False)
+    request_return = models.BooleanField(default=False)
+    
     def __str__(self):
-        return f"{self.product.product.name} - {self.size} - (Quantity: {self.qty})"
+        return f"{self.product.product.name} - {self.size} - (Quantity: {self.qty}, Status: {self.status})"
 
     def total_price(self):
         return self.cart_item.total_price()

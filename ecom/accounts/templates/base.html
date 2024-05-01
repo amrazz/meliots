@@ -31,6 +31,10 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}" type="text/css" />
 
   <style>
+    a{
+      text-decoration: none;
+      color: black;
+    }
     .search-container {
       position: relative;
       width: 400px;
@@ -143,20 +147,52 @@
 
   <!-- Offcanvas Menu Begin -->
   <div class="offcanvas-menu-overlay"></div>
+
+  {% if user.is_authenticated %}
+  <div class="offcanvas-menu-wrapper">
+    <div class="offcanvas__logo">
+      <a href="{% url 'index' %}"><img src="{% static 'img/e_logo2.png' %}" alt=""></a>
+    </div><hr><br>
+    <div class="offcanvas__close">+</div>
+    <ul class="offcanvas__widget">
+
+      <li>
+        <a href="{% url 'wishlist_view' %}">
+          <span class="icon_heart_alt"></span>
+          <div class="tip">{{ wishlist_count }}</div>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'shop_cart' %}">
+          <span class="icon_bag_alt"></span>
+          <div class="tip"> {{ cart_count }} </div>
+        </a>
+      </li>
+    </ul>
+   
+    <div id="mobile-menu-wrap"></div>
+    <div class="d-inline ">
+        <a class="dropdown-item" href="{% url 'profile' %}">Profile</a>
+        <a class="dropdown-item" href="{% url 'checkout' %}">Checkout</a>
+        <a class="dropdown-item" href="{% url 'view_order' %}">View Order</a>
+        <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+
+    </div>
+  </div>
+  {% else %}
+  
   <div class="offcanvas-menu-wrapper">
     <div class="offcanvas__close">+</div>
     <ul class="offcanvas__widget">
+
       <li>
-        <span class="icon_search search-switch"></span>
-      </li>
-      <li>
-        <a href="#">
+        <a href="{% url 'login' %}">
           <span class="icon_heart_alt"></span>
           <div class="tip">0</div>
         </a>
       </li>
       <li>
-        <a href="#">
+        <a href="{% url 'login' %}">
           <span class="icon_bag_alt"></span>
           <div class="tip">0</div>
         </a>
@@ -167,10 +203,11 @@
     </div>
     <div id="mobile-menu-wrap"></div>
     <div class="offcanvas__aut">
-      <a href="#">Login</a>
+      <a href="{% url 'login' %}">Login</a>
       <div class="btn"><a href="{% url 'logout' %}">Logout</a></div>
     </div>
   </div>
+  {% endif %}
   <!-- Offcanvas Menu End -->
 
   <!-- Header Section Begin -->
@@ -222,6 +259,7 @@
                 <div class="dropdown-menu bg-black " aria-labelledby="username">
                   <a class="dropdown-item" href="{% url 'profile' %}">Profile</a>
                   <a class="dropdown-item" href="{% url 'checkout' %}">Checkout</a>
+                  <a class="dropdown-item" href="{% url 'view_order' %}">View Order</a>
                   <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
                 </div>
               </div>

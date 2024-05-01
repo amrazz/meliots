@@ -65,21 +65,21 @@
     </div>
 </div>
 <!-- Breadcrumb End -->
-    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
-                        <script>
-                            {% if messages %}
-                            {% for message in messages %}
-                            {% if message.tags == 'error' %}
-                            swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
-                            {% elif message.tags == 'success' %}
-                            swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
-                            {% else %}
-                            swal("Message", "{{ message }}"); // Display general message
-                            {% endif %}
-                            {% endfor %}
-                            {% endif %}
-                        </script>
+<script>
+    {% if messages %}
+    {% for message in messages %}
+    {% if message.tags == 'error' %}
+    swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
+    {% elif message.tags == 'success' %}
+    swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
+    {% else %}
+    swal("Message", "{{ message }}"); // Display general message
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+</script>
 <!-- Checkout Section Begin -->
 <section class="checkout spad">
     <div class="container">
@@ -90,25 +90,26 @@
                 <select name="coupon_code" style="width: 253px; height: 56px; border-radius: 55px;">
                     <option value="" class="text-center">Select a coupon</option>
                     {% for coupon in coupons %}
-                    <option class="text-center" value="{{ coupon.coupon_code }}">{{ coupon.coupon_code }} - {{ coupon.coupon_name }}</option>
+                    <option class="text-center" value="{{ coupon.coupon_code }}">{{ coupon.coupon_code }} -
+                        {{coupon.coupon_name }}</option>
                     {% endfor %}
                 </select>
                 {% if coupon_applied == False %}
                 <button type="submit" class="site-btn">Apply</button>
-                
+
                 {% else %}
                 <button type="submit" class="site-btn">Remove</button>
                 <input type="hidden" name="action" value="remove_coupon">
                 {% endif %}
             </form>
-            
-           </div><br><br>
-        <form action="{% url 'place_order' %}" class="checkout__form" method = 'post'>
+
+        </div><br><br>
+        <form action="{% url 'place_order' %}" class="checkout__form" method='post'>
             {% csrf_token %}
             <div class="row">
                 <div class="col-lg-8">
                     <h5 class="text-center">Billing detail</h5>
-                   
+
 
                     <div class="row address">
                         {% for i in addresses %}
@@ -124,9 +125,11 @@
                                 <p class="card-text">Phone Number : {{i.phone_number}}</p>
                                 <div class="form-check">
                                     {% if addresses|length == 1 %}
-                                    <input required class="form-check-input" type="radio" checked name="select_address" id="address-{{i.id}}" value="{{i.id}}">
+                                    <input required class="form-check-input" type="radio" checked name="select_address"
+                                        id="address-{{i.id}}" value="{{i.id}}">
                                     {% else %}
-                                    <input required class="form-check-input" type="radio" name="select_address" id="address-{{i.id}}" value="{{i.id}}">
+                                    <input required class="form-check-input" type="radio" name="select_address"
+                                        id="address-{{i.id}}" value="{{i.id}}">
                                     {% endif %}
                                     <label class="form-check-label" for="address-{{i.id}}">
                                         Select
@@ -136,7 +139,7 @@
                         </div>
                         {% endfor %}
                     </div>
-                    
+
                 </div>
                 <div class="col-lg-4">
                     <div class="checkout__order">
@@ -158,13 +161,14 @@
                         <div class="checkout__order__total">
                             <ul>
                                 <li>Subtotal : <span>₹ {{sub_total}}.0</span></li><br>
-                                 {% if discount_amount %}
+                                {% if discount_amount %}
                                 <li>Discounted Price : <span>₹ {{ discount_amount }}.0</span></li>
-                                
+
                                 <br>
                                 {% endif %}
                                 <li>Shipping Fee : <span>₹ {{shipping_fee}}</span></li><br>
-                                <li>Total : <span>₹ {{total}}.0</span></li>
+                                <li id="totalAmount">Total : <span>₹ {{total}}.0</span></li>
+
                             </ul>
                         </div>
 
@@ -180,24 +184,73 @@
                                 </video>
 
                                 <label for="visa">COD</label>
-                                <input checked id="visa" name="payment_method"  value="COD" type="radio" >
+                                <input checked id="visa" name="payment_method" value="COD" type="radio">
                             </div>
 
                             <div class="form__radio">
-                                <img style="width: 58px;height: 14px;padding-right: 7px;" src="{% static 'img/Razorpay-icon.png' %}" alt="">
+                                <img style="width: 58px;height: 14px;padding-right: 7px;"
+                                    src="{% static 'img/Razorpay-icon.png' %}" alt="">
                                 <label for="razorpay">Razor Pay</label>
-                                <input id="razorpay" name="payment_method" type="radio" value="Razorpay" >     
+                                <input id="razorpay" name="payment_method" type="radio" value="Razorpay">
                             </div>
                         </div><br><br>
 
                         <button type="submit" class="site-btn">Place order</button>
-                    </form>
-                    </div>
-                </div>
-            </div>
+        </form>
+    </div>
+    </div>
+    </div>
     </div>
 </section>
 <!-- Checkout Section End -->
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var form = document.querySelector('.checkout__form');
+
+        form.addEventListener('submit', function (event) {
+            var paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+
+            if (paymentMethod && paymentMethod.value === 'Razorpay') {
+                event.preventDefault(); // Prevent form submission
+                var totalAmountElement = document.getElementById('totalAmount');
+                var totalAmountText = totalAmountElement.textContent;
+                var totalAmount = totalAmountText.match(/\d+/)[0];
+
+                // Initialize Razorpay payment
+                initializeRazorpay(totalAmount);
+            }
+        });
+
+        function initializeRazorpay(totalAmount) {
+            console.log(totalAmount)
+            // Initialize Razorpay payment options
+            var options = {
+                "key": "rzp_test_i5YPKuq85Rzcc0",
+                "amount": totalAmount * 100,     
+                "currency": "INR",
+                "name": "MELIOTIS",
+                "description": "Order payment",
+                "order_id": "{{ razorpay_order_id }}", 
+                "handler": function (response) {
+                    // Handle Razorpay payment success response
+                    // Submit the form programmatically to ensure a POST request is made
+                    form.submit(); // This submits the form as a POST request
+                },
+
+                "theme": {
+                    "color": "#3399cc"
+                }
+            };
+
+            var rzp = new Razorpay(options);
+            rzp.open();
+        }
+    });
+</script>
+
+
 
 
 {% endblock content %}

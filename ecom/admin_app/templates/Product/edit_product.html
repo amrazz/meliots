@@ -53,14 +53,20 @@
                 </div>
                 <div class="form-group">
                     <label for="productSizes">Sizes & Quantities</label>
-                    {% for size in sizes %}
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">{{ size.size }}</span>
+                            <span class="input-group-text">S</span>
                         </div>
-                        <input type="number" step="1" name="quantity_{{ size.productcolor.id }}" id="quantity_{{ size.productcolor.id }}" class="form-control" value="{{ size.quantity }}">
+                        <input type="number" step="1" name="S" id="S" class="form-control" value="{{ sizes.0.quantity }}">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">M</span>
+                        </div>
+                        <input type="number" step="1" name="M" id="M" class="form-control" value="{{ sizes.1.quantity }}">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">L</span>
+                        </div>
+                        <input type="number" step="1" name="L" id="L" class="form-control" value="{{ sizes.2.quantity }}">
                     </div>
-                    {% endfor %}
                 </div>
                 
                 <div class="form-group">
