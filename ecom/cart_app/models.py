@@ -65,7 +65,6 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=100, null=False)
     payment_transaction_id = models.CharField(max_length=100, null=True, blank=True)
     payment = models.ForeignKey(Payment,on_delete=models.PROTECT, null=True, blank=True)
-
     tracking_id = models.CharField(max_length=100, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     subtotal = models.PositiveBigIntegerField(default=0, blank=True, null=True)
@@ -99,6 +98,8 @@ class OrderItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     size = models.CharField(max_length = 12, default = 'S')
     qty = models.PositiveIntegerField(default=0)
+    request_cancel = models.BooleanField(default=False)
+    cancel = models.BooleanField(default=False)
     return_product = models.BooleanField(default=False)
     request_return = models.BooleanField(default=False)
     

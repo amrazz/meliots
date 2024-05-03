@@ -148,9 +148,39 @@
 
         </table>
     </div>
+    
 </div>
 </div>
-</div>
+
+</div><br>
+<div class="d-flex justify-content-center" style="margin-left: 189px;">
+    {% if is_paginated %}
+    <nav aria-label="pagination">
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" tabindex="-1"
+                    href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for i in paginator.page_range %}
+            {% if i == page_obj.number %}
+            <li class="page-item active" aria-current="page">
+                <a class="page-link" href="?page={{i}}" class="visually-hidden">{{i}}</a>
+            </li>
+            {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{i}}">{{i}}</a></li>
+            {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" tabindex="-1" href="?page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div><br><br><br>
 </div>
 <script>
     function updateQuantity(size, rowIndex) {
@@ -169,5 +199,7 @@
         document.getElementById('quantity-display-' + rowIndex).textContent = quantity;
     }
 </script>
+
+
 
 {% endblock content %}

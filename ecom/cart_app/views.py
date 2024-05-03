@@ -67,7 +67,7 @@ def add_to_cart(request, pro_id):
             if not size:
                 messages.error(request, 'Selected size is not available.')
                 return redirect('product_detail', pro_id)
-
+        
             quantity = int(request.POST.get('quantity'))
             if int(quantity) <= 0:
                 messages.error(request, 'Invalid quantity.')
@@ -302,6 +302,9 @@ def place_order(request):
                 
             }]
             order_id = initiate_payment(items)
+            if order_id is None:
+                messages.error(request, 'Payment initiation failed. Please try again.')
+                return redirect('checkout')
             order = Order.objects.create(
                 customer=customer,
                 address=address,
@@ -388,19 +391,18 @@ def payment_success(request):
        # Perform any required actions (e.g., update the order status)
        return render(request, 'op.html')
     except razorpay.errors.SignatureVerificationError as e:
-       # Payment signature verification failed
-       # Handle the error accordingly
+
        return HttpResponse(f'The payment is failed due to the {str(e)} reasons')
 
 
-
+#____________________________________________________________________________________________________________________
 def order_detail(request):
     return render(request, 'op.html') # order purchased
 
 def view_order(request):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user=request.user.pk)
-        items=OrderItem.objects.filter(order__customer=customer).order_by('created_at')      
+        items=OrderItem.objects.filter(order__customer=customer).order_by('-created_at')      
         context = {
             'items' : items
         }
@@ -411,7 +413,6 @@ def view_status(request, order_id):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user=request.user.pk)
         order_items = OrderItem.objects.get(pk = order_id)
-        print(order_items)
         status_info = {
         'Order Placed': {'color': '#009608', 'label': 'Order Placed'},
         'Shipped': {'color': '#009608', 'label': 'Shipped'},
@@ -423,32 +424,37 @@ def view_status(request, order_id):
             'status_info' : status_info
         }
         return render(request, 'view_status.html', context)
-    
-def cancel_order(request,order_id):
+
+def request_cancel_order(request,order_id):
     print(order_id)
     if request.user.is_authenticated:
         order_item = OrderItem.objects.get(pk = order_id)
         if order_item.order.customer.user == request.user:
-            order_item.status = 'Cancelled'
+            order_item.request_cancel = True
             order_item.save()
             return render(request, 'view_status.html',{'order_items' : order_item})
     return redirect('login')
     
 def request_return_product(request,order_id):
     if request.user.is_authenticated:
+        print('joiii')
         seven_days = timezone.now() - timedelta(days = 7)
         order_item = OrderItem.objects.get(pk = order_id)
         check = OrderItem.objects.filter(created_at__gt = seven_days)
-        order_item = OrderItem.objects.get(pk = order_id)
         if order_item in check:
+            print('reached here')
             order_item.request_return = True
+            order_item.status = 'Pending'
             order_item.save()
-            return render(request, 'view_status.html',{'order_items' : order_item})
+            print(order_item.request_return)
+            return redirect('view_status', order_id)
         else:
             messages.info(request, 'You can only request for return product within 7 days.')
             return redirect('view_status', order_id)
     return redirect('login')
-    
+   
+#_______________________________________________________________________________________________________________________
+
 def wishlist_view(request):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user=request.user.pk)

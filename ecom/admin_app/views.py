@@ -12,7 +12,10 @@ from django.shortcuts import get_object_or_404
 from .models import *
 from cart_app.models import *
 from datetime import datetime
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+PRODUCT_PER_PAGE = 9
 
 
 # Create your views here
@@ -229,7 +232,23 @@ def product(request):
     try:
         if request.user.is_superuser:
             products = ProductColorImage.objects.filter(is_deleted=False).order_by('id')
-            return render(request, 'product/product.html', {'products' : products})
+            page = request.GET.get('page', 1)
+            product_Paginator = Paginator(products, PRODUCT_PER_PAGE)
+
+            try:
+                products = product_Paginator.page(page)
+            except PageNotAnInteger:
+                products = product_Paginator.page(1)
+            except EmptyPage:
+                products = product_Paginator.page(product_Paginator.num_pages)
+
+            context = {
+                'products' : products,
+                'page_obj': products,
+                'is_paginated': product_Paginator.num_pages > 1,
+                'paginator': product_Paginator,
+            }
+            return render(request, 'product/product.html', context)
         else:
             messages.error(request, 'Only admins are allowed.')
             return redirect('admin_login')
@@ -535,42 +554,76 @@ def product_is_unlisted(request, product_id):
 
 def order(request):
     if request.user.is_superuser:
-        order_details = Order.objects.all()
-        status_choices = dict(OrderItem.STATUS_CHOICES)
+        order_details = OrderItem.objects.all()
 
         context = {
             'order_details' : order_details,
-            'status_choices' : status_choices
         }
         return render(request, 'order/order.html', context)
     else:
         return redirect('admin_login')
 
-
-
-def update_status(request):
-    if request.user.is_superuser:
-        print("dhfdhfgdhgsdhfgshdgjhsdf")
-        if request.method == 'POST':
-            order_id = request.POST.get('order_id')
-            new_status = request.POST.get('new_status')
-            order = Order.objects.get(id=order_id)
-            order.status = new_status
-            order.save()
-            return JsonResponse({'status': 'success'})
-    return JsonResponse({'status': 'error'})
-
 def admin_order(request, order_id):
     if request.user.is_superuser:
         order = Order.objects.get(id=order_id)
         item = OrderItem.objects.filter(order = order)
+        status_choices = dict(OrderItem.STATUS_CHOICES)
+
         context = {
             'item': item,
-            'order':order
+            'order':order,
+            'status_choices' : status_choices
+
         }
         return render(request, 'order/order_detail.html', context) 
     else:
         return redirect('admin_login')
+
+def update_status(request):
+    if request.user.is_superuser and request.method == 'POST':
+        order_item_id = request.POST.get('order_item_id')  
+        new_status = request.POST.get('new_status')
+        
+        try:
+            order_item = OrderItem.objects.get(id=order_item_id)
+            order_item.status = new_status
+            order_item.save()
+            return JsonResponse({'status': 'success'})
+        except ObjectDoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Order item not found.'})
+
+    return JsonResponse({'status': 'error', 'message': 'Unauthorized or invalid request.'})
+
+    
+def cancel_order(request, order_id):
+    if request.user.is_superuser:
+        cancel = OrderItem.objects.get(order_id = order_id)
+        if cancel.request_cancel == True:
+            cancel.cancel = True
+            cancel.status = 'Cancelled'
+            cancel.save()
+            return redirect('admin_order', order_id)
+        messages.info(request, 'Order has already been cancelled')
+        return redirect('order')
+    else:
+        return redirect('admin_login')
+
+def return_order(request, order_id):
+    if request.user.is_superuser:
+        return_order = OrderItem.objects.get(order_id = order_id)
+        if return_order.request_return == True:
+            return_order.return_order = True
+            return_order.status = 'Returned'
+            return_order.save()
+            return redirect('admin_order', order_id)
+        messages.info(request, 'Order has already been returned')
+        return redirect('order')
+    else:
+        return redirect('admin_login')
+    
+
+
+#_________________________________________________________________________________________________
 
 def admin_coupon(request):
     if request.user.is_superuser:
@@ -582,9 +635,7 @@ def admin_coupon(request):
     else:
         return redirect('admin_login')
 
-from django.contrib import messages
-from django.shortcuts import render, redirect
-from .models import Coupon
+
 
 def add_coupon(request):
     # try:

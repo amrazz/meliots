@@ -87,14 +87,13 @@
 }
 
 .card {
-    width: 150px;
     height: 366px;
     border-radius: 20px;
     overflow: hidden;
     border: 5px solid rgb(107, 116, 130);
     position: relative;
-    width: calc(25% - 20px); /* Adjust width as needed */
-    margin-bottom: 20px; /* Adjust margin between cards */
+    width: calc(25% - -162px) !important; 
+    margin-bottom: 20px;
 }
 
 .cards {

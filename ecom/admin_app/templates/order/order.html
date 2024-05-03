@@ -91,34 +91,17 @@
             <tbody>
                 {% for order in order_details %}
                 <tr>
-                    <td>{{ order.tracking_id }}
+                    <td>{{ order.order.tracking_id }}
                         <br>
                     </td>
-                    <td>{{ order.customer.user.username }}</td>
-                    <td>₹{{order.total}}</td>
-                    {% if order.status == 'Delivered' %}
-                    <td><p style="color: green;">{{order.status}}</p></td>
-                    {% elif order.status == 'Returned' %}
-                    <td><p style="color: rgb(248, 12, 4);">{{order.status}}</p></td>
-                    {% elif order.status == 'Refunded' %}
-                    <td><p style="color: rgb(255, 145, 1);">{{order.status}}</p></td>
-                    {% elif order.status == 'Cancelled' %}
-                    <td><p style="color: rgb(255, 0, 0);">{{order.status}}</p></td>
-                    {% else %}
+                    <td>{{ order.order.customer.user.username }}</td>
+                    <td>₹{{order.order.total}}</td>
+                    
+                    <td>{{ order.status }}</td>
                     <td>
-                        <select id="status-dropdown-{{ order.id }}" name="status" class="custom-select"
-                            onchange="updateOrderStatus(this)">
-                            {% for key, value in status_choices.items %}
-                            <option value="{{ key }}" class="custom-option" {% if order.status == key %}selected{% endif %}>{{ value }}</option>
-                            {% endfor %}
-                        </select>
-                    </td>
-                    {% endif %}
-
-                    <td>
-                        <div class="d-flex">
-                            <form action="{% url 'admin_order' order.id %}">
-                            <button class="btn btn-outline-danger" type="submit"><i class="fa-solid fa-file-lines fa-flip"></i> View Details</button>
+                        <div class="d-flex justify-content-center">
+                            <form action="{% url 'admin_order' order.order.id %}">
+                            <button class="btn btn-outline-danger" type="submit"><i class="fa-solid fa-file-lines"></i> View Details</button>
                         </form>
                         </div>
                     </td>
@@ -156,61 +139,6 @@
 
 
 
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script>
-    function updateOrderStatus(selectElement) {
-        var orderId = selectElement.id.split('-')[2];
-        var newStatus = selectElement.value;
-
-        // AJAX request
-        console.log('Updating status for order ID:', orderId);
-        console.log('New status:', newStatus);
-
-        $.ajax({
-            url: '/admin/update_status/',
-            method: 'POST',
-            data: {
-                'order_id': orderId,
-                'new_status': newStatus,
-                'csrfmiddlewaretoken': '{{ csrf_token }}'
-            },
-            success: function (data) {
-                // Handle success response
-                console.log('Update successful:', data);
-                if (['Delivered', 'Returned', 'Refunded', 'Cancelled'].includes(newStatus)) {
-                    // Change the select element to a <p> tag with appropriate color
-                    $('#status-dropdown-' + orderId).replaceWith('<p style="color: ' + getStatusColor(newStatus) + ';">' + newStatus + '</p>');
-                } else {
-                    // Update the dropdown select element with the new status
-                    var selectElement = $('#status-dropdown-' + orderId);
-                    selectElement.find('option:selected').text(newStatus);
-                }
-                // Optionally, you can update other parts of the UI here
-            },
-            error: function (xhr, errmsg, err) {
-                // Handle error response
-                console.log('Update failed:', xhr.status + ": " + xhr.responseText);
-            }
-        });
-    }
-
-    // Function to get the color based on the status
-    function getStatusColor(status) {
-        switch (status) {
-            case 'Delivered':
-                return 'green';
-            case 'Returned':
-                return 'rgb(248, 12, 4)';
-            case 'Refunded':
-                return 'rgb(255, 145, 1)';
-            case 'Cancelled':
-                return 'rgb(255, 0, 0)';
-            default:
-                return '';
-        }
-    }
-</script>
 
 
 

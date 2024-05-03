@@ -12,12 +12,22 @@
     <link rel="stylesheet" href="{% static 'css/order.css' %}">
     <script src="https://kit.fontawesome.com/83f31ed500.js" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
 
 {% block style %}
 <style>
-
+.card {
+    width: 150px;
+    height: 366px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 5px solid rgb(107, 116, 130);
+    position: relative;
+    width: calc(25% - -159px);
+    margin-bottom: 20px;
+}
 </style>
 {% endblock style %}
 
@@ -99,41 +109,149 @@
                     <h3>Ordered Items</h3>
                 </div>
                 <hr><br>
-                <!-- <div class="container-fluid ">
-
-                    {% for order_item in order.orderitem_set.all %}
-                        <div class="order-item">
-                        <p><b>Product Name: {{ order_item.product.product.product.name }}</b></p>
-                        <p><strong>Size:</strong> {{ order_item.product.product_size }}</p>
-                        <p><strong>Quantity:</strong> {{ order_item.product.quantity }}</p>
-                        <p><strong>Price:</strong>₹ {{ order_item.product.product.product.offer_price }}</p>
-    
-                         Add more item details here as needed 
-            </div> 
-            {% endfor %} -->
-                <div class=" cards ">
+                <div class="row" style="background-color: #f9f9f9;"> 
                     {% for i in item %}
-
-                    <div class="card d-flex justify-content-between ">
-
-                        <img src="{{i.product.image1.url}}" class="card-img" alt="">
-                        <div class="card-body">
-                            <p class="card-sub-title"><b>Product Name: {{ i.product.product.name }}</b>
-                            </p>
-                            <p class="card-sub-title"><strong>Size:</strong> {{ i.size }}</p>
-                            <p class="card-sub-title"><strong>Quantity:</strong> {{ i.qty }}</p>
-                            <p class="card-sub-title"><strong>Price:</strong> ₹ {{i.product.product.offer_price }}</p>
+                    <div class="col-md-4 "  > 
+                        <div class="d-flex" style="font-size: x-large;margin-left: 81px;">
+                            {% if i.status == 'Delivered' %}
+                            <p style="color: green;">{{i.status}}</p>
+                            {% elif i.status == 'Returned' %}
+                            <p style="color: rgb(248, 12, 4);">{{i.status}}</p>
+                            {% elif i.status == 'Refunded' %}
+                            <p style="color: rgb(255, 145, 1);">{{i.status}}</p>
+                            {% elif i.status == 'Cancelled' %}
+                            <p style="color: rgb(255, 0, 0);">{{i.status}}</p>
+                            {% elif i.request_cancel == True %}
+                            <div style="margin-left: -73px;">
+                            <a href="#" style="font-size: smaller;" id="cancelOrderBtn" class="btn btn-outline-primary">Accept Cancel Request</a>
+                            </div>
+                            {% elif i.request_return == True %}
+                            <div style="margin-left: -73px;">
+                            <a href="#" style="font-size: smaller;" id="ReturnOrderBtn" class="btn btn-outline-primary">Accept Return Request</a>
+                            </div>
+                            {% else %}
+                            <div style="padding-bottom: 5px;">
+                                <select style=" font-size: large;padding-bottom: 10px;" id="status-dropdown-{{ i.id }}" name="status" class="custom-select"
+                                onchange="updateOrderStatus(this)">
+                                {% for key, value in status_choices.items %}
+                                <option value="{{ key }}" class="custom-option" {% if i.status == key %}selected{% endif %}>{{ value }}</option>
+                                {% endfor %}
+                            </select>
+                            </div>
+                            {% endif %}
+                        </div><br><br>
+            
+                        <div class="cards">
+                            <div class="card">
+                                <img src="{{i.product.image1.url}}" class="card-img" alt="">
+                                <div class="card-body">
+                                    <p class="card-sub-title"><b>Product Name: {{ i.product.product.name }}</b>
+                                    </p>
+                                    <p class="card-sub-title"><strong>Size:</strong> {{ i.size }}</p>
+                                    <p class="card-sub-title"><strong>Quantity:</strong> {{ i.qty }}</p>
+                                    <p class="card-sub-title"><strong>Price:</strong> ₹ {{i.product.product.offer_price }}</p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </div> <!-- End of column div -->
                     {% endfor %}
-                </div>
-
+                </div> <!-- End of row div -->
             </div>
         </div>
     </div>
 </div>
 
 </div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+function updateOrderStatus(selectElement) {
+    var itemId = selectElement.id.split('-')[2]; // Extract item ID from element ID
+    var newStatus = selectElement.value;
+
+    // AJAX request
+    $.ajax({
+        url: '/admin/update_status/', // Endpoint for updating status
+        method: 'POST',
+        data: {
+            'order_item_id': itemId, 
+            'new_status': newStatus,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function (data) {
+            if (data.status === 'success') {
+                console.log('Status updated successfully');
+                // Optionally update UI here
+            } else {
+                console.error('Status update failed:', data.message);
+            }
+        },
+        error: function (xhr, errmsg, err) {
+            console.error('Status update failed:', xhr.status + ": " + xhr.responseText);
+        }
+    });
+}
+
+
+    // Function to get the color based on the status
+    function getStatusColor(status) {
+        switch (status) {
+            case 'Delivered':
+                return 'green';
+            case 'Returned':
+                return 'rgb(248, 12, 4)';
+            case 'Refunded':
+                return 'rgb(255, 145, 1)';
+            case 'Cancelled':
+                return 'rgb(255, 0, 0)';
+            default:
+                return '';
+        }
+    }
+</script>
+
+<script>
+    $(document).ready(function() {
+        $('#cancelOrderBtn').click(function(e) {
+            e.preventDefault(); // Prevent the default action
+            Swal.fire({
+                title: 'Do you really need to cancel this order?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, cancel it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{% url 'cancel_order' order.pk %}";
+                }
+            });
+        });
+    });
+    </script>
+
+<script>
+    $(document).ready(function() {
+        $('#ReturnOrderBtn').click(function(e) {
+            e.preventDefault(); // Prevent the default action
+            Swal.fire({
+                title: 'Do you need to Return this order?',
+                text: "Accept Return Request!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, Return it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{% url 'return_order' order.pk %}";
+                }
+            });
+        });
+    });
+    </script>
 
 
 {% endblock content %}
