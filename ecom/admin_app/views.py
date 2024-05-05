@@ -14,6 +14,9 @@ from cart_app.models import *
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
+from django.db import transaction
+from django.db.models import Sum,F
+from django.utils.crypto import get_random_string
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 PRODUCT_PER_PAGE = 9
 
@@ -554,7 +557,7 @@ def product_is_unlisted(request, product_id):
 
 def order(request):
     if request.user.is_superuser:
-        order_details = OrderItem.objects.all()
+        order_details = Order.objects.all().order_by('created_at')
 
         context = {
             'order_details' : order_details,
@@ -594,19 +597,65 @@ def update_status(request):
 
     return JsonResponse({'status': 'error', 'message': 'Unauthorized or invalid request.'})
 
-    
+@transaction.atomic
 def cancel_order(request, order_id):
+    print(f'Cancel order with id {order_id}')
     if request.user.is_superuser:
-        cancel = OrderItem.objects.get(order_id = order_id)
-        if cancel.request_cancel == True:
-            cancel.cancel = True
-            cancel.status = 'Cancelled'
-            cancel.save()
-            return redirect('admin_order', order_id)
+        try:
+            cancel = OrderItem.objects.filter(order_id=order_id).first()
+            print(f'Found order item with id {cancel.id}')
+            
+            if cancel.request_cancel:
+                print('Order item requested cancellation')
+                cancel.cancel = True
+                cancel.status = 'Cancelled'
+                cancel.save()
+
+                if cancel.order.payment_method != 'COD' and cancel.order.paid:  
+                    print('Order is paid and using a payment method other than COD')
+                    user = request.user
+                    total_discount = cancel.order.discounted_price
+
+                    total_quantity = OrderItem.objects.filter(order_id=order_id).aggregate(total_quantity=Sum('qty'))['total_quantity']
+
+                    discount_per_item = total_discount / total_quantity
+
+                    original_price = cancel.product.product.offer_price()
+
+                    cancelled_amount = (original_price - discount_per_item) * cancel.qty
+
+                    wallet, created = Wallet.objects.get_or_create(user=user)
+                    print(f'Found wallet for user {user.username} and balance is {wallet.balance}')
+                    wallet.balance += cancelled_amount
+                    wallet.save()
+
+                    tranc_id = "TRANC_"
+                    tranc_id += get_random_string(5, 'ABCDEFGHIJKLMOZ0123456789')
+                    while Wallet_transaction.objects.filter(transaction_id=tranc_id).exists():
+                        tranc_id += get_random_string(5, 'ABCDEFGHIJKLMOZ0123456789')
+                    
+                    wallet_transaction_create = Wallet_transaction.objects.create(
+                        wallet=wallet,
+                        order_item=cancel,
+                        money_deposit=cancelled_amount,
+                        transaction_id=tranc_id
+                    )
+                    messages.success(request, f'Amount of ₹{cancelled_amount} added to your Wallet.')
+                    print('Amount added to wallet and transaction created')
+                    return redirect('admin_order', order_id)
+        
+        except OrderItem.DoesNotExist:
+            print('Order item does not exist')
+            messages.info(request, 'Order item does not exist')
+            return redirect('order')
+        
+        print('Order has already been cancelled')
         messages.info(request, 'Order has already been cancelled')
         return redirect('order')
     else:
+        print('User is not a superuser')
         return redirect('admin_login')
+
 
 def return_order(request, order_id):
     if request.user.is_superuser:
@@ -614,6 +663,7 @@ def return_order(request, order_id):
         if return_order.request_return == True:
             return_order.return_order = True
             return_order.status = 'Returned'
+            return_order.request_return == False
             return_order.save()
             return redirect('admin_order', order_id)
         messages.info(request, 'Order has already been returned')

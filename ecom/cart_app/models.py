@@ -109,6 +109,47 @@ class OrderItem(models.Model):
     def total_price(self):
         return self.cart_item.total_price()
     
+    
+    
+    
+class Wallet(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    balance = models.PositiveBigIntegerField(blank=True, default=0)
+
+    def __str__(self):
+        name = f"{self.user.first_name} {self.user.last_name} "
+        email = self.user.email
+        balance = self.balance
+        return f"{name} {email} | Balance : {balance}"
+
+
+@receiver(post_save, sender = User)
+def Create_User_Wallet(sender, instance, created, **kwargs):
+    if created:
+        Wallet.objects.create(user = instance)
+        print('wallet created successfully!!')
+        
+
+class Wallet_transaction(models.Model):
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE)
+    order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE)
+    transaction_id = models.CharField(max_length=50, unique=True, )
+    money_deposit = models.PositiveBigIntegerField(blank=True, default=0)
+    money_withdrawn = models.PositiveBigIntegerField(blank=True, default=0)
+    transaction_time = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.money_deposit:
+            money = "+{}".format(self.money_deposit)
+        elif self.money_withdrawn:
+            money = "-{}".format(self.money_withdrawn)
+        id = self.transaction_id
+        item = self.order_item
+        name = f"{self.wallet.user.first_name} {self.wallet.user.last_name}"
+        time = self.transaction_time
+        return f"{id} | {item} - {name} : {time} | {money}"
+    
+
 class WishList(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     product = models.ForeignKey(ProductColorImage, on_delete=models.CASCADE)

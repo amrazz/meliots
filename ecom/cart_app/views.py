@@ -20,6 +20,8 @@ razorpay_client = razorpay.Client(auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KE
 
 # Create your views here.
 
+def custom_404(request, exception):
+    return render(request, '404.html', status=404)
 
 @never_cache
 @login_required(login_url = 'login')
@@ -76,6 +78,13 @@ def add_to_cart(request, pro_id):
             if size.quantity < quantity:
                 messages.error(request, 'Selected quantity exceeds available stock.')
                 return redirect('product_detail', pro_id)
+            if CartItem.objects.filter(product= product).exists():
+                messages.error(request, 'Product already in Cart.')
+                return redirect('product_detail', pro_id)
+            if WishList.objects.filter(product = product).exists():
+                messages.info(request, 'Product already in Wishlist.')
+                return redirect('product_detail', pro_id)
+                
 
             user = Customer.objects.get(user=request.user.pk)
             user_cart = User_Cart.objects.get(customer=user)
@@ -305,6 +314,14 @@ def place_order(request):
             if order_id is None:
                 messages.error(request, 'Payment initiation failed. Please try again.')
                 return redirect('checkout')
+            payment = Payment.objects.create(
+                method_name = pm,
+                amount = total,
+                transaction_id = order_id,
+                paid_at = timezone.now(),
+                pending = False,
+                success = True
+            )
             order = Order.objects.create(
                 customer=customer,
                 address=address,
@@ -312,12 +329,14 @@ def place_order(request):
                 subtotal=subtotal,
                 shipping_charge=shipping_fee,
                 total=total,
+                paid = True,
                 tracking_id=tk_id,
                 coupon_applied=coupon_applied,
                 coupon_name=coupon_name,
                 coupon_discount_percentage=coupon_discount_percentage,
                 discounted_price=discounted_price,
-                payment_transaction_id=order_id
+                payment_transaction_id=order_id,
+                payment = payment
             )
             for cart_item in cart:
                 OrderItem.objects.create(
@@ -327,6 +346,8 @@ def place_order(request):
                     qty=cart_item.quantity,
                     size=cart_item.product_size
             )
+                
+            
             cart.delete()
         
             keys_to_delete = ['coupon_applied', 'coupon_name', 'coupon_discount_percentage', 'discounted_price']
@@ -336,6 +357,7 @@ def place_order(request):
             
             return redirect('order_detail')
         else:
+
             order = Order.objects.create(
                 customer=customer,
                 address=address,
@@ -371,6 +393,7 @@ def place_order(request):
     else:
         return redirect('checkout')
     
+
     
 def payment_success(request):
     if request.method == 'POST':

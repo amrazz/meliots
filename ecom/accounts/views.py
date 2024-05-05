@@ -22,6 +22,7 @@ from django.http import JsonResponse
 from django.template.loader import render_to_string
 from admin_app.models import *
 from .models import *
+from cart_app.models import *
 PRODUCT_PER_PAGE = 9
 
 @never_cache
@@ -718,4 +719,18 @@ def filter_products_by_price(request):
             messages.error(request, 'Something went wrong please try again.')
             return redirect('index')
         
+#_____________________________________________________________________________________________________________________
+
+def wallet_view(request):
+    if request.user.is_authenticated:
+        wallet, created = Wallet.objects.get_or_create(user=request.user)
+        wallet_transactions = Wallet_transaction.objects.filter(wallet=wallet).order_by('-transaction_time')
+        context = {
+            'wallet': wallet,
+            'wallet_transactions': wallet_transactions
+        }
+        return render(request, 'wallet.html', context)
+    else:
+        return redirect('login')
+
         

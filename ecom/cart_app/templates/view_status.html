@@ -205,7 +205,7 @@
                         <source src="{% static 'img/van2.mp4' %}" type="video/mp4">
                     </video>
                 </div>
-                {% else %}
+                {% elif order_items.request_return == True and order_items.status == 'Returned' %}
                 <div class="track-step">
                     <div class="track_dot"
                         style=" width: 20px;height: 20px;background-color: #b0b8c1;border-radius: 50%;"></div>
@@ -236,7 +236,8 @@
                         style=" width: 20px;height: 20px;background-color: #b0b8c1;border-radius: 50%;">
                     </div>
                     <h5>Delivered</h5>
-                </div>
+                    
+                </div><br><h3>Your Order has been Returned.</h3>
                 {% endif %}
             </div><br><br>      
             <div class="d-flex justify-content-center ">
@@ -252,6 +253,8 @@
                     <h3>Your Order has been Cancelled.</h3>
                 {% elif order_items.request_cancel == True %}
                 <button type="button" class="btn btn-primary" disabled>Cancel Requested</button>
+                {% elif order_items.status == 'Returned' %}
+                    <h3>Your Order has been Returned.</h3>
                 {% endif %}
 
             </div>

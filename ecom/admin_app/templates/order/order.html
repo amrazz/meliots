@@ -84,23 +84,23 @@
                     <th scope="col" style="display: flex; justify-content: center;">Order ID</th>
                     <th scope="col">User</th>
                     <th scope="col">Price</th>
-                    <th scope="col">Status</th>
-                    <th scope="col" style="display: flex; justify-content: center;">Actions</th>
+                    <th scope="col">Payment Method</th>
+                    <th scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for order in order_details %}
                 <tr>
-                    <td>{{ order.order.tracking_id }}
+                    <td>{{ order.tracking_id }}
                         <br>
                     </td>
-                    <td>{{ order.order.customer.user.username }}</td>
-                    <td>₹{{order.order.total}}</td>
+                    <td>{{ order.customer.user.username }}</td>
+                    <td>₹{{order.total}}</td>
                     
-                    <td>{{ order.status }}</td>
+                    <td> {{ order.payment_method }} </td>
                     <td>
-                        <div class="d-flex justify-content-center">
-                            <form action="{% url 'admin_order' order.order.id %}">
+                        <div class="">
+                            <form action="{% url 'admin_order' order.id %}">
                             <button class="btn btn-outline-danger" type="submit"><i class="fa-solid fa-file-lines"></i> View Details</button>
                         </form>
                         </div>

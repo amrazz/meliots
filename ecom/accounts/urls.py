@@ -27,5 +27,7 @@ urlpatterns = [
     path('delete_address/<int:address_id>/', views.delete_address, name='delete_address'),
     path('search_pro/', views.search_pro, name='search_pro'),
     path('filter_products_by_price/', views.filter_products_by_price, name='filter_products_by_price'),
+    
+    path('wallet_view/', views.wallet_view, name = 'wallet_view'),
 
 ] 

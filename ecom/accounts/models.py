@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
 # Create your models here.
 
 
@@ -43,3 +42,7 @@ def Create_User_Customer(sender, instance, created, **kwargs):
     if created:
         Customer.objects.create(user = instance)
         print('customer created successfully!!')
+        
+
+        
+
