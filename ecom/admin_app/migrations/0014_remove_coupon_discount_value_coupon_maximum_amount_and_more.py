@@ -6,22 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('admin_app', '0013_product_per_expiry_date'),
+        ("admin_app", "0013_product_per_expiry_date"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='coupon',
-            name='discount_value',
+            model_name="coupon",
+            name="discount_value",
         ),
         migrations.AddField(
-            model_name='coupon',
-            name='maximum_amount',
+            model_name="coupon",
+            name="maximum_amount",
             field=models.PositiveBigIntegerField(blank=True, default=0),
         ),
         migrations.AddField(
-            model_name='coupon',
-            name='minimum_amount',
+            model_name="coupon",
+            name="minimum_amount",
             field=models.PositiveBigIntegerField(blank=True, default=0),
         ),
     ]

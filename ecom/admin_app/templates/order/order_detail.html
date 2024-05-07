@@ -121,17 +121,17 @@
                             <p style="color: rgb(255, 145, 1);">{{i.status}}</p>
                             {% elif i.status == 'Cancelled' %}
                             <p style="color: rgb(255, 0, 0);">{{i.status}}</p>
-                            {% elif i.request_cancel == True %}
+                            {% elif i.request_cancel == True and i.cancel == False %}
                             <div style="margin-left: -73px;">
-                            <a href="#" style="font-size: smaller;" id="cancelOrderBtn" class="btn btn-outline-primary">Accept Cancel Request</a>
+                            <a href="#" style="font-size: medium;" id="cancelOrderBtn" class="btn btn-outline-primary">Accept Cancel Request</a>
                             </div>
                             {% elif i.request_return == True %}
                             <div style="margin-left: -73px;">
-                            <a href="#" style="font-size: smaller;" id="ReturnOrderBtn" class="btn btn-outline-primary">Accept Return Request</a>
+                            <a href="#" style="font-size:medium;" id="ReturnOrderBtn" class="btn btn-outline-primary">Accept Return Request</a>
                             </div>
                             {% else %}
                             <div style="padding-bottom: 5px;">
-                                <select style=" font-size: large;padding-bottom: 10px;" id="status-dropdown-{{ i.id }}" name="status" class="custom-select"
+                                <select style=" font-size: medium;padding-bottom: 10px;" id="status-dropdown-{{ i.id }}" name="status" class="custom-select"
                                 onchange="updateOrderStatus(this)">
                                 {% for key, value in status_choices.items %}
                                 <option value="{{ key }}" class="custom-option" {% if i.status == key %}selected{% endif %}>{{ value }}</option>

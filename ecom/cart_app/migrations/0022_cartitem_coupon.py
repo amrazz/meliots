@@ -7,14 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('admin_app', '0012_categoryoffer_new_price_categoryoffer_old_price'),
-        ('cart_app', '0021_remove_order_coupon_order_coupon_applied_and_more'),
+        ("admin_app", "0012_categoryoffer_new_price_categoryoffer_old_price"),
+        ("cart_app", "0021_remove_order_coupon_order_coupon_applied_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='cartitem',
-            name='coupon',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='admin_app.coupon'),
+            model_name="cartitem",
+            name="coupon",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="admin_app.coupon",
+            ),
         ),
     ]

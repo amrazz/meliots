@@ -8,29 +8,69 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cart_app', '0028_orderitem_cancel_orderitem_request_cancel'),
+        ("cart_app", "0028_orderitem_cancel_orderitem_request_cancel"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Wallet',
+            name="Wallet",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('balance', models.PositiveBigIntegerField(blank=True, default=0)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("balance", models.PositiveBigIntegerField(blank=True, default=0)),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Wallet_transaction',
+            name="Wallet_transaction",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('transaction_id', models.CharField(max_length=50, unique=True)),
-                ('money_deposit', models.PositiveBigIntegerField(blank=True, default=0)),
-                ('money_withdrawn', models.PositiveBigIntegerField(blank=True, default=0)),
-                ('transaction_time', models.DateTimeField(auto_now_add=True)),
-                ('order_item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cart_app.orderitem')),
-                ('wallet', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cart_app.wallet')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("transaction_id", models.CharField(max_length=50, unique=True)),
+                (
+                    "money_deposit",
+                    models.PositiveBigIntegerField(blank=True, default=0),
+                ),
+                (
+                    "money_withdrawn",
+                    models.PositiveBigIntegerField(blank=True, default=0),
+                ),
+                ("transaction_time", models.DateTimeField(auto_now_add=True)),
+                (
+                    "order_item",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="cart_app.orderitem",
+                    ),
+                ),
+                (
+                    "wallet",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="cart_app.wallet",
+                    ),
+                ),
             ],
         ),
     ]

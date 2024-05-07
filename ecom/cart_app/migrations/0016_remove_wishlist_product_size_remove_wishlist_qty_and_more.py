@@ -6,21 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cart_app', '0015_wishlist_product_size_wishlist_qty'),
+        ("cart_app", "0015_wishlist_product_size_wishlist_qty"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='wishlist',
-            name='product_size',
+            model_name="wishlist",
+            name="product_size",
         ),
         migrations.RemoveField(
-            model_name='wishlist',
-            name='qty',
+            model_name="wishlist",
+            name="qty",
         ),
         migrations.AlterField(
-            model_name='cartitem',
-            name='quantity',
+            model_name="cartitem",
+            name="quantity",
             field=models.PositiveIntegerField(blank=True, default=1, null=True),
         ),
     ]

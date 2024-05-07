@@ -6,31 +6,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('admin_app', '0005_product_category'),
+        ("admin_app", "0005_product_category"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='productcolorimage',
-            old_name='image',
-            new_name='image1',
+            model_name="productcolorimage",
+            old_name="image",
+            new_name="image1",
         ),
         migrations.AddField(
-            model_name='productcolorimage',
-            name='image2',
-            field=models.ImageField(default=1, upload_to='images/product'),
+            model_name="productcolorimage",
+            name="image2",
+            field=models.ImageField(default=1, upload_to="images/product"),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='productcolorimage',
-            name='image3',
-            field=models.ImageField(default=1, upload_to='images/product'),
+            model_name="productcolorimage",
+            name="image3",
+            field=models.ImageField(default=1, upload_to="images/product"),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='productcolorimage',
-            name='image4',
-            field=models.ImageField(default=1, upload_to='images/product'),
+            model_name="productcolorimage",
+            name="image4",
+            field=models.ImageField(default=1, upload_to="images/product"),
             preserve_default=False,
         ),
     ]

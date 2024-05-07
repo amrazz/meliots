@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cart_app', '0027_remove_orderitem_cancel_product'),
+        ("cart_app", "0027_remove_orderitem_cancel_product"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='orderitem',
-            name='cancel',
+            model_name="orderitem",
+            name="cancel",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='orderitem',
-            name='request_cancel',
+            model_name="orderitem",
+            name="request_cancel",
             field=models.BooleanField(default=False),
         ),
     ]

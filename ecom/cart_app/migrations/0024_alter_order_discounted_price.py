@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cart_app', '0023_payment_remove_order_payment_id_and_more'),
+        ("cart_app", "0023_payment_remove_order_payment_id_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='order',
-            name='discounted_price',
+            model_name="order",
+            name="discounted_price",
             field=models.PositiveBigIntegerField(blank=True, default=0, null=True),
         ),
     ]

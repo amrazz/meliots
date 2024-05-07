@@ -6,17 +6,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cart_app', '0024_alter_order_discounted_price'),
+        ("cart_app", "0024_alter_order_discounted_price"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='order',
-            name='status',
+            model_name="order",
+            name="status",
         ),
         migrations.AddField(
-            model_name='orderitem',
-            name='status',
-            field=models.CharField(choices=[('Order Placed', 'Order Placed'), ('Pending', 'Pending'), ('Shipped', 'Shipped'), ('Out for Delivery', 'Out for Delivery'), ('Delivered', 'Delivered'), ('Returned', 'Returned'), ('Refunded', 'Refunded'), ('Cancelled', 'Cancelled')], default='Pending', max_length=20),
+            model_name="orderitem",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("Order Placed", "Order Placed"),
+                    ("Pending", "Pending"),
+                    ("Shipped", "Shipped"),
+                    ("Out for Delivery", "Out for Delivery"),
+                    ("Delivered", "Delivered"),
+                    ("Returned", "Returned"),
+                    ("Refunded", "Refunded"),
+                    ("Cancelled", "Cancelled"),
+                ],
+                default="Pending",
+                max_length=20,
+            ),
         ),
     ]

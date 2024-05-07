@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cart_app', '0016_remove_wishlist_product_size_remove_wishlist_qty_and_more'),
+        ("cart_app", "0016_remove_wishlist_product_size_remove_wishlist_qty_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='wishlist',
-            name='qty',
+            model_name="wishlist",
+            name="qty",
             field=models.IntegerField(blank=True, default=0, null=True),
         ),
     ]

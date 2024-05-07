@@ -7,13 +7,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cart_app', '0004_order_total'),
+        ("cart_app", "0004_order_total"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='order',
-            name='customer',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='cart_app.user_cart'),
+            model_name="order",
+            name="customer",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.DO_NOTHING, to="cart_app.user_cart"
+            ),
         ),
     ]

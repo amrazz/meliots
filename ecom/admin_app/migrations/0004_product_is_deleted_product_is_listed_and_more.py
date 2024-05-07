@@ -6,38 +6,38 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('admin_app', '0003_alter_productcolorimage_image'),
+        ("admin_app", "0003_alter_productcolorimage_image"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='product',
-            name='is_deleted',
+            model_name="product",
+            name="is_deleted",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='product',
-            name='is_listed',
+            model_name="product",
+            name="is_listed",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='productcolorimage',
-            name='is_deleted',
+            model_name="productcolorimage",
+            name="is_deleted",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='productcolorimage',
-            name='is_listed',
+            model_name="productcolorimage",
+            name="is_listed",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='productsize',
-            name='is_deleted',
+            model_name="productsize",
+            name="is_deleted",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='productsize',
-            name='is_listed',
+            model_name="productsize",
+            name="is_listed",
             field=models.BooleanField(default=True),
         ),
     ]

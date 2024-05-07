@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('admin_app', '0014_remove_coupon_discount_value_coupon_maximum_amount_and_more'),
+        (
+            "admin_app",
+            "0014_remove_coupon_discount_value_coupon_maximum_amount_and_more",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='coupon',
-            name='discount_percentage',
+            model_name="coupon",
+            name="discount_percentage",
             field=models.IntegerField(default=0),
         ),
     ]

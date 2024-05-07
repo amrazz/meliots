@@ -7,19 +7,39 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0002_address'),
-        ('admin_app', '0010_remove_product_old_price_product_percentage'),
-        ('cart_app', '0013_remove_order_qty_remove_order_size_orderitem_qty_and_more'),
+        ("accounts", "0002_address"),
+        ("admin_app", "0010_remove_product_old_price_product_percentage"),
+        ("cart_app", "0013_remove_order_qty_remove_order_size_orderitem_qty_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='WishList',
+            name="WishList",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('added_at', models.DateTimeField(auto_now_add=True)),
-                ('customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.customer')),
-                ('product', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='admin_app.productcolorimage')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("added_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "customer",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="accounts.customer",
+                    ),
+                ),
+                (
+                    "product",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="admin_app.productcolorimage",
+                    ),
+                ),
             ],
         ),
     ]

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('admin_app', '0012_categoryoffer_new_price_categoryoffer_old_price'),
+        ("admin_app", "0012_categoryoffer_new_price_categoryoffer_old_price"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='product',
-            name='per_expiry_date',
+            model_name="product",
+            name="per_expiry_date",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

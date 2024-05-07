@@ -79,7 +79,7 @@
     <li class="sidebar-item">
         <div class="dropdown">
             <a class="sidebar-link dropdown-toggle" href="{% url 'category' %}"
-                id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">  
                 <span><i class="fas fa-list-alt"></i></span>
                 <span class="hide-menu">Category</span>
             </a>
@@ -103,6 +103,13 @@
         <a class="sidebar-link" href="#" aria-expanded="false">
             <span><i class="fas fa-undo"></i></span>
             <span class="hide-menu">Return</span>
+        </a>
+    </li>
+
+    <li class="sidebar-item">
+        <a class="sidebar-link" href="{% url 'sales_report' %}" aria-expanded="false">
+            <span><i class="fa-solid fa-file-invoice"></i></span>
+            <span class="hide-menu">Sales Report</span>
         </a>
     </li>
 

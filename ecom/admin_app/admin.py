@@ -7,5 +7,3 @@ admin.site.register(Category)
 admin.site.register(Product)
 admin.site.register(ProductColorImage)
 admin.site.register(ProductSize)
-
-
