@@ -62,4 +62,6 @@ urlpatterns = [
         views.download_sales_report,
         name="download_sales_report",
     ),
+    path('view_brand/', views.view_brand, name="view_brand"),
+    path('add_brand/', views.add_brand, name="add_brand"),
 ]

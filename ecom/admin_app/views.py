@@ -303,6 +303,7 @@ def edit_product(request, product_id):
         color_image = ProductColorImage.objects.get(id=product_id)
         print(color_image.color)
         sizes = ProductSize.objects.filter(productcolor_id=color_image.pk)
+        brands = Brand.objects.all()
         print("sizes", " :", sizes)
         if request.method == "POST":
             name = request.POST.get("name")
@@ -310,6 +311,7 @@ def edit_product(request, product_id):
             type = request.POST.get("type")
             price = request.POST.get("price")
             percentage = request.POST.get("percentage")
+            brand = request.POST.get("brand")
             if int(percentage) < 0 or int(percentage) > 100:
                 messages.error(request, "The percentage must be between 0 and 100.")
                 return redirect("product")
@@ -347,6 +349,7 @@ def edit_product(request, product_id):
                 return redirect("product")
 
             category = Category.objects.get(id=category_id)
+            brand = Brand.objects.get(id=brand)
 
             color_image.product.name = name
             color_image.product.per_expiry_date = exp_date
@@ -355,6 +358,7 @@ def edit_product(request, product_id):
             color_image.product.price = price
             color_image.product.percentage = percentage
             color_image.product.category = category
+            color_image.product.brand = brand
             color_image.product.save()
 
             if color_image:
@@ -391,7 +395,7 @@ def edit_product(request, product_id):
             return render(
                 request,
                 "product/edit_product.html",
-                {"color_image": color_image, "sizes": sizes},
+                {"color_image": color_image, "sizes": sizes, "brands": brands},
             )
     except Product.DoesNotExist:
         messages.error(request, "Product not found.")
@@ -542,6 +546,41 @@ def product_size(request):
     except Exception as e:
         messages.error(request, str(e))
         return redirect("product")
+#_____________________________________________________________________________________________________________________________________________________
+
+@never_cache
+def view_brand(request):
+    if request.user.is_superuser:
+        brands = Brand.objects.all()
+        return render(request, 'view_brand.html', {'brands' : brands})
+    else:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect("admin_login")
+    
+def add_brand(request):
+    if request.user.is_superuser:
+        if request.method == 'POST':
+            name = request.POST.get('brand_name')
+            description = request.POST.get('description')
+            
+            if not name:
+                messages.error(request, "Brand name is required.")
+                return redirect(add_brand)
+            else:
+                create_brand = Brand.objects.create(
+                    name = name,
+                    description = description
+                )
+                messages.success(request, "Brand added successfully.")
+                return redirect(view_brand)
+            
+        return render(request, 'add_brand.html')
+    else:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect("admin_login")
+        
+
+
 
 
 # ____________________________________________________________________________________________________________________________________________________
@@ -646,91 +685,53 @@ def update_status(request):
 
 @transaction.atomic
 def cancel_order(request, order_id):
-    print("==========================================================")
-    print(f"Entering cancel_order with order_id {order_id}")
     if request.user.is_superuser:
-        print("User is a superuser")
         try:
-            print("Searching for OrderItem")
             cancel = OrderItem.objects.filter(order=order_id).first()
 
-            if cancel.request_cancel:
-                print("Order item requested cancellation")
-                cancel.cancel = True
+            if cancel and not cancel.cancel:  
+                cancel.request_cancel = True
                 cancel.status = "Cancelled"
-
-                print("Updating order item")
-                cancel.request_cancel = False
                 cancel.save()
-                print("Order item updated")
 
                 if cancel.order.payment_method != "COD" and cancel.order.paid:
-                    print("Order is paid and using a payment method other than COD")
-                    user = request.user
                     total_discount = cancel.order.discounted_price
-
-                    print("Calculating discount per item")
-                    total_quantity = OrderItem.objects.filter(
-                        order_id=order_id
-                    ).aggregate(total_quantity=Sum("qty"))["total_quantity"]
+                    total_quantity = OrderItem.objects.filter(order_id=order_id).aggregate(total_quantity=Sum("qty"))["total_quantity"]
                     discount_per_item = total_discount / total_quantity
-
-                    original_price = cancel.product.product.offer_price()
-
+                    original_price = cancel.product.product.offer_price
                     cancelled_amount = (original_price - discount_per_item) * cancel.qty
 
-                    print(
-                        total_discount,
-                        total_quantity,
-                        discount_per_item,
-                        original_price,
-                        cancelled_amount,
-                    )
-
-                    print("Searching for wallet for user")
+                    user = request.user
                     wallet, created = Wallet.objects.get_or_create(user=user)
-                    print(
-                        f"Found wallet for user {user.username} and balance is {wallet.balance}"
-                    )
                     wallet.balance += abs(cancelled_amount)
                     wallet.save()
-                    print("Wallet updated")
 
-                    tranc_id = "TRANC_"
-                    tranc_id += get_random_string(5, "ABCDEFGHIJKLMOZ0123456789")
-
-                    while Wallet_transaction.objects.filter(
-                        transaction_id=tranc_id
-                    ).exists():
+                    tranc_id = "TRANC_" + get_random_string(5, "ABCDEFGHIJKLMOZ0123456789")
+                    while Wallet_transaction.objects.filter(transaction_id=tranc_id).exists():
                         tranc_id += get_random_string(5, "ABCDEFGHIJKLMOZ0123456789")
-                    print(tranc_id)
 
-                    print("Creating wallet transaction")
                     wallet_transaction_create = Wallet_transaction.objects.create(
                         wallet=wallet,
                         order_item=cancel,
                         money_deposit=abs(cancelled_amount),
                         transaction_id=tranc_id,
                     )
-                    print("Wallet transaction created")
-                    messages.success(
-                        request, f"Amount of ₹{cancelled_amount} added to your Wallet."
-                    )
-                    print("Amount added to wallet and transaction created")
-                    return redirect("admin_order", order_id)
+
+                    messages.success(request, f"Amount of ₹{cancelled_amount} added to your Wallet.")
+
+                messages.success(request, "Cancellation request submitted successfully.")
+                
+                return redirect("admin_order", order_id)
+            else:
+                messages.info(request, "Order item does not exist or has already been cancelled.")
+                return redirect("order")
 
         except OrderItem.DoesNotExist:
-            print("Order item does not exist")
-            messages.info(request, "Order item does not exist")
+            messages.info(request, "Order item does not exist.")
             return redirect("order")
 
-        print("Order has already been cancelled")
-        messages.info(request, "Order has already been cancelled")
-        return redirect("order")
     else:
-        print("User is not a superuser")
         return redirect("admin_login")
-    print("==========================================================")
 
 
 def return_order(request, order_id):

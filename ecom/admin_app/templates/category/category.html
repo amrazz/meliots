@@ -86,7 +86,7 @@
                                 <button class="btn btn-outline-secondary" type="submit">Unlist</button>
                             </form>
                             {% else %}
-                            <form action="{% url 'islisted' category.id %}" method="post">
+                            <form class="d-flex justify-content-center " action="{% url 'islisted' category.id %}" method="post">
                                 {% csrf_token %}
                                 <a href="" class="btn btn-outline-primary me-4 ">Edit</a>
                                 <a href="#" class="btn btn-outline-danger me-4 ">Delete</a>

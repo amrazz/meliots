@@ -96,8 +96,9 @@
                             </div>
                         </form>
                         <br><br>
-                        <div class="section-title">
+                        <div class="section-title d-flex justify-content-between">
                             <h4>Sort By</h4>
+                            <a href="{% url 'shop_page' %}" class="btn btn-danger ">Clear all</a>
                         </div>
                         <select name="ordering" onchange="location.href=finalurl();" id="sort-by" class="form-control">
                             <option value="" id="placeholder" disabled selected hidden>Sort</option>
@@ -109,23 +110,63 @@
                         </select>
                     </div>
                     <br><br>
-                    <div class="sidebar__categories">
-                        <div class="section-title">
-                            <h4>Categories</h4>
-                        </div>
-                        <form action="{% url 'shop_page' %}" method="get">
-                            {% csrf_token %}
-                            {% for category in categories %}
-                            <div class="card-heading">
-                                <input class="filter-checkbox category-checkbox" type="checkbox" id="category-{{ category.id }}" name="category" value="{{ category.name }}">
-                                <label for="category-{{ category.id }}">
-                                    {{ category.name }}
-                                    <span class="checkmark"></span>
-                                </label>
+                    <form action="{% url 'filtered_products_cat' %}" method="get">
+                        <div class="sidebar__categories">
+                            <div class="section-title">
+                                <h4>Categories</h4>
                             </div>
-                            {% endfor %}
-                        </form>
-                    </div>
+                            <div>
+                                {% for category in categories %}
+                                <div class="card-heading">
+                                    <input class="filter-checkbox category-checkbox" type="checkbox"
+                                    id="category-{{ category.id }}" name="category" value="{{ category.id }}" 
+                                    {% if category.id in selected_category %} checked {% endif %}>
+                                    <label for="category-{{ category.id }}">
+                                        {{ category.name }}
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="sidebar__categories">
+                            <div class="section-title">
+                                <h4>Brands</h4>
+                            </div>
+                            <div>
+                                {% for brand in brands %}
+                                <div class="card-heading">
+                                    <input class="filter-checkbox brand-checkbox" type="checkbox" id="brand-{{ brand.id }}" name="brand" value="{{ brand.id }}"
+                                        {% if brand.id in selected_brand %} checked {% endif %}>
+                                        <label for="brand-{{ brand.id }}">
+                                            {{ brand.name }}
+                                            <span class="checkmark"></span>
+                                        </label>
+                                </div>
+                                {% endfor %}
+                            </div><br>
+                            <div class="sidebar__color">
+                                <div class="section-title">
+                                    <h4>Shop by Color</h4>
+                                </div>
+                                <div>
+                                    {% for color in colors %}
+                                    <div class="card-heading">
+                                        <input class="filter-checkbox color-checkbox" type="checkbox" id="color-{{ color.color }}" name="color" value="{{ color.color }}"
+                                            {% if color.color in selected_color %} checked {% endif %}>
+                                        <label for="color-{{ color.color }}">
+                                            {{ color.color }}
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-danger apply-filters">Apply Filters</button>
+
+                        </div>
+
+                    </form><br>
 
 
                     <div class="sidebar__filter">
@@ -145,50 +186,8 @@
                         </div>
                         <br>
                     </div>
-                    
-                    <div class="sidebar__color">
-                        <div class="section-title"> 
-                            <h4>Shop by Color</h4>
-                        </div>
-                        <div class="size__list color__list">
-                            <label for="black">
-                                Blacks
-                                <input type="checkbox" id="black">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="whites">
-                                Whites
-                                <input type="checkbox" id="whites">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="reds">
-                                Reds
-                                <input type="checkbox" id="reds">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="greys">
-                                Greys
-                                <input type="checkbox" id="greys">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="blues">
-                                Blues
-                                <input type="checkbox" id="blues">
-                                <span class="checkmark"></span>
-                            </label>
 
-                            <label for="greens">
-                                Greens
-                                <input type="checkbox" id="greens">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="yellows">
-                                Yellows
-                                <input type="checkbox" id="yellows">
-                                <span class="checkmark"></span>
-                            </label>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
             <div class="col-lg-9 col-md-9">
@@ -229,7 +228,7 @@
                                 <!-- Product price -->
                                 {% if color.product.percentage == 0 %}
                                 <div class="product__price">₹ {{color.product.offer_price}}
-                                    
+
                                 </div>
                                 {% else %}
                                 <div class="product__price">₹ {{color.product.offer_price}}
@@ -285,28 +284,15 @@
         var selectedOrdering = document.getElementById("sort-by").value;
         search_params.set('ordering', selectedOrdering);
         url.search = search_params.toString();
-        // Update the placeholder text to show the current sorting option
         document.getElementById('placeholder').innerHTML = "Sort: " + document.getElementById(selectedOrdering).innerHTML;
         return url.toString();
     }
 </script>
 
 
-<script>
-    document.getElementById('filter').addEventListener('click', function (event) {
-        event.preventDefault();
-        var minPrice = document.getElementById('minamount').value.replace(/\D/g, '');
-        var maxPrice = document.getElementById('maxamount').value.replace(/\D/g, '');
-        var url = window.location.href + `?min_price=${minPrice}&max_price=${maxPrice}`;
-        window.location.href = url;
-    });
-    document.querySelectorAll('.filter-checkbox').forEach(function(checkbox) {
-    checkbox.addEventListener('change', function() {
-        let form = this.closest('form');
-        form.submit();
-    });
-});
-</script>
+
+
+
 
 
 {% endblock content %}

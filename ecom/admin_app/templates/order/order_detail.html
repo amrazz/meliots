@@ -123,7 +123,7 @@
                             <p style="color: rgb(255, 0, 0);">{{i.status}}</p>
                             {% elif i.request_cancel == True and i.cancel == False %}
                             <div style="margin-left: -73px;">
-                            <a href="#" style="font-size: medium;" id="cancelOrderBtn" class="btn btn-outline-primary">Accept Cancel Request</a>
+                            <a href="{% url 'cancel_order' i.pk %}" onclick="confirmCancel({{ i.pk }})" style="font-size: medium;" id="cancelOrderBtn" class="btn btn-outline-primary">Accept Cancel Request</a>
                             </div>
                             {% elif i.request_return == True %}
                             <div style="margin-left: -73px;">
@@ -167,12 +167,12 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
 function updateOrderStatus(selectElement) {
-    var itemId = selectElement.id.split('-')[2]; // Extract item ID from element ID
+    var itemId = selectElement.id.split('-')[2];
     var newStatus = selectElement.value;
 
     // AJAX request
     $.ajax({
-        url: '/admin/update_status/', // Endpoint for updating status
+        url: '/admin/update_status/', 
         method: 'POST',
         data: {
             'order_item_id': itemId, 
@@ -182,7 +182,6 @@ function updateOrderStatus(selectElement) {
         success: function (data) {
             if (data.status === 'success') {
                 console.log('Status updated successfully');
-                // Optionally update UI here
             } else {
                 console.error('Status update failed:', data.message);
             }
@@ -211,33 +210,32 @@ function updateOrderStatus(selectElement) {
     }
 </script>
 
-<script>
-    $(document).ready(function() {
-        $('#cancelOrderBtn').click(function(e) {
-            e.preventDefault(); // Prevent the default action
-            Swal.fire({
-                title: 'Do you really need to cancel this order?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, cancel it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = "{% url 'cancel_order' order.pk %}";
-                }
-            });
-        });
-    });
-    </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
+<!-- JavaScript code for handling cancel and return requests -->
 <script>
+    // Function to confirm cancel using SweetAlert
+    function confirmCancel(orderItemId) {
+        Swal.fire({
+            title: 'Do you want to cancel this item?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, cancel it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "{% url 'cancel_order' order_id=orderItemId %}";
+            }
+        });
+    }
+
     $(document).ready(function() {
+        // Function to handle return request
         $('#ReturnOrderBtn').click(function(e) {
             e.preventDefault(); // Prevent the default action
             Swal.fire({
-                title: 'Do you need to Return this order?',
+                title: 'Do you need to return this order?',
                 text: "Accept Return Request!",
                 icon: 'warning',
                 showCancelButton: true,
@@ -246,12 +244,13 @@ function updateOrderStatus(selectElement) {
                 confirmButtonText: 'Yes, Return it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = "{% url 'return_order' order.pk %}";
+                    // Redirect to the return_order view
+                    window.location.href = "{% url 'return_order' orderItemId %}";
                 }
             });
         });
     });
-    </script>
+</script>
 
 
 {% endblock content %}

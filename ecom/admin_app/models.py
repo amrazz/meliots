@@ -17,7 +17,16 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+    
+    
+class Brand(models.Model):
+    name = models.CharField(max_length=50)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    is_listed = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.name
 
 class Product(models.Model):
     name = models.CharField(max_length=100)
@@ -28,6 +37,9 @@ class Product(models.Model):
     )
     category = models.ForeignKey(
         Category, related_name="category", on_delete=models.CASCADE, null=False
+    )
+    brand = models.ForeignKey(
+        Brand, related_name="brand", on_delete=models.CASCADE, null=True, blank=True
     )
     type = models.CharField(max_length=100, default="Clothing")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -76,6 +88,8 @@ class ProductSize(models.Model):
     def __str__(self):
         product_name = self.productcolor.product.name
         return f"{product_name} {self.productcolor.color} - {self.size}"
+
+
 
 
 class CategoryOffer(models.Model):

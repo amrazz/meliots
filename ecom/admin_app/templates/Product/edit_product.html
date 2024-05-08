@@ -23,6 +23,16 @@
                         value="{{ color_image.product.name }}" >
                 </div>
                 <div class="form-group">
+                    <label for="productBrand">Brand</label>
+                    <select name="brand" id="productBrand" class="form-control">
+                        {% for brand in brands %}
+                            <option value="{{ brand.pk }}" {% if brand.pk == color_image.product.brand.id %}selected{% endif %}>
+                                {{ brand.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="productCategory">Category</label>
                     <select name="category" id="productCategory" class="form-control">
                         <option value=" {{color_image.product.category.id}} "> {{color_image.product.category.name}}

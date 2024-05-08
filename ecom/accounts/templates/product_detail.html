@@ -226,7 +226,10 @@
                         <i class="fa fa-star"></i>
                         <i class="fa fa-star"></i>
                         <i class="fa fa-star"></i>
-                        <span>( 138 reviews )</span>
+                        <span>( 138 reviews )</span><br>
+                        {% if products_color.product.brand %}
+                        <h4><b> {{products_color.product.brand}} </b></h4>
+                        {% endif %}
                         {% if products_color.product.percentage == 0 %}
                         <div class=" " style="width: 150px; font-size:30px;margin-top: 20px;color: red;">
                             
@@ -243,6 +246,7 @@
                     <div class="product__details__price">₹ {{products_color.product.offer_price}}.00 <span>₹
                             {{ products_color.product.price }}</span></div>
                         {% endif %}
+                       
                     <div class="product__details__button d-flex">
                         {% if products_color.is_listed and products_color.product.category.is_listed %}
                         <form style="width: auto; padding-top: 12px; display: flex;" method="post"

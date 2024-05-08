@@ -38,4 +38,6 @@ urlpatterns = [
         name="filter_products_by_price",
     ),
     path("wallet_view/", views.wallet_view, name="wallet_view"),
+    path("filtered_products_cat/", views.filtered_products_cat, name="filtered_products_cat"),
+
 ]

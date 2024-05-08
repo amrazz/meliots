@@ -22,7 +22,9 @@
         <div class="row">
             <div class="col-lg-3 col-md-3">
                 <div class="shop__sidebar">
-                    <div class="search d-flex justify-content-between">
+
+                    <br>
+                    <div class="sidebar__sort">
                         <form action="{% url 'search_pro' %}" method="post" class="search-form">
                             {% csrf_token %}
                             <div class="input-group">
@@ -34,31 +36,39 @@
                                 </div>
                             </div>
                         </form>
+                        <br><br>
+                        <div class="section-title">
+                            <h4>Sort By</h4>
+                        </div>
+                        <select name="ordering" onchange="location.href=finalurl();" id="sort-by" class="form-control">
+                            <option value="" id="placeholder" disabled selected hidden>Sort</option>
+                            <option id="name" value="name">A-Z</option>
+                            <option id="-name" value="-name">Z-A</option>
+                            <option id="price" value="price">Price: Low to High</option>
+                            <option id="-price" value="-price">Price: High to Low</option>
+                            <option id="created_at" value="created_at">New arrivals</option>
+                        </select>
                     </div>
-                    <br>
+                    <br><br>
                     <div class="sidebar__categories">
                         <div class="section-title">
                             <h4>Categories</h4>
                         </div>
-                        <div class="categories__accordion">
-                            <div class="accordion" id="accordionExample">
-                                {% for category in product %}
-                                <div class="card">
-                                    <div class="card-heading">
-                                        <input data-filter='category' class="filter-check" type="checkbox"
-                                            id="{{ category.name }}" name="category" value="{{ category.id }}">
-                                        <label for="{{ category.name }}">
-                                            {{ category.name }}
-                                            <span class="checkmark"></span>
-                                        </label>
-                                    </div>
-                                </div>
-                                {% endfor %}
+                        <div>
+                            {% for category in categories %}
+                            <div class="card-heading">
+                                <input class="filter-checkbox category-checkbox" type="checkbox" id="category-{{ category.id }}" name="category" value="{{ category.name }}">
+                                <label for="category-{{ category.id }}">
+                                    {{ category.name }}
+                                    <span class="checkmark"></span>
+                                </label>
                             </div>
+                            {% endfor %}
+                            <button class="btn btn-outline-danger apply-filters">Apply Filters</button>
                         </div>
                     </div>
 
-                               
+
                     <div class="sidebar__filter">
                         <div class="section-title">
                             <h4>Shop by price</h4>
@@ -76,56 +86,10 @@
                         </div>
                         <br>
                     </div>
-                    <div class="sidebar__sizes">
-                        <div class="section-title">
-                            <h4>Shop by size</h4>
-                        </div>
-                        <div class="size__list">
-                            <label for="xxs">
-                                xxs
-                                <input type="checkbox" id="xxs">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="xs">
-                                xs
-                                <input type="checkbox" id="xs">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="xss">
-                                xs-s
-                                <input type="checkbox" id="xss">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="s">
-                                s
-                                <input type="checkbox" id="s">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="m">
-                                m
-                                <input type="checkbox" id="m">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="ml">
-                                m-l
-                                <input type="checkbox" id="ml">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="l">
-                                l
-                                <input type="checkbox" id="l">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="xl">
-                                xl
-                                <input type="checkbox" id="xl">
-                                <span class="checkmark"></span>
-                            </label>
-                        </div>
-                    </div>
+                    
                     <div class="sidebar__color">
-                        <div class="section-title">
-                            <h4>Shop by size</h4>
+                        <div class="section-title"> 
+                            <h4>Shop by Color</h4>
                         </div>
                         <div class="size__list color__list">
                             <label for="black">
@@ -153,11 +117,7 @@
                                 <input type="checkbox" id="blues">
                                 <span class="checkmark"></span>
                             </label>
-                            <label for="beige">
-                                Beige Tones
-                                <input type="checkbox" id="beige">
-                                <span class="checkmark"></span>
-                            </label>
+
                             <label for="greens">
                                 Greens
                                 <input type="checkbox" id="greens">
@@ -226,13 +186,12 @@
 <!-- Shop Section End -->
 
 <script>
-    function finalurl(){
+    function finalurl() {
         var url = new URL(window.location.href);
         var search_params = url.searchParams;
         var selectedOrdering = document.getElementById("sort-by").value;
         search_params.set('ordering', selectedOrdering);
         url.search = search_params.toString();
-        // Update the placeholder text to show the current sorting option
         document.getElementById('placeholder').innerHTML = "Sort: " + document.getElementById(selectedOrdering).innerHTML;
         return url.toString();
     }
@@ -240,13 +199,26 @@
 
 
 <script>
-    document.getElementById('filter').addEventListener('click', function(event) {
+    document.getElementById('filter').addEventListener('click', function (event) {
         event.preventDefault();
-        var minPrice = document.getElementById('minamount').value.replace(/\D/g, ''); 
-        var maxPrice = document.getElementById('maxamount').value.replace(/\D/g, ''); 
+        var minPrice = document.getElementById('minamount').value.replace(/\D/g, '');
+        var maxPrice = document.getElementById('maxamount').value.replace(/\D/g, '');
         var url = window.location.href + `?min_price=${minPrice}&max_price=${maxPrice}`;
         window.location.href = url;
     });
+    document.querySelectorAll('.filter-checkbox').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+        let form = this.closest('form');
+        form.submit();
+    });
+});
 </script>
 
+<script>
+    document.querySelector('.apply-filters').addEventListener('click', function (event) {
+        event.preventDefault();
+        let form = document.querySelector('form');
+        form.submit();
+    });
+</script>
 {% endblock content %}

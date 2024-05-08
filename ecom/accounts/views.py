@@ -22,6 +22,7 @@ from django.http import JsonResponse
 from django.template.loader import render_to_string
 from admin_app.models import *
 from .models import *
+
 from cart_app.models import *
 
 PRODUCT_PER_PAGE = 9
@@ -389,87 +390,222 @@ def product_detail(request, product_id):
 
 @never_cache
 def mens_page(request):
-    product = ProductColorImage.objects.all()
+    ordering = request.GET.get("ordering", "name")
     products_color = ProductColorImage.objects.filter(
         Q(product__category__name="Men's")
         & Q(product__category__is_deleted=False)
         & Q(is_deleted=False)
     )
 
+    # Filter by price range
+    min_price = request.GET.get("min_price")
+    max_price = request.GET.get("max_price")
+
+    if min_price is not None:
+        min_price = int(min_price)
+    if max_price is not None:
+        max_price = int(max_price)
+
+    if min_price is not None and max_price is not None:
+        products_color = products_color.annotate(
+            calculated_offer_price=ExpressionWrapper(
+                F("product__price")
+                - (F("product__price") * F("product__percentage") / 100),
+                output_field=DecimalField(),
+            )
+        ).filter(
+            calculated_offer_price__gte=min_price, calculated_offer_price__lte=max_price
+        )
+
+    # Filter by category
+    categories_filter = request.GET.getlist("category")
+    if categories_filter:
+        products_color = products_color.filter(
+            product__category__name__in=categories_filter
+        )
+
+    # Order products
+    if ordering == "name":
+        products_color = products_color.order_by("product__name")
+    elif ordering == "-name":
+        products_color = products_color.order_by("-product__name")
+    elif ordering == "price":
+        products_color = sorted(products_color, key=lambda x: x.product.offer_price())
+    elif ordering == "-price":
+        products_color = sorted(
+            products_color, key=lambda x: x.product.offer_price(), reverse=True
+        )
+    elif ordering == "created_at":
+        products_color = products_color.order_by("product__created_at")
+
+    # Paginate products
     page = request.GET.get("page", 1)
-    product_Paginator = Paginator(products_color, PRODUCT_PER_PAGE)
+    product_paginator = Paginator(products_color, PRODUCT_PER_PAGE)
 
     try:
-        products = product_Paginator.page(page)
+        products = product_paginator.page(page)
     except PageNotAnInteger:
-        products = product_Paginator.page(1)
+        products = product_paginator.page(1)
     except EmptyPage:
-        products = product_Paginator.page(product_Paginator.num_pages)
+        products = product_paginator.page(product_paginator.num_pages)
+
+    # Retrieve categories
+    categories = Category.objects.filter(is_listed=True, is_deleted=False)
 
     context = {
-        "products_color": products_color,
-        "product": product,
+        "products_color": products,
+        "categories": categories,
         "page_obj": products,
-        "is_paginated": product_Paginator.num_pages > 1,
-        "paginator": product_Paginator,
+        "is_paginated": product_paginator.num_pages > 1,
+        "paginator": product_paginator,
     }
     return render(request, "mens.html", context)
 
 
 @never_cache
 def womens_page(request):
-    product = Category.objects.all()
+    ordering = request.GET.get("ordering", "name")
     products_color = ProductColorImage.objects.filter(
         Q(product__category__name="Women's")
         & Q(product__category__is_deleted=False)
         & Q(is_deleted=False)
     )
 
+    # Filter by price range
+    min_price = request.GET.get("min_price")
+    max_price = request.GET.get("max_price")
+
+    if min_price is not None:
+        min_price = int(min_price)
+    if max_price is not None:
+        max_price = int(max_price)
+
+    if min_price is not None and max_price is not None:
+        products_color = products_color.annotate(
+            calculated_offer_price=ExpressionWrapper(
+                F("product__price")
+                - (F("product__price") * F("product__percentage") / 100),
+                output_field=DecimalField(),
+            )
+        ).filter(
+            calculated_offer_price__gte=min_price, calculated_offer_price__lte=max_price
+        )
+
+    # Filter by category
+    categories_filter = request.GET.getlist("category")
+    if categories_filter:
+        products_color = products_color.filter(
+            product__category__name__in=categories_filter
+        )
+
+    # Order products
+    if ordering == "name":
+        products_color = products_color.order_by("product__name")
+    elif ordering == "-name":
+        products_color = products_color.order_by("-product__name")
+    elif ordering == "price":
+        products_color = sorted(products_color, key=lambda x: x.product.offer_price())
+    elif ordering == "-price":
+        products_color = sorted(
+            products_color, key=lambda x: x.product.offer_price(), reverse=True
+        )
+    elif ordering == "created_at":
+        products_color = products_color.order_by("product__created_at")
+
+    # Paginate products
     page = request.GET.get("page", 1)
-    product_Paginator = Paginator(products_color, PRODUCT_PER_PAGE)
+    product_paginator = Paginator(products_color, PRODUCT_PER_PAGE)
 
     try:
-        products = product_Paginator.page(page)
+        products = product_paginator.page(page)
     except PageNotAnInteger:
-        products = product_Paginator.page(1)
+        products = product_paginator.page(1)
     except EmptyPage:
-        products = product_Paginator.page(product_Paginator.num_pages)
+        products = product_paginator.page(product_paginator.num_pages)
+
+    # Retrieve categories
+    categories = Category.objects.filter(is_listed=True, is_deleted=False)
 
     context = {
-        "products_color": products_color,
-        "product": product,
+        "products_color": products,
+        "categories": categories,
         "page_obj": products,
-        "is_paginated": product_Paginator.num_pages > 1,
-        "paginator": product_Paginator,
+        "is_paginated": product_paginator.num_pages > 1,
+        "paginator": product_paginator,
     }
     return render(request, "womens.html", context)
 
 
 @never_cache
 def kids_page(request):
-    product = Category.objects.all()
+    ordering = request.GET.get("ordering", "name")
     products_color = ProductColorImage.objects.filter(
         Q(product__category__name="Kid's")
         & Q(product__category__is_deleted=False)
         & Q(is_deleted=False)
     )
 
+    # Filter by price range
+    min_price = request.GET.get("min_price")
+    max_price = request.GET.get("max_price")
+
+    if min_price is not None:
+        min_price = int(min_price)
+    if max_price is not None:
+        max_price = int(max_price)
+
+    if min_price is not None and max_price is not None:
+        products_color = products_color.annotate(
+            calculated_offer_price=ExpressionWrapper(
+                F("product__price")
+                - (F("product__price") * F("product__percentage") / 100),
+                output_field=DecimalField(),
+            )
+        ).filter(
+            calculated_offer_price__gte=min_price, calculated_offer_price__lte=max_price
+        )
+
+    # Filter by category
+    categories_filter = request.GET.getlist("category")
+    if categories_filter:
+        products_color = products_color.filter(
+            product__category__name__in=categories_filter
+        )
+
+    # Order products
+    if ordering == "name":
+        products_color = products_color.order_by("product__name")
+    elif ordering == "-name":
+        products_color = products_color.order_by("-product__name")
+    elif ordering == "price":
+        products_color = sorted(products_color, key=lambda x: x.product.offer_price())
+    elif ordering == "-price":
+        products_color = sorted(
+            products_color, key=lambda x: x.product.offer_price(), reverse=True
+        )
+    elif ordering == "created_at":
+        products_color = products_color.order_by("product__created_at")
+
+    # Paginate products
     page = request.GET.get("page", 1)
-    product_Paginator = Paginator(products_color, PRODUCT_PER_PAGE)
+    product_paginator = Paginator(products_color, PRODUCT_PER_PAGE)
 
     try:
-        products = product_Paginator.page(page)
+        products = product_paginator.page(page)
     except PageNotAnInteger:
-        products = product_Paginator.page(1)
+        products = product_paginator.page(1)
     except EmptyPage:
-        products = product_Paginator.page(product_Paginator.num_pages)
+        products = product_paginator.page(product_paginator.num_pages)
+
+    # Retrieve categories
+    categories = Category.objects.filter(is_listed=True, is_deleted=False)
 
     context = {
-        "products_color": products_color,
-        "product": product,
+        "products_color": products,
+        "categories": categories,
         "page_obj": products,
-        "is_paginated": product_Paginator.num_pages > 1,
-        "paginator": product_Paginator,
+        "is_paginated": product_paginator.num_pages > 1,
+        "paginator": product_paginator,
     }
     return render(request, "kids.html", context)
 
@@ -478,6 +614,10 @@ def kids_page(request):
 def shop_page(request):
     ordering = request.GET.get("ordering", "name")
     products_color = ProductColorImage.objects.filter(is_listed=True, is_deleted=False)
+    colors = ProductColorImage.objects.filter(is_listed=True, is_deleted=False).distinct("color")
+    brands = Brand.objects.filter(is_listed=True)
+
+    
 
     min_price = request.GET.get("min_price")
     max_price = request.GET.get("max_price")
@@ -500,9 +640,11 @@ def shop_page(request):
 
     categories_filter = request.GET.getlist("category")
     if categories_filter:
-        products_color = products_color.filter(
-            product__category__name__in=categories_filter
-        )
+        category_filters = Q()
+        for category in categories_filter:
+            category_filters |= Q(product__category__name=category)
+        products_color = products_color.filter(category_filters)
+    
 
     if ordering == "name":
         products_color = products_color.order_by("product__name")
@@ -535,8 +677,87 @@ def shop_page(request):
         "page_obj": products,
         "is_paginated": product_Paginator.num_pages > 1,
         "paginator": product_Paginator,
+        'brands' : brands,
+        'colors' : colors
     }
     return render(request, "shop.html", context)
+
+
+# ___________________________________________________________________________________________________________________________________________________
+
+
+def search_pro(request):
+    try:
+        if request.method == "POST":
+            query = request.POST.get("query")
+            products_color = ProductColorImage.objects.filter(
+                product__is_deleted=False, product__name__icontains=query
+            )
+
+
+            context = {"products_color": products_color, "query": query}
+            return render(request, "filter/search.html", context)
+    except Exception as e:
+        messages.error(request, "Something went wrong please try again.")
+        return redirect("index")
+    
+
+@never_cache
+def filtered_products_cat(request):
+    print("Filtered products by category, brand, and color")
+    print("Request:", request)
+    selected_category_ids = request.GET.getlist('category')  
+    selected_brand_ids = request.GET.getlist('brand')
+    selected_color_ids = request.GET.getlist('color')
+    
+    print("Selected category:", selected_category_ids)
+    print("Selected brand:", selected_brand_ids)
+    print("Selected color:", selected_color_ids)
+    
+    categories = Category.objects.filter(is_listed=True)
+    brands = Brand.objects.filter(is_listed=True)
+    colors = ProductColorImage.objects.filter(is_deleted = False, is_listed = True).distinct("color")
+    
+    products = ProductColorImage.objects.filter(
+        Q(product__category__in=selected_category_ids) |
+        Q(product__brand__in=selected_brand_ids) |
+        Q(color__in=selected_color_ids)
+    ).distinct()
+    
+    selected_category_ids = [int(category_id) for category_id in selected_category_ids]
+    selected_brand_ids = [int(brand_id) for brand_id in selected_brand_ids]
+    selected_color_ids = [color for color in selected_color_ids]
+
+    print("Products:", products)
+    
+    context = {
+        'categories': categories,
+        'brands': brands,
+        'colors': colors,
+        "products_color": products,
+        "selected_category": selected_category_ids,
+        "selected_brand": selected_brand_ids,
+        "selected_color": selected_color_ids,
+    }
+    return render(request, "shop.html", context)
+
+
+@never_cache
+def filter_products_by_price(request):
+    try:
+        min_price = request.GET.get("min", 500)
+        max_price = request.GET.get("max", 50000)
+
+        products = ProductColorImage.objects.filter(
+            product__offer_price__gte=min_price, product__offer_price__lte=max_price
+        )
+        return render(request, "shop.html", {"products_color": products})
+    except Exception as e:
+        messages.error(request, "Something went wrong please try again.")
+        return redirect("index")
+
+
+# _____________________________________________________________________________________________________________________________________________________________
 
 
 def profile(request):
@@ -768,38 +989,6 @@ def delete_address(request, address_id):
 
 
 # _______________________________________________X_________________________X__________________________
-
-
-def search_pro(request):
-    try:
-        if request.method == "POST":
-            query = request.POST.get("query")
-            products_color = ProductColorImage.objects.filter(
-                product__is_deleted=False, product__name__icontains=query
-            )
-            print(query)
-            print(products_color)
-
-            context = {"products_color": products_color, "query": query}
-            return render(request, "filter/search.html", context)
-    except Exception as e:
-        messages.error(request, "Something went wrong please try again.")
-        return redirect("index")
-
-
-@never_cache
-def filter_products_by_price(request):
-    try:
-        min_price = request.GET.get("min", 500)
-        max_price = request.GET.get("max", 50000)
-
-        products = ProductColorImage.objects.filter(
-            product__offer_price__gte=min_price, product__offer_price__lte=max_price
-        )
-        return render(request, "shop.html", {"products_color": products})
-    except Exception as e:
-        messages.error(request, "Something went wrong please try again.")
-        return redirect("index")
 
 
 # _____________________________________________________________________________________________________________________

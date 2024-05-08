@@ -187,3 +187,5 @@ LOGOUT_REDIRECT_URL = "/"
 
 RAZOR_KEY_ID = "rzp_test_i5YPKuq85Rzcc0"
 RAZOR_KEY_SECRET = "8Oy3wO9MkuDhIfDcKurtY0IW"
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"

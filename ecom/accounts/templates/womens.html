@@ -23,7 +23,9 @@
         <div class="row">
             <div class="col-lg-3 col-md-3">
                 <div class="shop__sidebar">
-                    <div class="search d-flex justify-content-between">
+
+                    <br>
+                    <div class="sidebar__sort">
                         <form action="{% url 'search_pro' %}" method="post" class="search-form">
                             {% csrf_token %}
                             <div class="input-group">
@@ -35,78 +37,43 @@
                                 </div>
                             </div>
                         </form>
-                    </div>
-                    <br>
-                    <!-- <div class="sidebar__categories">
+                        <br><br>
                         <div class="section-title">
-                            <h4>Categories</h4>
+                            <h4>Sort By</h4>
                         </div>
-                        <div class="categories__accordion">
-                            <div class="accordion" id="accordionExample">
-                                <div class="card">
-                                    {% for product in products %}
-
-                                    <div class="card-heading active">
-                                        <a data-toggle="collapse" data-target="#collapseOne">Men</a>
-                                    </div>
-                                    <div id="collapseOne" class="collapse show" data-parent="#accordionExample">
-                                        <div class="card-body">
-                                            <ul>
-                                                <li><a href="#">{{product.type}}</a></li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-
-                                </div>
-                            </div>
-                        </div>
-                    </div> -->
-                    
-                    <br>
-                    <div class="sidebar__sizes">
-                        <div class="section-title">
-                            <h4>Shop by size</h4>
-                        </div>
-                        <div class="size__list">
-                          
-                            <label for="s">
-                                s
-                                <input type="checkbox" id="s">
-                                <span class="checkmark"></span>
-                            </label>
-                            <label for="m">
-                                m
-                                <input type="checkbox" id="m">
-                                <span class="checkmark"></span>
-                            </label>
-                            
-                            <label for="l">
-                                l
-                                <input type="checkbox" id="l">
-                                <span class="checkmark"></span>
-                            </label>
-                        </div>
+                        <select name="ordering" onchange="location.href=finalurl();" id="sort-by" class="form-control">
+                            <option value="" id="placeholder" disabled selected hidden>Sort</option>
+                            <option id="name" value="name">A-Z</option>
+                            <option id="-name" value="-name">Z-A</option>
+                            <option id="price" value="price">Price: Low to High</option>
+                            <option id="-price" value="-price">Price: High to Low</option>
+                            <option id="created_at" value="created_at">New arrivals</option>
+                        </select>
                     </div>
+                    <br><br>
+                  
+
+
                     <div class="sidebar__filter">
                         <div class="section-title">
                             <h4>Shop by price</h4>
                         </div>
                         <div class="filter-range-wrap">
                             <div class="price-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content"
-                                data-min="33" data-max="99"></div>
+                                data-min="500" data-max="50000"></div>
                             <div class="range-slider">
                                 <div class="price-input">
-                                    <p>Price:</p>
                                     <input type="text" id="minamount">
                                     <input type="text" id="maxamount">
                                 </div>
-                            </div>
+                            </div><br>
+                            <button class="btn btn-outline-danger" id="filter">Filter</button>
                         </div>
-                        <a href="#">Filter</a>
+                        <br>
                     </div>
+                    
                     <div class="sidebar__color">
-                        <div class="section-title">
+                        <div class="section-title"> 
                             <h4>Shop by Color</h4>
                         </div>
                         <div class="size__list color__list">
@@ -135,11 +102,7 @@
                                 <input type="checkbox" id="blues">
                                 <span class="checkmark"></span>
                             </label>
-                            <label for="beige">
-                                Beige Tones
-                                <input type="checkbox" id="beige">
-                                <span class="checkmark"></span>
-                            </label>
+
                             <label for="greens">
                                 Greens
                                 <input type="checkbox" id="greens">
@@ -232,11 +195,50 @@
                     </nav>
                     {% endif %}
                 </div>
+
             </div>
 
         </div>
     </div>
 </section>
 <!-- Shop Section End -->
+
+
+<script>
+    function finalurl() {
+        var url = new URL(window.location.href);
+        var search_params = url.searchParams;
+        var selectedOrdering = document.getElementById("sort-by").value;
+        search_params.set('ordering', selectedOrdering);
+        url.search = search_params.toString();
+        document.getElementById('placeholder').innerHTML = "Sort: " + document.getElementById(selectedOrdering).innerHTML;
+        return url.toString();
+    }
+</script>
+
+
+<script>
+    document.getElementById('filter').addEventListener('click', function (event) {
+        event.preventDefault();
+        var minPrice = document.getElementById('minamount').value.replace(/\D/g, '');
+        var maxPrice = document.getElementById('maxamount').value.replace(/\D/g, '');
+        var url = window.location.href + `?min_price=${minPrice}&max_price=${maxPrice}`;
+        window.location.href = url;
+    });
+    document.querySelectorAll('.filter-checkbox').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+        let form = this.closest('form');
+        form.submit();
+    });
+});
+</script>
+
+<script>
+    document.querySelector('.apply-filters').addEventListener('click', function (event) {
+        event.preventDefault();
+        let form = document.querySelector('form');
+        form.submit();
+    });
+</script>
 
 {% endblock content %}

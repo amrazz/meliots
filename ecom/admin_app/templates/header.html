@@ -91,6 +91,21 @@
             </ul>
         </div>
     </li>
+    <li class="sidebar-item">
+        <div class="dropdown">
+            <a class="sidebar-link dropdown-toggle" href="{% url 'view_brand' %}"
+                id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">  
+                <span><i class="fa-solid fa-staff-snake"></i></span>
+                <span class="hide-menu">Brand</span>
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
+                <li><a class="dropdown-item " href="{% url 'view_brand' %}">View Brand</a></li>
+                <li><a class="dropdown-item" href="{% url 'add_brand' %}">Add Brand</a></li>
+                
+
+            </ul>
+        </div>
+    </li>
 
     <li class="sidebar-item">
         <a class="sidebar-link" href="{% url 'order' %}" aria-expanded="false">
