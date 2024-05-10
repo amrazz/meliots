@@ -51,6 +51,7 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    @property
     def offer_price(self):
         offer_price = self.price - (self.percentage * self.price / 100)
         return round(offer_price)

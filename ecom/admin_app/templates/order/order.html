@@ -13,6 +13,42 @@
 </head>
 {% block style %}
 <style>
+    /* Custom styling for the sorting dropdown */
+    .custom-select {
+        width: 230px;
+        margin-left: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 8px;
+        background-color: #fff;
+    }
+
+    /* Custom styling for the date inputs */
+    .date-inputs {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+
+    .date-input {
+        flex: 1;
+        margin-right: 10px;
+    }
+
+    .date-input label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .date-input input[type="date"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
     .text-nowrap {
         white-space: nowrap !important;
         padding-top: 24px;
@@ -55,12 +91,38 @@
             </div>
         </div>
         <br>
+        <!-- Sorting dropdown -->
+        <select name="ordering" onchange="location.href=finalurl();" id="sort-by" class="form-control custom-select">
+            <option value="" id="placeholder" disabled selected hidden>Sort</option>
+            <option id="name" value="name">A-Z</option>
+            <option id="-name" value="-name">Z-A</option>
+        </select>
+
+        <!-- Date inputs -->
+       <form action="{% url 'order' %}" method="get">
+        <div class="date-inputs">
+            <div class="date-input">
+                <label for="from">From</label>
+                <input type="date" id="from" name="from" class="form-control">
+            </div>
+            <div class="date-input">
+                <label for="to">To</label>
+                <input type="date" id="to" name="to" class="form-control">
+            </div>
+           
+        </div><br>
+        <div class="d-flex justify-content-end "><button type="submit" class="btn btn-primary">Filter</button>
+</div>
+
         <div class="input-group mb-3 mt-3">
-            <input type="text" class="form-control" name='search_product' placeholder="Search Order"
+            <input type="text" class="form-control" name='search' placeholder="Search Order"
                 aria-label="Search users" aria-describedby="search-button">
             <button class="btn btn-primary" type="submit" id="search-button">Search</button>
         </div>
         <br>
+    </form>
+
+
         <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
         <script>
@@ -77,6 +139,7 @@
             {% endif %}
         </script>
         <br />
+
         <!-- User details table -->
         <table class="table table-striped ">
             <thead>
@@ -96,13 +159,14 @@
                     </td>
                     <td>{{ order.customer.user.username }}</td>
                     <td>₹{{order.total}}</td>
-                    
+
                     <td> {{ order.payment_method }} </td>
                     <td>
                         <div class="">
                             <form action="{% url 'admin_order' order.id %}">
-                            <button class="btn btn-outline-danger" type="submit"><i class="fa-solid fa-file-lines"></i> View Details</button>
-                        </form>
+                                <button class="btn btn-outline-danger" type="submit"><i
+                                        class="fa-solid fa-file-lines"></i> View Details</button>
+                            </form>
                         </div>
                     </td>
                 </tr>
@@ -112,25 +176,7 @@
         </table>
 
     </div>
-    <div class="d-flex justify-content-center ">
-        <nav aria-label="Page navigation example ">
-            <ul class="pagination">
-              <li class="page-item">
-                <a class="page-link" href="#" aria-label="Previous">
-                  <span aria-hidden="true">&laquo;</span>
-                </a>
-              </li>
-              <li class="page-item"><a class="page-link" href="#">1</a></li>
-              <li class="page-item"><a class="page-link" href="#">2</a></li>
-              <li class="page-item"><a class="page-link" href="#">3</a></li>
-              <li class="page-item">
-                <a class="page-link" href="#" aria-label="Next">
-                  <span aria-hidden="true">&raquo;</span>
-                </a>
-              </li>
-            </ul>
-          </nav>
-    </div>
+
 </div>
 </div>
 </div>
@@ -138,7 +184,14 @@
 </div>
 
 
-
+<script>
+    document.getElementById('sort-by').addEventListener('change', function () {
+        var sort_by = this.value;
+        var url = new URL(window.location.href);
+        url.searchParams.set('sort_by', sort_by);
+        window.location.href = url.toString();
+    });
+</script>
 
 
 

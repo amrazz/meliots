@@ -39,7 +39,7 @@ def shop_cart(request):
             product__product__is_deleted=False,
         ).distinct()
 
-        sub_total = sum(item.total_price() for item in cart_items)
+        sub_total = sum(item.total_price for item in cart_items)
         total = sub_total
 
         total_quantity = sum(i.quantity for i in cart_items)
@@ -121,13 +121,13 @@ def update_total_price(request):
         cart_item = CartItem.objects.get(id=cart_item_id)
         cart_item.quantity = new_quantity
         cart_item.save()
-        new_total_price = cart_item.total_price()
+        new_total_price = cart_item.total_price
 
         user = Customer.objects.get(user=request.user.pk)
         customer = User_Cart.objects.get(customer=user)
         cart_items = CartItem.objects.filter(user_cart=customer).distinct()
 
-        sub_total = sum(item.total_price() for item in cart_items)
+        sub_total = sum(item.total_price for item in cart_items)
         total_quantity = sum(i.quantity for i in cart_items)
         if total_quantity > 5:
             shipping_fee = "Free"
@@ -168,7 +168,7 @@ def checkout(request):
                     if item.quantity > i.quantity:
                         CartItem.objects.get(id=item.id).delete()
 
-            sub_total = sum(price.total_price() for price in cart)
+            sub_total = sum(price.total_price for price in cart)
             total = sub_total
             discount_amount = 0
 
@@ -272,14 +272,14 @@ def initiate_payment(items):
     data = {
         "currency": "INR",
         "payment_capture": "1",
-        "amount": items[0]["amount"] * 100,
+        "amount": items[0]["amount"],
     }
-
+    print(data["amount"])
     razorpay_order = razorpay_client.order.create(data=data)
     razorpay_order_id = razorpay_order["id"]
     for item in items:
         item_data = {
-            "amount": item["amount"] * 100,
+            "amount": item["amount"],
             "currency": "INR",
         }
         razorpay_client.order.create(data=item_data)
@@ -301,7 +301,7 @@ def place_order(request):
 
         customer = Customer.objects.get(user=request.user.pk)
         cart = CartItem.objects.filter(user_cart__customer=customer)
-        subtotal = sum(item.total_price() for item in cart)
+        subtotal = sum(item.total_price for item in cart)
         total_qty = sum(item.quantity for item in cart)
 
         if total_qty <= 5:

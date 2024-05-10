@@ -34,8 +34,9 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.product.product.name} - {self.product_size} - (Quantity: {self.quantity})"
 
+    @property
     def total_price(self):
-        offer_price = self.product.product.offer_price()
+        offer_price = self.product.product.offer_price
         return int(round(self.quantity * offer_price))
 
 
@@ -95,6 +96,7 @@ class OrderItem(models.Model):
         ("Refunded", "Refunded"),
         ("Cancelled", "Cancelled"),
     )
+    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
     product = models.ForeignKey(ProductColorImage, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)

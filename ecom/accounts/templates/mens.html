@@ -139,8 +139,17 @@
                                 <ul class="product__hover">
                                     <li><a href="{{ color.image1.url }}" class="image-popup"><span
                                                 class="arrow_expand"></span></a></li>
-                                    <li><a href=""><span class="icon_heart_alt"></span></a></li>
-                                    <li><a href=""><span class="icon_bag_alt"></span></a></li>
+                                                <li><form action="{% url 'wishlist_add' color.id %}" method="post">
+                                                    {% csrf_token %}
+                                                <input type="hidden" name="size" value="S" id="">
+                                                <button class="btn" type="submit" style="
+                                                    border-radius: 252px;
+                                                    width: 48px;
+                                                    height: 48px;
+                                                    padding-left: 0px;
+                                                    padding-top: 0px;
+                                                "><a href=""><span class="icon_heart_alt"></span></a></button>
+                                            </form></li>
                                 </ul>
                             </div>
                             </a>

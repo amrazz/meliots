@@ -123,7 +123,7 @@
                             <p style="color: rgb(255, 0, 0);">{{i.status}}</p>
                             {% elif i.request_cancel == True and i.cancel == False %}
                             <div style="margin-left: -73px;">
-                            <a href="{% url 'cancel_order' i.pk %}" onclick="confirmCancel({{ i.pk }})" style="font-size: medium;" id="cancelOrderBtn" class="btn btn-outline-primary">Accept Cancel Request</a>
+                            <a href="{% url 'cancel_order' i.pk %}"  style="font-size: medium;" id="cancelOrderBtn" class="btn btn-outline-primary">Accept Cancel Request</a>
                             </div>
                             {% elif i.request_return == True %}
                             <div style="margin-left: -73px;">
@@ -156,7 +156,7 @@
                     </div> <!-- End of column div -->
                     {% endfor %}
                 </div> <!-- End of row div -->
-            </div>
+            </di  v>
         </div>
     </div>
 </div>
@@ -215,25 +215,11 @@ function updateOrderStatus(selectElement) {
 <!-- JavaScript code for handling cancel and return requests -->
 <script>
     // Function to confirm cancel using SweetAlert
-    function confirmCancel(orderItemId) {
-        Swal.fire({
-            title: 'Do you want to cancel this item?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, cancel it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = "{% url 'cancel_order' order_id=orderItemId %}";
-            }
-        });
-    }
-
+    
     $(document).ready(function() {
         // Function to handle return request
         $('#ReturnOrderBtn').click(function(e) {
-            e.preventDefault(); // Prevent the default action
+            e.preventDefault();
             Swal.fire({
                 title: 'Do you need to return this order?',
                 text: "Accept Return Request!",
@@ -245,7 +231,7 @@ function updateOrderStatus(selectElement) {
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Redirect to the return_order view
-                    window.location.href = "{% url 'return_order' orderItemId %}";
+                    window.location.href = "";
                 }
             });
         });

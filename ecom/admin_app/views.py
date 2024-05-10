@@ -18,12 +18,13 @@ from django.db import transaction
 from django.db.models import Sum, F
 from django.utils.crypto import get_random_string
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-
-
+from io import BytesIO
+import xlsxwriter
+from datetime import datetime
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 
@@ -641,25 +642,57 @@ def product_is_unlisted(request, product_id):
 # ____________________________________________________________________________________________________________________________________________________
 
 
-def order(request):
+def order(request, sort_by=None):
+    from_date = request.GET.get('from')
+    to_date = request.GET.get('to')
+    search = request.GET.get('search')
+    print("sort_by:", sort_by)
+    print("from_date:", from_date)
+    print("to_date:", to_date)
     if request.user.is_superuser:
-        order_details = Order.objects.all().order_by("-created_at")
-
+        if not sort_by:
+            sort_by = '-created_at'
+        if from_date:
+            from_date = datetime.strptime(from_date, "%Y-%m-%d")
+        if to_date:
+            to_date = datetime.strptime(to_date, "%Y-%m-%d")
+            
+        print("Querying database...")
+        order_details = Order.objects.all().order_by(sort_by)
+        
+        if from_date and to_date:
+            order_details = Order.objects.filter(created_at__range=[from_date, to_date]).order_by(sort_by)
+        elif from_date:
+            order_details = Order.objects.filter(created_at__gte=from_date).order_by(sort_by)
+        elif to_date:
+            order_details = Order.objects.filter(created_at__lte=to_date).order_by(sort_by)
+        elif search:
+            order_details = Order.objects.filter(
+                Q(tracking_id__icontains=search)|
+     
+                Q(payment_method__icontains=search)
+                ).order_by(sort_by)
+        
+        print("Finished querying database")
         context = {
             "order_details": order_details,
         }
         return render(request, "order/order.html", context)
     else:
+        print("Redirecting to admin login")
         return redirect("admin_login")
+    
+    
 
 
 def admin_order(request, order_id):
     if request.user.is_superuser:
         order = Order.objects.get(id=order_id)
-        item = OrderItem.objects.filter(order=order)
+        item = OrderItem.objects.filter(order=order).order_by('id')
+        print(item)
         status_choices = dict(OrderItem.STATUS_CHOICES)
 
-        context = {"item": item, "order": order, "status_choices": status_choices}
+        context = {"item": item,'order':order, "status_choices": status_choices}
         return render(request, "order/order_detail.html", context)
     else:
         return redirect("admin_login")
@@ -687,58 +720,67 @@ def update_status(request):
 def cancel_order(request, order_id):
     if request.user.is_superuser:
         try:
-            cancel = OrderItem.objects.filter(order=order_id).first()
+            print("Starting cancel_order function")
+            cancel = OrderItem.objects.get(id=order_id)
+            main_order_id = cancel.order.id
+            print(cancel)
 
-            if cancel and not cancel.cancel:  
-                cancel.request_cancel = True
-                cancel.status = "Cancelled"
-                cancel.save()
+            
 
-                if cancel.order.payment_method != "COD" and cancel.order.paid:
-                    total_discount = cancel.order.discounted_price
-                    total_quantity = OrderItem.objects.filter(order_id=order_id).aggregate(total_quantity=Sum("qty"))["total_quantity"]
-                    discount_per_item = total_discount / total_quantity
-                    original_price = cancel.product.product.offer_price
-                    cancelled_amount = (original_price - discount_per_item) * cancel.qty
+            if cancel.order.payment_method!= "COD" and cancel.order.paid:
+                print("Payment method is not COD and order is paid")
+                total_discount = cancel.order.discounted_price
+                total_quantity = OrderItem.objects.filter(id=order_id).aggregate(total_quantity=Sum("qty"))["total_quantity"]
+                print(total_quantity)
+                discount_per_item = float(total_discount) / float(total_quantity)
+                original_price = cancel.product.product.offer_price
+                cancelled_amount = (float(original_price) - float(discount_per_item)) * int(cancel.qty)
 
-                    user = request.user
-                    wallet, created = Wallet.objects.get_or_create(user=user)
-                    wallet.balance += abs(cancelled_amount)
-                    wallet.save()
+                user = request.user
+                wallet, created = Wallet.objects.get_or_create(user=user)
+                wallet.balance += float(cancelled_amount)
+                wallet.save()
 
-                    tranc_id = "TRANC_" + get_random_string(5, "ABCDEFGHIJKLMOZ0123456789")
-                    while Wallet_transaction.objects.filter(transaction_id=tranc_id).exists():
-                        tranc_id += get_random_string(5, "ABCDEFGHIJKLMOZ0123456789")
+                tranc_id = "TRANC_" + get_random_string(5, "ABCDEFGHIJKLMOZ0123456789")
+                while Wallet_transaction.objects.filter(transaction_id=tranc_id).exists():
+                    tranc_id += get_random_string(5, "ABCDEFGHIJKLMOZ0123456789")
 
-                    wallet_transaction_create = Wallet_transaction.objects.create(
-                        wallet=wallet,
-                        order_item=cancel,
-                        money_deposit=abs(cancelled_amount),
-                        transaction_id=tranc_id,
-                    )
-
+                wallet_transaction_create = Wallet_transaction.objects.create(
+                    wallet=wallet,
+                    order_item=cancel,
+                    money_deposit=abs(cancelled_amount),
+                    transaction_id=tranc_id,
+                )
+                if cancel and not cancel.cancel:  
+                    print("Cancel condition satisfied")
+                    cancel.request_cancel = True
+                    cancel.status = "Cancelled"
+                    cancel.save()
                     messages.success(request, f"Amount of ₹{cancelled_amount} added to your Wallet.")
-
-                messages.success(request, "Cancellation request submitted successfully.")
-                
-                return redirect("admin_order", order_id)
+                print("Redirecting to admin_order")
+                return redirect("admin_order", main_order_id)
             else:
+                print("Order item does not exist or has already been cancelled.")
                 messages.info(request, "Order item does not exist or has already been cancelled.")
                 return redirect("order")
 
         except OrderItem.DoesNotExist:
+            print("Order item does not exist.")
             messages.info(request, "Order item does not exist.")
             return redirect("order")
 
     else:
+        print("User is not superuser")
         return redirect("admin_login")
 
 
+
 def return_order(request, order_id):
+    
     if request.user.is_superuser:
-        return_order = OrderItem.objects.get(order_id=order_id)
+        return_order = OrderItem.objects.get(id=order_id)
         if return_order.request_return == True:
-            return_order.return_order = True
+            return_order.return_product = True
             return_order.status = "Returned"
             return_order.request_return == False
             return_order.save()
@@ -884,99 +926,175 @@ def del_coupon(request, coupon_id):
     else:
         messages.error(request, "You do not have permission to access this page.")
         return redirect("admin_login")
-
-
 def sales_report(request):
-    if request.user.is_superuser:
-        order = OrderItem.objects.all().order_by("created_at")
-        count = order.count()
-        total = OrderItem.objects.aggregate(total=Sum("order__total"))["total"]
-        total_discount = OrderItem.objects.aggregate(
-            total_discount=Sum("order__discounted_price")
-        )["total_discount"]
+    if request.user.is_superuser:        
+        if request.method == "GET":
+            from_date = request.GET.get("from")
+            to_date = request.GET.get("to")
+            month = request.GET.get("month")
+            year = request.GET.get("year")
+            daily = request.GET.get("daily")
+            print(f"{daily} this is dailyyyyyyyyyyyyyyyyy")
+            order = OrderItem.objects.none()
 
-        context = {
-            "order": order,
-            "count": count,
-            "total": total,
-            "total_discount": total_discount,
-        }
-        return render(request, "sales_report.html", context)
-    else:
-        messages.error(request, "You do not have permission to access this page.")
-        return redirect("admin_login")
+            if from_date or to_date or month or year:
+                order = OrderItem.objects.filter(
+                    cancel=False,
+                    return_product=False,
+                    status="Delivered",
+                ).order_by("created_at")
+
+                if from_date:
+                    order = order.filter(created_at__gte=from_date)
+                elif to_date:
+                    order = order.filter(created_at__lte=to_date)
+                elif month:
+                    year, month = map(int, month.split('-'))
+                    order = order.filter(created_at__year=year, created_at__month=month)
+                elif year:
+                    order = order.filter(created_at__year=year)
+
+            if daily:
+                order = OrderItem.objects.filter(
+                    cancel=False,
+                    return_product=False,
+                    status="Delivered",
+                ).order_by("created_at")
+
+            count = order.count()
+            total = OrderItem.objects.aggregate(total=Sum("order__total"))["total"]
+            total_discount = OrderItem.objects.aggregate(
+                total_discount=Sum("order__discounted_price")
+            )["total_discount"]
+
+            context = {
+                "order": order,
+                "count": count,
+                "total": total,
+                "total_discount": total_discount,
+            }
+            request.session["overall_sales_count"] = count
+            request.session["overall_order_amount"] = total
+            request.session["overall_discount"] = total_discount
+            
+            return render(request, "sales_report.html", context)
+        else:
+            messages.error(request, "You do not have permission to access this page.")
+            return redirect("admin_login")
+
+
 
 
 def download_sales_report(request):
-    format = request.GET.get("format", "pdf")
-    order_items = OrderItem.objects.all().order_by("created_at")
-
-    if format == "pdf":
-        response = HttpResponse(content_type="application/pdf")
-        response["Content-Disposition"] = 'attachment; filename="sales_report.pdf"'
-
-        # Create a PDF document
-        doc = SimpleDocTemplate(
-            response, pagesize=letter, topMargin=1 * inch, bottomMargin=1 * inch
-        )
-
-        # Create a list to hold table data
-        table_data = [
-            [
-                "PRODUCT",
-                "ORDER DATE",
-                "CUSTOMER DETAILS",
-                "APPLIED COUPON",
-                "DISCOUNTED PRICE",
-            ],
-        ]
-
-        # Populate table data
-        for item in order_items:
-            created_at_formatted = item.created_at.strftime("%d/%m/%y %H:%M")
-            table_data.append(
-                [
-                    f"{item.product.product.name} ({item.product.color}) {item.size} {item.qty}",
-                    created_at_formatted,
-                    f"{item.order.customer.user.first_name} {item.order.customer.user.last_name}",
-                    str(item.order.coupon_name),
-                    str(item.order.discounted_price),
-                ]
+    if request.user.is_superuser:
+        if request.method == "GET":
+            sales_data = OrderItem.objects.filter(
+                Q(cancel=False)
+                & Q(return_product=False)
+                & Q(status="Delivered")
             )
 
-        # Create a table with adjusted column widths
-        table = Table(
-            table_data,
-            colWidths=[2 * inch, 1.5 * inch, 2 * inch, 1.5 * inch, 1.5 * inch],
-        )
+            overall_sales_count = request.session.get("overall_sales_count")
+            overall_order_amount = request.session.get("overall_order_amount")
+            overall_discount = request.session.get("overall_discount")
 
-        # Define table style
-        table_style = TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                ("GRID", (0, 0), (-1, -1), 1, colors.black),
-            ]
-        )
+            if "format" in request.GET and request.GET["format"] == "pdf":
+                buffer = BytesIO()
 
-        # Apply table style
-        table.setStyle(table_style)
+                doc = SimpleDocTemplate(buffer, pagesize=letter)
 
-        # Add table to document
-        elements = []
-        elements.append(Paragraph("SALES REPORT", getSampleStyleSheet()["Title"]))
-        elements.append(Paragraph("MELIOTIS", getSampleStyleSheet()["Normal"]))
-        elements.append(
-            Paragraph("meliotis100@gmail.com", getSampleStyleSheet()["Normal"])
-        )
-        elements.append(table)
-        doc.build(elements)
+                styles = getSampleStyleSheet()
+                centered_style = ParagraphStyle(
+                    name="Centered", parent=styles["Heading1"], alignment=1
+                )
 
-        return response
+                today_date = datetime.now().strftime("%Y-%m-%d")
+
+                content = []
+
+                company_details = f"<b>MELIOTIS</b><br/>Email: meliotis100@email.com<br/>Date: {today_date}"
+                content.append(Paragraph(company_details, styles["Normal"]))
+                content.append(Spacer(1, 0.5 * inch))
+
+                content.append(Paragraph("<b>SALES REPORT</b><hr>", centered_style))
+                content.append(Spacer(1, 0.5 * inch))
+
+                data = [["Order ID", "Product", "Quantity", "Total Price", "Date"]]
+                for sale in sales_data:
+                    formatted_date = sale.order.created_at.strftime("%a, %d %b %Y")
+                    data.append(
+                        [sale.order.tracking_id,sale.product.product.name, sale.qty, sale.product.product.offer_price, formatted_date]
+                    )
+
+                table = Table(data, repeatRows=1)
+                table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+                            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("TOPPADDING", (0, 0), (-1, 0), 12),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
+                            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                        ]
+                    )
+                )
+
+                content.append(table)
+
+                content.append(Spacer(1, 0.5 * inch))
+
+                overall_sales_count_text = f"<b>Overall Sales Count:</b> {overall_sales_count}"
+                overall_order_amount_text = f"<b>Overall Order Amount:</b> {overall_order_amount}"
+                overall_discount_amount_text = f"<b>Overall Discount:</b> {overall_discount}"
+
+                content.append(Paragraph(overall_sales_count_text, styles["Normal"]))
+                content.append(Paragraph(overall_order_amount_text, styles["Normal"]))
+                content.append(Paragraph(overall_discount_amount_text, styles["Normal"]))
+
+                doc.build(content)
+
+                current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+                file_name = f"Sales_Report_{current_time}.pdf"
+
+                response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+                response["Content-Disposition"] = f'attachment; filename="{file_name}"'
+
+                return response
+
+            elif "format" in request.GET and request.GET["format"] == "excel":
+                output = BytesIO()
+                workbook = xlsxwriter.Workbook(output, {"in_memory": True})
+                worksheet = workbook.add_worksheet("Sales Report")
+
+                headings = ["Product", "Quantity", "Total Price", "Date"]
+                header_format = workbook.add_format({"bold": True})
+                for col, heading in enumerate(headings):
+                    worksheet.write(0, col, heading, header_format)
+
+                for row, sale in enumerate(sales_data, start=1):
+                    formatted_date = sale.order.created_at.strftime("%a, %d %b %Y")
+                    worksheet.write(row, 0, sale.product.product.name)
+                    worksheet.write(row, 1, sale.qty)
+                    worksheet.write(row, 2, sale.product.product.offer_price)
+                    worksheet.write(row, 3, formatted_date)
+
+                workbook.close()
+
+                output.seek(0)
+                response = HttpResponse(
+                    output.getvalue(),
+                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+                current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+                file_name = f"Sales_Report_{current_time}.xlsx"
+                response["Content-Disposition"] = f'attachment; filename="{file_name}"'
+
+                return response
+
+        else:
+            return redirect("dashboard")
     else:
-        return HttpResponse("Unsupported format", status=400)
+        return redirect("admin_login")

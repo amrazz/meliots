@@ -15,7 +15,7 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, FloatField
 from datetime import datetime, timedelta
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import JsonResponse
@@ -430,10 +430,10 @@ def mens_page(request):
     elif ordering == "-name":
         products_color = products_color.order_by("-product__name")
     elif ordering == "price":
-        products_color = sorted(products_color, key=lambda x: x.product.offer_price())
+        products_color = sorted(products_color, key=lambda x: x.product.offer_price)
     elif ordering == "-price":
         products_color = sorted(
-            products_color, key=lambda x: x.product.offer_price(), reverse=True
+            products_color, key=lambda x: x.product.offer_price, reverse=True
         )
     elif ordering == "created_at":
         products_color = products_color.order_by("product__created_at")
@@ -504,10 +504,10 @@ def womens_page(request):
     elif ordering == "-name":
         products_color = products_color.order_by("-product__name")
     elif ordering == "price":
-        products_color = sorted(products_color, key=lambda x: x.product.offer_price())
+        products_color = sorted(products_color, key=lambda x: x.product.offer_price)
     elif ordering == "-price":
         products_color = sorted(
-            products_color, key=lambda x: x.product.offer_price(), reverse=True
+            products_color, key=lambda x: x.product.offer_price, reverse=True
         )
     elif ordering == "created_at":
         products_color = products_color.order_by("product__created_at")
@@ -578,10 +578,10 @@ def kids_page(request):
     elif ordering == "-name":
         products_color = products_color.order_by("-product__name")
     elif ordering == "price":
-        products_color = sorted(products_color, key=lambda x: x.product.offer_price())
+        products_color = sorted(products_color, key=lambda x: x.product.offer_price)
     elif ordering == "-price":
         products_color = sorted(
-            products_color, key=lambda x: x.product.offer_price(), reverse=True
+            products_color, key=lambda x: x.product.offer_price, reverse=True
         )
     elif ordering == "created_at":
         products_color = products_color.order_by("product__created_at")
@@ -651,10 +651,10 @@ def shop_page(request):
     elif ordering == "-name":
         products_color = products_color.order_by("-product__name")
     elif ordering == "price":
-        products_color = sorted(products_color, key=lambda x: x.product.offer_price())
+        products_color = sorted(products_color, key=lambda x: x.product.offer_price)
     elif ordering == "-price":
         products_color = sorted(
-            products_color, key=lambda x: x.product.offer_price(), reverse=True
+            products_color, key=lambda x: x.product.offer_price, reverse=True
         )
     elif ordering == "created_at":
         products_color = products_color.order_by("product__created_at")
@@ -709,6 +709,8 @@ def filtered_products_cat(request):
     selected_category_ids = request.GET.getlist('category')  
     selected_brand_ids = request.GET.getlist('brand')
     selected_color_ids = request.GET.getlist('color')
+
+    
     
     print("Selected category:", selected_category_ids)
     print("Selected brand:", selected_brand_ids)
@@ -745,14 +747,45 @@ def filtered_products_cat(request):
 @never_cache
 def filter_products_by_price(request):
     try:
-        min_price = request.GET.get("min", 500)
-        max_price = request.GET.get("max", 50000)
+        if request.method == 'GET':
+            min_price = request.GET.get("min", 500)[1:]
+            max_price = request.GET.get("max", 50000)[1:]
 
-        products = ProductColorImage.objects.filter(
-            product__offer_price__gte=min_price, product__offer_price__lte=max_price
-        )
-        return render(request, "shop.html", {"products_color": products})
+            print("Minimum price:", min_price)
+            print("Maximum price:", max_price)
+
+            product_color_images = ProductColorImage.objects.filter(
+            product__is_listed=True, product__is_deleted=False
+            )
+            categories = Category.objects.filter(is_listed=True)
+            brands = Brand.objects.filter(is_listed=True)
+            colors = ProductColorImage.objects.filter(is_deleted = False, is_listed = True).distinct("color")
+            
+
+            # Annotate the queryset with the offer price
+            product_color_images = product_color_images.annotate(
+                calculated_offer_price=ExpressionWrapper(
+                    F('product__price') - (F('product__percentage') * F('product__price') / 100),
+                    output_field=FloatField()
+                )
+            )
+
+            # Filter product color images based on the offer price
+            if min_price is not None:
+                product_color_images = product_color_images.filter(calculated_offer_price__gte=min_price)
+            if max_price is not None:
+                product_color_images = product_color_images.filter(calculated_offer_price__lte=max_price)
+
+                print("Filtered products:", product_color_images)
+            context = {
+                "products_color": product_color_images,
+                 'categories' : categories,
+                 'brands' : brands,
+                 'colors' : colors
+            }
+            return render(request, "shop.html", context)
     except Exception as e:
+        print("Exception:", e)
         messages.error(request, "Something went wrong please try again.")
         return redirect("index")
 
