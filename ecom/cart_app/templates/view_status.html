@@ -243,18 +243,18 @@
             <div class="d-flex justify-content-center ">
                 {% if order_items.status == 'Order Placed' and not order_items.request_cancel %}
                 <a href="#" id="cancelOrderBtn" class="btn btn-outline-warning">Cancel</a>
+                {% elif order_items.status == 'Returned' and order_items.return_product == True %}
+                    <h3>Your Order has been Returned.</h3>
+                {% elif order_items.status == 'Delivered' and order_items.request_return == True %}
+                <button type="button" class="btn btn-primary" disabled>Return Requested</button>
                 {% elif order_items.status == 'Delivered' %}
                 <a href="{% url 'request_return_product' order_items.id %}" class="btn btn-outline-secondary">Return</a>
-                {% elif order_items.status == 'Delivered' or order_items.request_return == True %}
-                <button type="button" class="btn btn-primary" disabled>Return Requested</button>
                 {% elif order_items.status == 'Shipped' %}
                 <button type="button" class="btn btn-primary" disabled>You cannot Cancel after Shipped</button>
                 {% elif order_items.status == 'Cancelled' %}
                     <h3>Your Order has been Cancelled.</h3>
                 {% elif order_items.request_cancel == True %}
                 <button type="button" class="btn btn-primary" disabled>Cancel Requested</button>
-                {% elif order_items.status == 'Returned' %}
-                    <h3>Your Order has been Returned.</h3>
                 {% endif %}
 
             </div>
@@ -265,27 +265,7 @@
     
 </div>
 
-<!-- Bootstrap Modal Markup -->
-<div class="modal fade" id="cancelOrderModal" tabindex="-1" role="dialog" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="cancelOrderModalLabel">Do you really need to cancel this order?</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          Confirm to cancel the order.
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="confirmCancelOrder">Confirm</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  
+
 
 <script>
     // Get the current time

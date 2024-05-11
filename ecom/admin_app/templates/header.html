@@ -86,6 +86,7 @@
             <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
                 <li><a class="dropdown-item " href="{% url 'category' %}">Category</a></li>
                 <li><a class="dropdown-item" href="{% url 'add_category' %}">Add Category</a></li>
+                <li><a class="dropdown-item" href="{% url 'category_offer' %}">Category Offer</a></li>
                 
 
             </ul>
@@ -114,12 +115,6 @@
         </a>
     </li>
 
-    <li class="sidebar-item">
-        <a class="sidebar-link" href="#" aria-expanded="false">
-            <span><i class="fas fa-undo"></i></span>
-            <span class="hide-menu">Return</span>
-        </a>
-    </li>
 
     <li class="sidebar-item">
         <a class="sidebar-link" href="{% url 'sales_report' %}" aria-expanded="false">

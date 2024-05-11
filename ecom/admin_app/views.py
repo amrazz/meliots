@@ -20,6 +20,7 @@ from django.utils.crypto import get_random_string
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from io import BytesIO
 import xlsxwriter
+from .forms import CategoryOfferForm
 from datetime import datetime
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -191,6 +192,50 @@ def edit_category(request, cat_id):
     return redirect("admin_login")
 
 
+def category_offer(request):
+    if request.user.is_superuser:
+        category_off = CategoryOffer.objects.filter(category__is_listed = True, category__is_deleted = False)
+        return render(request, "category/cat_offer.html", {"category_off" : category_off})
+    
+def add_category_offer(request):
+    if request.user.is_superuser:
+        form = CategoryOfferForm()
+        
+        if request.method == 'POST':
+            form = CategoryOfferForm(request.POST)
+            if form.is_valid():
+                category = form.cleaned_data.get('category')
+                name = form.cleaned_data.get('offer_name')
+                discount_percentage = form.cleaned_data.get('discount_percentage')
+                is_active = form.cleaned_data.get('is_active')
+                end_date = form.cleaned_data.get('end_date')
+                print(category, name, discount_percentage, is_active, end_date)
+                today = timezone.now().date()
+                if not all([category, name, discount_percentage, is_active, end_date]):
+                    messages.error(request, "All fields are required.")
+                elif discount_percentage < 0 or discount_percentage > 100:
+                    messages.error(request, "Discount percentage must be between 0 and 100.")
+                elif not Category.objects.filter(name=category).exists():
+                    messages.error(request, "Category does not exist.")
+                elif end_date < today:
+                    messages.error(request, "End date must be greater than today's date.")
+                elif CategoryOffer.objects.filter(category__name = category).exists():
+                    messages.error(request, "Category offer already exists for this category.")
+                else:
+                    CategoryOffer.objects.create(
+                        category=category,
+                        offer_name=name,
+                        discount_percentage=discount_percentage,
+                        is_active=is_active,
+                        end_date=end_date
+                    )
+                    messages.success(request, "Category offer added successfully.")
+                    return redirect('category_offer')
+            
+        return render(request, 'category/add_cat_offer.html', {"form": form})
+
+
+
 @never_cache
 def islisted(request, cat_id):
     try:
@@ -326,6 +371,15 @@ def edit_product(request, product_id):
                     return redirect("product")
             else:
                 exp_date = None
+            
+            today = timezone.now()
+            
+            if str(exp_date) and str(exp_date) < str(today):
+                messages.error(request, "Expiry date cannot be in the past.")
+                return redirect(edit_product, product_id)
+            elif str(exp_date) and str(exp_date) == str(today):
+                messages.error(request, "Expiry date cannot be today.")
+                return redirect(edit_product, product_id)
 
             description = request.POST.get("description")
             if float(price) < 0:
@@ -741,9 +795,9 @@ def cancel_order(request, order_id):
                 wallet.balance += float(cancelled_amount)
                 wallet.save()
 
-                tranc_id = "TRANC_" + get_random_string(5, "ABCDEFGHIJKLMOZ0123456789")
+                tranc_id = "CANCEL_" + get_random_string(3, "ABCDEFGHIJKLMOZ0123456789")
                 while Wallet_transaction.objects.filter(transaction_id=tranc_id).exists():
-                    tranc_id += get_random_string(5, "ABCDEFGHIJKLMOZ0123456789")
+                    tranc_id += get_random_string(3, "ABCDEFGHIJKLMOZ0123456789")
 
                 wallet_transaction_create = Wallet_transaction.objects.create(
                     wallet=wallet,
@@ -775,19 +829,52 @@ def cancel_order(request, order_id):
 
 
 
-def return_order(request, order_id):
-    
+def return_order(request, return_id):
     if request.user.is_superuser:
-        return_order = OrderItem.objects.get(id=order_id)
-        if return_order.request_return == True:
-            return_order.return_product = True
-            return_order.status = "Returned"
-            return_order.request_return == False
-            return_order.save()
-            return redirect("admin_order", order_id)
+        print("Starting return_order function")
+        return_order = OrderItem.objects.get(id=return_id)
+        ord_id = return_order.order.id
+        print("Return order details:", return_order)
+        print(return_order.status, return_order.request_return)
+        if return_order.request_return == True and return_order.status == "Delivered":
+            
+            total_discount = return_order.order.discounted_price
+            total_quantity = OrderItem.objects.filter(id=return_id).aggregate(total_quantity=Sum("qty"))["total_quantity"]
+            print("Total quantity:", total_quantity)
+            discount_per_item = float(total_discount) / float(total_quantity)
+            original_price = return_order.product.product.offer_price
+            refund_amount = (float(original_price) - float(discount_per_item)) * int(return_order.qty)
+            print("Refund amount:", refund_amount)
+
+            user = request.user
+            wallet, created = Wallet.objects.get_or_create(user=user)
+            wallet.balance += float(refund_amount)
+            wallet.save()
+
+            tranc_id = "REFUND_" + get_random_string(3, "ABCLMOZ456789")
+            while Wallet_transaction.objects.filter(transaction_id=tranc_id).exists():
+                tranc_id += get_random_string(3, "ABCDEFGHIJ456789")
+            print("Transaction ID:", tranc_id)
+
+            wallet_transaction_create = Wallet_transaction.objects.create(
+                wallet=wallet,
+                order_item=return_order,
+                money_deposit=abs(refund_amount),
+                transaction_id=tranc_id,
+            )
+            if return_order and not return_order.cancel:  
+                return_order.return_product = True
+                return_order.status = "Returned"
+                return_order.request_return = False
+                return_order.return_product = True
+                return_order.save()
+                messages.success(request, f"Amount of ₹{refund_amount} added to your Wallet.")
+                print("Order returned successfully")
+                return redirect("admin_order", ord_id)
         messages.info(request, "Order has already been returned")
-        return redirect("order")
+        return redirect("admin_order")
     else:
+        print("User is not superuser")
         return redirect("admin_login")
 
 
@@ -933,39 +1020,33 @@ def sales_report(request):
             to_date = request.GET.get("to")
             month = request.GET.get("month")
             year = request.GET.get("year")
-            daily = request.GET.get("daily")
-            print(f"{daily} this is dailyyyyyyyyyyyyyyyyy")
-            order = OrderItem.objects.none()
 
-            if from_date or to_date or month or year:
-                order = OrderItem.objects.filter(
-                    cancel=False,
-                    return_product=False,
-                    status="Delivered",
-                ).order_by("created_at")
 
-                if from_date:
-                    order = order.filter(created_at__gte=from_date)
-                elif to_date:
-                    order = order.filter(created_at__lte=to_date)
-                elif month:
-                    year, month = map(int, month.split('-'))
-                    order = order.filter(created_at__year=year, created_at__month=month)
-                elif year:
+
+            order = OrderItem.objects.filter(
+            cancel=False,
+            return_product=False,
+            status="Delivered",
+            ).order_by("created_at")
+                
+
+            if from_date:
+                order = order.filter(created_at__gte=from_date)
+            elif to_date:
+                order = order.filter(created_at__lte=to_date)
+            elif month:
+                year, month = map(int, month.split('-'))
+                order = order.filter(created_at__year=year, created_at__month=month)
+            elif year:
                     order = order.filter(created_at__year=year)
-
-            if daily:
-                order = OrderItem.objects.filter(
-                    cancel=False,
-                    return_product=False,
-                    status="Delivered",
-                ).order_by("created_at")
-
+                    
             count = order.count()
-            total = OrderItem.objects.aggregate(total=Sum("order__total"))["total"]
-            total_discount = OrderItem.objects.aggregate(
-                total_discount=Sum("order__discounted_price")
+            total = order.aggregate(total=Sum("order__total"))["total"]
+            total_discount = order.aggregate(
+            total_discount=Sum("order__discounted_price")
             )["total_discount"]
+
+            
 
             context = {
                 "order": order,
@@ -981,7 +1062,6 @@ def sales_report(request):
         else:
             messages.error(request, "You do not have permission to access this page.")
             return redirect("admin_login")
-
 
 
 

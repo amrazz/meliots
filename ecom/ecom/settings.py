@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
+    "crispy_forms",
+    'crispy_bootstrap4',
 ]
 
 
@@ -189,3 +191,6 @@ RAZOR_KEY_ID = "rzp_test_i5YPKuq85Rzcc0"
 RAZOR_KEY_SECRET = "8Oy3wO9MkuDhIfDcKurtY0IW"
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+
+
+CRISPY_TEMPLATE_PACK = "bootstrap4"

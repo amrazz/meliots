@@ -25,6 +25,9 @@ urlpatterns = [
     path("add_product/", views.add_product, name="add_product"),
     path("product_image/", views.product_image, name="product_image"),
     path("product_size/", views.product_size, name="product_size"),
+    path("category_offer/", views.category_offer, name="category_offer"),
+    path("add_category_offer/", views.add_category_offer, name="add_category_offer"),
+
     path("edit_product/<int:product_id>/", views.edit_product, name="edit_product"),
     path(
         "product_is_deleted/<int:product_id>/",
@@ -51,7 +54,7 @@ urlpatterns = [
     path("update_status/", views.update_status, name="update_status"),
     path("admin_order/<int:order_id>/", views.admin_order, name="admin_order"),
     path("cancel_order/<int:order_id>/", views.cancel_order, name="cancel_order"),
-    path("return_order/<int:order_id>/", views.return_order, name="return_order"),
+    path("return_order/<int:return_id>/", views.return_order, name="return_order"),
     path("admin_coupon/", views.admin_coupon, name="admin_coupon"),
     path("add_coupon/", views.add_coupon, name="add_coupon"),
     path("edit_coupon/<int:coupon_id>/", views.edit_coupon, name="edit_coupon"),

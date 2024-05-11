@@ -95,15 +95,15 @@ class ProductSize(models.Model):
 
 class CategoryOffer(models.Model):
     category = models.OneToOneField(Category, on_delete=models.CASCADE)
+    offer_name = models.CharField(max_length=100, null=True, blank=True)
     discount_percentage = models.PositiveIntegerField()
-    new_price = models.PositiveIntegerField(default=0)
-    old_price = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
     start_date = models.DateField(auto_now_add=True)
     end_date = models.DateField()
 
     def __str__(self):
         return f"{self.category.name} - {self.discount_percentage}% DISCOUNT FROM {self.start_date} :- {self.end_date}"
-
+        
 
 class Coupon(models.Model):
     coupon_code = models.CharField(max_length=100, unique=True)

@@ -500,11 +500,11 @@ def request_return_product(request, order_id):
         print("joiii")
         seven_days = timezone.now() - timedelta(days=7)
         order_item = OrderItem.objects.get(pk=order_id)
-        check = OrderItem.objects.filter(created_at__gt=seven_days)
-        if order_item in check:
+        print(order_item)
+        
+        if order_item.created_at > seven_days and order_item.status == "Delivered":
             print("reached here")
             order_item.request_return = True
-            order_item.status = "Pending"
             order_item.save()
             print(order_item.request_return)
             return redirect("view_status", order_id)
@@ -514,6 +514,7 @@ def request_return_product(request, order_id):
             )
             return redirect("view_status", order_id)
     return redirect("login")
+
 
 
 # _______________________________________________________________________________________________________________________
