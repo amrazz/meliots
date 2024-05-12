@@ -17,7 +17,7 @@ urlpatterns = [
     path("place_order/", views.place_order, name="place_order"),
     path("payment/success/", views.payment_success, name="payment_success"),
     path("order_detail/", views.order_detail, name="order_detail"),
-    path("view_order/", views.view_order, name="view_order"),
+    path("view_order/<int:ord_id>/", views.view_order, name="view_order"),
     path("view_status/<int:order_id>/", views.view_status, name="view_status"),
     path("wishlist_view/", views.wishlist_view, name="wishlist_view"),
     path("wishlist_add/<int:pro_id>/", views.wishlist_add, name="wishlist_add"),
@@ -32,4 +32,5 @@ urlpatterns = [
         views.request_return_product,
         name="request_return_product",
     ),
+    path('view_all_order/', views.view_all_order, name="view_all_order")
 ]

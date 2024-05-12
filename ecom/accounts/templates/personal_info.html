@@ -101,12 +101,12 @@
             <div class="row d-flex justify-content-end">
                 <div class="path">
                     <div class="l">
-                        <a href="#" style="color: red;">personal Information</a>
+                        <a href="{% url 'profile' %}" style="color: red;">personal Information</a>
 
                     </div>
                     <p class="text-secondary text-muted">_________________________________________</p>
                     <div>
-                        <a href="{% url 'view_order' %}">My Orders</a>
+                        <a href="{% url 'view_all_order' %}">My Orders</a>
                     </div>
                     <p class="text-secondary text-muted">_________________________________________</p>
                     <div>
@@ -119,6 +119,10 @@
                     <p class="text-secondary text-muted">_________________________________________</p>
                     <div>
                         <a href="#" id="changePasswordBtn">Change Password</a>
+                    </div>
+                    <p class="text-secondary text-muted">_________________________________________</p>
+                    <div>
+                        <a href="{% url 'referral' %}" id="changePasswordBtn">Referral</a>
                     </div>
                     <p class="text-secondary text-muted">_________________________________________</p>
                 </div>

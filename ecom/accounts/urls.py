@@ -39,5 +39,6 @@ urlpatterns = [
     ),
     path("wallet_view/", views.wallet_view, name="wallet_view"),
     path("filtered_products_cat/", views.filtered_products_cat, name="filtered_products_cat"),
-
+    path("referral/", views.referral, name="referral"),
+    path('invoice/<int:product_id>/', views.invoice, name='invoice'),
 ]

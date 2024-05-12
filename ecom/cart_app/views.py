@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, HttpResponse
+from django.shortcuts import render, redirect, HttpResponse,get_object_or_404
 from django.http import JsonResponse
 from .models import *
 from django.contrib import messages, auth
@@ -459,30 +459,40 @@ def payment_success(request):
 def order_detail(request):
     return render(request, "op.html")  # order purchased
 
-
-def view_order(request):
+def view_all_order(request):
     if request.user.is_authenticated:
-        customer = Customer.objects.get(user=request.user.pk)
-        items = OrderItem.objects.filter(order__customer=customer).order_by(
-            "-created_at"
-        )
-        context = {"items": items}
-        return render(request, "view_order.html", context)
+        user = request.user
+        customer = Customer.objects.get(user = user)
+        orders = OrderItem.objects.filter(order__customer = customer)
+        return render(request, "view_all_order.html", {'orders' : orders, },)
+    else:
+        return redirect('login')
 
+def view_order(request, ord_id):
+    if request.user.is_authenticated:
+        customer = get_object_or_404(Customer, user=request.user)
+        order = get_object_or_404(Order, pk=ord_id)
+        items = OrderItem.objects.filter(order=order).order_by("-created_at")
+        context = {"order": order, "items": items}
+        return render(request, "view_order.html", context)
+    else:
+        return redirect('login')
 
 def view_status(request, order_id):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user=request.user.pk)
         order_items = OrderItem.objects.get(pk=order_id)
+        currentTime = timezone.now().date()  
         status_info = {
             "Order Placed": {"color": "#009608", "label": "Order Placed"},
             "Shipped": {"color": "#009608", "label": "Shipped"},
             "Out for Delivery": {"color": "#009608", "label": "Out for Delivery"},
             "Delivered": {"color": "#009608", "label": "Delivered"},
         }
-        context = {"order_items": order_items, "status_info": status_info}
+        context = {"order_items": order_items, "status_info": status_info, "currentTime": currentTime}
         return render(request, "view_status.html", context)
-
+    else:
+        return redirect('login')
 
 def request_cancel_order(request, order_id):
     print(order_id)

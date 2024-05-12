@@ -2,6 +2,7 @@ import re
 import random
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
+from django.http import HttpResponse
 from django.contrib import messages, auth
 from django.views.decorators.cache import never_cache
 from django.contrib.auth import authenticate, login, logout
@@ -22,7 +23,8 @@ from django.http import JsonResponse
 from django.template.loader import render_to_string
 from admin_app.models import *
 from .models import *
-
+from django.urls import reverse
+import pdfkit
 from cart_app.models import *
 
 PRODUCT_PER_PAGE = 9
@@ -361,19 +363,19 @@ def log_out(request):
     return redirect("index")
 
 
+
 @never_cache
 def index(request):
     if request.user.is_authenticated:
-        first_name_capitalized = request.user.first_name.title()
         products_color = ProductColorImage.objects.filter(product__is_deleted=False)
         products = Product.objects.filter(is_listed=True)
         context = {
-            "username": first_name_capitalized,
-            "products_color": products_color,
-            "products": products,
+        "products_color": products_color,
+        "products": products,
         }
         return render(request, "index.html", context)
     return render(request, "index.html")
+
 
 
 @never_cache
@@ -897,10 +899,12 @@ def change_password(request, pass_id):
 
 def address(request):
     try:
-
-        address = Address.objects.filter(user=request.user.pk)
-        context = {"address": address}
-        return render(request, "address.html", context)
+        if request.user.is_authenticated:
+            address = Address.objects.filter(user=request.user.pk)
+            context = {"address": address}
+            return render(request, "address.html", context)
+        else:
+            return redirect("login")
     except:
         return render(request, "address.html")
 
@@ -1014,9 +1018,13 @@ def edit_address(request, address_id):
 
 def delete_address(request, address_id):
     try:
-        data = Address.objects.get(id=address_id)
-        data.delete()
-        return redirect("address")
+        if not request.user.is_authenticated:
+            data = Address.objects.get(id=address_id)
+            data.delete()
+            messages.success(request, "Address deleted successfully.")
+            return redirect("address")
+        else:
+            return redirect("login")
     except:
         return redirect("address")
 
@@ -1035,5 +1043,37 @@ def wallet_view(request):
         )
         context = {"wallet": wallet, "wallet_transactions": wallet_transactions}
         return render(request, "wallet.html", context)
+    else:
+        return redirect("login")
+
+
+def invoice(request, product_id):
+    if request.user.is_authenticated:
+        user = Customer.objects.get(user=request.user)
+        order_items = OrderItem.objects.get(id=product_id, order__customer=user)
+        total = order_items.product.product.offer_price * order_items.qty
+        context = {"order_items": order_items, "total": total}
+        html_string = render_to_string('invoice.html', context)
+
+        # Define the configuration for pdfkit
+        config = pdfkit.configuration(wkhtmltopdf='C:\\Users\\DELL\\OneDrive\\Desktop\\Python\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
+
+        pdf = pdfkit.from_string(html_string, False, configuration=config)
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'filename="invoice.pdf"'
+
+        return response
+    else:
+        return redirect("login")
+        # return render(request, "invoice.html", context)
+
+def referral(request):
+    if request.user.is_authenticated:
+        user = request.user
+        customer = Customer.objects.get(user=user)
+        
+        amount = customer.referral_count * 100
+        
+        return render(request, 'referral.html', {'customer': customer, 'amount': amount})
     else:
         return redirect("login")

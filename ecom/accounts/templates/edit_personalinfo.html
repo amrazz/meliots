@@ -75,7 +75,7 @@
                                         <p class="text-secondary text-muted">_________________________________________
                                         </p>
                                         <div>
-                                            <a href="{% url 'view_order' %}">My Orders</a>
+                                            <a href="{% url 'view_all_order' %}">My Orders</a>
                                         </div>
                                         <p class="text-secondary text-muted">_________________________________________
                                         </p>
@@ -87,10 +87,14 @@
                                         </p>
 
                                         <div>
-                                            <a href="#">Wallet</a>
+                                            <a href="{% url 'wallet_view' %}">Wallet</a>
                                         </div>
                                         <p class="text-secondary text-muted">_________________________________________
                                         </p>
+                                        <div>
+                                            <a href="#" id="changePasswordBtn">Refferral</a>
+                                        </div>
+                                        <p class="text-secondary text-muted">_________________________________________</p>
                                     </div>
                                     <div class="col-lg-8">
                                         <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>

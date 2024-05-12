@@ -4,7 +4,38 @@
 
 {% block content %}
 
-<style>
+    <style>
+   .order-overview {
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        padding: 27px;
+        transition: all 0.3s ease;
+    }
+
+   .order-overview:hover {
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        transform: scale(1.05);
+
+    }
+
+   .order-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+   .order-details.order-id {
+        font-weight: bold;
+    }
+
+   .order-details.product-name {
+        font-weight: bold;
+    }
+
+   .order-details.total-price {
+        font-weight: bold;
+    }
     .path a {
         margin-bottom: 5px;
         color: #000;
@@ -37,6 +68,9 @@
     .align-right-btn {
         float: right;
     }
+    .product-details {
+    padding-top: 20px;
+}
 </style>
 
 
@@ -47,7 +81,7 @@
             <div class="col-lg-12">
                 <div class="breadcrumb__links">
                     <a href="{% url 'index' %}"><i class="fa fa-home"></i> Home</a>
-                    <a href="{% url 'view_all_order' %}"><i></i>My Orders</a>
+                    <a href="{% url 'view_all_order' %}"><i></i>Orders</a>
                 </div>
             </div>
         </div>
@@ -102,50 +136,33 @@
                     </script>
                     <br>
                     <h5 class="d-flex justify-content-center">MY ORDERS</h5>
-                    <div class="row">
-                        <div class="col-lg-12 order_table">
                             <!-- Table containing order details -->
-                            {% if items %}
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Product</th>
-                                        <th>Product Name</th>
-                                        <th>Price</th>
-                                        <th>Size</th>
-                                        <th>Total</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for i in items %}
-                                    <tr>
-                                        <td><img src="{{ i.product.image1.url }}" alt=""
-                                                style="width: 50px;height: 70px;border-radius: 7px;"></td>
-                                        <td>{{ i.product.product.name }}</td>
-                                        <td style="color: red;display: flex;width: 90px;">₹
-                                            {{i.product.product.offer_price }}</td>
-                                        <td>{{ i.size }}</td>
-                                        <td style="color: red;display: flex;width: 90px;">₹{{ i.order.total }}</td>
-                                        <td>
-                                            <a href="{% url 'view_status' i.pk %}">
-                                                <div class="btn btn-outline-primary">Status</div>
-                                            </a>
-                                        </td>
-                                    </tr>
+                            {% if orders %}
+                            <div class="row">
+                                <div class="col-lg-12 order-overview">
+                                    {% for order in orders %}
+                                        {% if forloop.first %}
+                                            <div class="order-details d-inline-block">
+                                               <div class="d-flex justify-content-between ">
+                                                <span class="order-id">Order ID: {{ order.order.tracking_id }}</span><a href="{% url 'view_order' order.order.id %}" class="btn btn-outline-secondary ">View details</a>
+                                               </div>
+                                                <br><hr>
+                                        {% endif %}
+                                        <div class="product-details">
+                                            <span class="product-name">Product Name: {{ order.product.product.name }} ({{order.product.color}}) size:({{order.size}})</span><br>
+                                            <span class="total-price">Total Price: ₹{{ order.product.product.offer_price }} Quantity: {{ order.qty }}</span><br>
+                                        </div>
+                                        {% if forloop.last %}
+                                            </div>
+                                        {% endif %}
                                     {% endfor %}
-
-                                    
-                                </tbody>
-
-                               
-                            </table>
-                            {% else %}
-
-                            <div class="d-flex justify-content-center ">
-                                <h5><b>YOU HAVEN'T ORDERED ANY PRODUCTS YET.</b></h5>
+                                </div>
                             </div>
-                            {% endif %}
+                        {% else %}
+                            <div class="d-flex justify-content-center ">
+                                <h5><b>YOU HAVEN'T ORDERED ANYTHING YET.</b></h5>
+                            </div>
+                        {% endif %}
                         </div>
                         
                         <br><br>

@@ -1021,14 +1021,11 @@ def sales_report(request):
             month = request.GET.get("month")
             year = request.GET.get("year")
 
-
-
             order = OrderItem.objects.filter(
-            cancel=False,
-            return_product=False,
-            status="Delivered",
+                cancel=False,
+                return_product=False,
+                status="Delivered",
             ).order_by("created_at")
-                
 
             if from_date:
                 order = order.filter(created_at__gte=from_date)
@@ -1038,15 +1035,13 @@ def sales_report(request):
                 year, month = map(int, month.split('-'))
                 order = order.filter(created_at__year=year, created_at__month=month)
             elif year:
-                    order = order.filter(created_at__year=year)
-                    
+                order = order.filter(created_at__year=year)
+                
             count = order.count()
             total = order.aggregate(total=Sum("order__total"))["total"]
             total_discount = order.aggregate(
-            total_discount=Sum("order__discounted_price")
+                total_discount=Sum("order__discounted_price")
             )["total_discount"]
-
-            
 
             context = {
                 "order": order,
@@ -1062,7 +1057,9 @@ def sales_report(request):
         else:
             messages.error(request, "You do not have permission to access this page.")
             return redirect("admin_login")
-
+    else:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect("admin_login")
 
 
 def download_sales_report(request):

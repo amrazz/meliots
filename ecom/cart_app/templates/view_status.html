@@ -39,9 +39,18 @@
                 <div class="col">
 
 
-                    <p class="text-muted"> Order ID : <span class="font-weight-bold text-dark">{{order_items.order.tracking_id}}</span></p>
-                    <p class="text-muted">Place On <span class="font-weight-bold text-dark">{{ order_items.created_at|date:"F d, Y" }}</span>
-                    </p>
+                   <div class="d-flex justify-content-between ">
+                    <div class="div">
+                        <p class="text-muted"> Order ID : <span class="font-weight-bold text-dark">{{order_items.order.tracking_id}}</span></p>
+                    <p class="text-muted">Place On <span class="font-weight-bold text-dark">{{ order_items.created_at|date:"F d, Y" }}</span></p>
+                    </div>
+                    <div>
+                       {% if not order_items.request_cancel and not order_items.cancel and not order_items.request_return and not order_items.return_product and order_items.status == 'Delivered' %}
+                       <a href="{% url 'invoice' order_items.id %}" class="btn btn-success mr3" style="margin-top: 18px;width: 167px;"><i class="fa-solid fa-download"></i> Invoice</a>
+                       {% endif %}
+                    </div>
+                   </div>
+
                 </div>
 
 
@@ -248,7 +257,15 @@
                 {% elif order_items.status == 'Delivered' and order_items.request_return == True %}
                 <button type="button" class="btn btn-primary" disabled>Return Requested</button>
                 {% elif order_items.status == 'Delivered' %}
-                <a href="{% url 'request_return_product' order_items.id %}" class="btn btn-outline-secondary">Return</a>
+                {% with delivery_date=order_items.created_at|date:"Y-m-d" %}
+                    {% with seven_days_ago=delivery_date|date:"Y-m-d"|add:"-7 days" %}
+                        {% if currentTime|date:"Y-m-d" >= seven_days_ago %}
+                            <a href="{% url 'request_return_product' order_items.id %}" class="btn btn-outline-secondary">Return</a>
+                        {% else %}
+                            <button class="btn btn-outline-secondary" disabled>Return</button>
+                        {% endif %}
+                    {% endwith %}
+                {% endwith %}
                 {% elif order_items.status == 'Shipped' %}
                 <button type="button" class="btn btn-primary" disabled>You cannot Cancel after Shipped</button>
                 {% elif order_items.status == 'Cancelled' %}
