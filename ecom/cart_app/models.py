@@ -117,6 +117,7 @@ class OrderItem(models.Model):
 class Wallet(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     balance = models.PositiveBigIntegerField(blank=True, default=0)
+    referral_deposit =  models.PositiveBigIntegerField(blank=True, default=0)
 
     def __str__(self):
         name = f"{self.user.first_name} {self.user.last_name} "
@@ -134,7 +135,7 @@ def Create_User_Wallet(sender, instance, created, **kwargs):
 
 class Wallet_transaction(models.Model):
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE)
-    order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE)
+    order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE, null=True, blank=True)
     transaction_id = models.CharField(
         max_length=50,
         unique=True,

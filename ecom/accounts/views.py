@@ -35,6 +35,8 @@ def register(request):
     try:
         if request.user.is_authenticated:
             return redirect("index")
+        
+        referral_code = request.GET.get('ref')
 
         if request.method == "POST":
             first_name = request.POST.get("f_name")
@@ -43,55 +45,82 @@ def register(request):
             email = request.POST.get("email")
             password1 = request.POST.get("pass1")
             password2 = request.POST.get("pass2")
+            referral_code_manual = request.POST.get("referral_code")
+            print(referral_code)
+            
+            if referral_code_manual:
+                referral_code = referral_code_manual
+                
+            if referral_code:
+                if not Customer.objects.filter(referral_code=referral_code).exists():
+                    messages.error(request, "Invalid Referral Code")
+                    print("Invalid Referral Code")
+                    return redirect("register")
+                else:
+                    request.session["referral_code"] = referral_code
+                    print(f"[DEBUG] Referral Code in sessions: {request.session.get("referral_code")}")
 
             if not all([first_name, last_name, username, email, password1, password2]):
                 messages.error(request, "Please fill up all the fields.")
+                print("Please fill up all the fields")
                 return redirect("register")
 
             elif User.objects.filter(username=username).exists():
                 messages.error(request, "The username is already taken")
+                print("The username is already taken")
                 return redirect("register")
 
             if not username.strip():
                 messages.error(request, "The username is not valid")
+                print("The username is not valid")
                 return redirect("register")
 
             if len(password1) < 6:
                 messages.error(request, "The password should be at least 6 characters")
+                print("The password should be at least 6 characters")
                 return redirect("register")
 
             elif password1 != password2:
                 messages.error(request, "The passwords do not match")
+                print("The passwords do not match")
                 return redirect("register")
+
+            
 
             try:
                 validate_password(password1, user=User)
             except ValidationError as e:
                 messages.error(request, ", ".join(e))
+                print(", ".join(e))
                 return redirect("register")
 
             if not any(char.isupper() for char in password1):
                 messages.error(
                     request, "Password must contain at least one uppercase letter"
                 )
+                print("Password must contain at least one uppercase letter")
                 return redirect("register")
 
             if not any(char.islower() for char in password1):
                 messages.error(
                     request, "Password must contain at least one lowercase letter"
                 )
+                print("Password must contain at least one lowercase letter")
                 return redirect("register")
 
             if not any(char.isdigit() for char in password1):
                 messages.error(request, "Password must contain at least one digit")
+                print("Password must contain at least one digit")
                 return redirect("register")
 
             elif not re.match(r"^[\w\.-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
                 messages.error(request, "Please enter a valid email address")
+                print("Please enter a valid email address")
                 return redirect("register")
 
             elif User.objects.filter(email=email).exists():
                 messages.error(request, "This email is already registered")
+                print("This email is already registered")
                 return redirect("register")
 
             otp, otp_generated_at = generate_otp_and_send_email(email)
@@ -115,10 +144,13 @@ def register(request):
 
     except ValidationError as e:
         messages.error(request, ", ".join(e))
+        print(", ".join(e))
         return redirect("register")
     except Exception as e:
         messages.error(request, str(e))
+        print(str(e))
         return redirect("register")
+
 
 
 def generate_otp_and_send_email(email):
@@ -156,10 +188,10 @@ def otp(request):
             return redirect("index")
 
         email = request.session.get("user_data", {}).get("email", "")
-        print(email)
+        print(f"[DEBUG] email: {email}")
         if request.method == "POST":
             otp_digits = [request.POST.get(f"digit{i}") for i in range(1, 5)]
-            print("top digits are ", otp_digits)
+            print(f"[DEBUG] otp_digits: {otp_digits}")
             if None in otp_digits:
                 messages.error(request, "Invalid OTP format, please try again.")
                 return redirect("my_otp")
@@ -168,6 +200,7 @@ def otp(request):
             stored_otp = request.session.get("user_data", {}).get("otp")
             user_data = request.session.get("user_data", {})
             otp_generated_at = user_data.get("otp_generated_at", "")
+            referral_code = request.session.get("referral_code", "")
 
             try:
                 otp_generated_at_datetime = datetime.fromisoformat(otp_generated_at)
@@ -180,7 +213,7 @@ def otp(request):
             ):
                 messages.error(request, "OTP has expired. Please try again.")
                 return redirect("register")
-            print(f" entered otp:{entered_otp} == stored_otp{stored_otp}")
+            print(f"[DEBUG] entered otp: {entered_otp} == stored_otp: {stored_otp}")
             if str(entered_otp) == str(stored_otp):
                 user = User.objects.create_user(
                     username=user_data["username"],
@@ -191,8 +224,61 @@ def otp(request):
                 )
                 user.save()
                 del request.session["user_data"]
-                messages.success(request, f"{user.username} created successfully.")
-                return redirect("login")
+                
+                if referral_code:
+                    if Customer.objects.filter(referral_code=referral_code).exists():
+                        print(f"[DEBUG] Referral code {referral_code} exists")
+                        print(f"users : {user}")
+
+                        
+                        referred_customer = Customer.objects.get(referral_code=referral_code)
+                        referred_customer.referral_count += 1
+                        referred_customer.save()
+                        print(f"referredddd customerrsss : {referred_customer}")
+                        
+                        referred_customer_user = referred_customer.user
+                        referred_customer_credit, created = Wallet.objects.get_or_create(user=referred_customer_user)
+                        referred_customer_credit.balance += 100
+                        referred_customer_credit.referral_deposit += 100
+                        referred_customer_credit.save()
+                        
+                        referred_transaction_id = "REFERRAL_"
+                        referred_transaction_id += get_random_string(4, "MOZ0123456789")
+                        while Wallet_transaction.objects.filter(transaction_id=referred_transaction_id).exists():
+                            referred_transaction_id += get_random_string(4, "MOZ0123456789")
+                        print(f"[DEBUG] Transaction ID for referred customer: {referred_transaction_id}")
+                        
+                        referred_customer_transaction = Wallet_transaction.objects.create(
+                            wallet=referred_customer_credit,
+                            transaction_id=referred_transaction_id,
+                            money_deposit =100
+                        )
+                        print(f"[DEBUG] referred_customer_transaction {referred_customer_transaction} created successfully.")
+                        
+                        customer = Customer.objects.get(user=user)
+                        customer.referred_person = referred_customer_user.username
+                        customer.save()
+                        
+                        
+                        referring_customer_credit, created = Wallet.objects.get_or_create(user=customer.user)
+                        referring_customer_credit.balance += 50
+                        referring_customer_credit.referral_deposit += 50
+                        referring_customer_credit.save()
+                        
+                        referring_transaction_id = "REFERRAL_"
+                        referring_transaction_id += get_random_string(4, "MOZ0123456789")
+                        while Wallet_transaction.objects.filter(transaction_id=referring_transaction_id).exists():
+                            referring_transaction_id += get_random_string(4, "MOZ0123456789")
+                        print(f"[DEBUG] Transaction ID for referring customer: {referring_transaction_id}")
+                        
+                        referring_customer_transaction = Wallet_transaction.objects.create(
+                            wallet=referring_customer_credit,
+                            transaction_id=referring_transaction_id,
+                            money_deposit = 50
+                        )
+                        print(f"[DEBUG] referring_customer_transaction {referring_customer_transaction} created successfully.")
+                        messages.success(request, f"{user.username} created successfully.")
+                        return redirect("login")
             else:
                 messages.error(request, "Invalid OTP, try again.")
                 return redirect("my_otp")
@@ -200,6 +286,7 @@ def otp(request):
         return render(request, "otp.html", {"email": email})
 
     except Exception as e:
+        print(f"[DEBUG] Exception: {e}")
         messages.error(request, str(e))
         return redirect("register")
 
@@ -1071,9 +1158,13 @@ def referral(request):
     if request.user.is_authenticated:
         user = request.user
         customer = Customer.objects.get(user=user)
-        
+        referral_code = customer.referral_code
         amount = customer.referral_count * 100
-        
-        return render(request, 'referral.html', {'customer': customer, 'amount': amount})
+        sign_up_url = reverse("register")
+
+        referral_link = request.build_absolute_uri(
+            sign_up_url + f"?ref={referral_code}"
+        )
+        return render(request, 'referral.html', {'customer': customer, 'amount': amount, 'referral_link': referral_link})
     else:
         return redirect("login")
