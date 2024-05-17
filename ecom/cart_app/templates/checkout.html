@@ -175,23 +175,42 @@
                         <legend>Payment Method</legend>
 
                         <div class="form__radios">
-                            <div class="form__radio">
-                                <video id="cod-video" width="50" height="50" autoplay muted loop
-                                    style="border-radius: 100px;">
-                                    <source
-                                        src="https://d1jj76g3lut4fe.cloudfront.net/processed/thumb/05ggV0j3NkL863RlQG.mp4"
-                                        type="video/mp4">
-                                </video>
-
-                                <label for="visa">COD</label>
-                                <input checked id="visa" name="payment_method" value="COD" type="radio">
-                            </div>
-
+                            {% if total > 3000 %}
+                                <div class="form__radio">
+                                    <video id="cod-video" width="50" height="50" autoplay muted loop style="border-radius: 100px;">
+                                        <source src="https://d1jj76g3lut4fe.cloudfront.net/processed/thumb/05ggV0j3NkL863RlQG.mp4" type="video/mp4">
+                                    </video>
+                                    <label for="visa"><strike>COD</strike></label>
+                                    <input checked id="visa" name="payment_method" value="COD" type="radio" disabled>
+                                </div>
+                                {% else %}
+                                <div class="form__radio">
+                                    <video id="cod-video" width="50" height="50" autoplay muted loop style="border-radius: 100px;">
+                                        <source src="https://d1jj76g3lut4fe.cloudfront.net/processed/thumb/05ggV0j3NkL863RlQG.mp4" type="video/mp4">
+                                    </video>
+                                    <label for="visa">COD</label>
+                                    <input checked id="visa" name="payment_method" value="COD" type="radio" >
+                                </div>
+                            {% endif %}
                             <div class="form__radio">
                                 <img style="width: 58px;height: 14px;padding-right: 7px;"
                                     src="{% static 'img/Razorpay-icon.png' %}" alt="">
                                 <label for="razorpay">Razor Pay</label>
                                 <input id="razorpay" name="payment_method" type="radio" value="Razorpay">
+                            </div>
+                            <!-- <div class="form__radio">
+                                <video id="cod-video" width="50" height="50" autoplay muted loop style="border-radius: 100px;">
+                                    <source src="https://d1jj76g3lut4fe.cloudfront.net/processed/thumb/05ggV0j3NkL863RlQG.mp4" type="video/mp4">
+                                </video>
+                                <label for="visa">Wallet</label>
+                                <input checked id="visa" name="payment_method" value="wallet" type="radio" >
+                            </div> -->
+
+                                  <div class="form__radio">
+                                    <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script> 
+                                    <dotlottie-player src="https://lottie.host/e470aa01-1034-4047-b3b9-2fc76c6e1e69/8Zwovk56Nx.json" background="transparent" speed="1" style="width: 61px; height: 35px;" loop autoplay></dotlottie-player>
+                                <label for="visa">Wallet</label>
+                                <input checked id="visa" name="payment_method" value="wallet" type="radio" >
                             </div>
                         </div><br><br>
 
@@ -236,7 +255,6 @@
                 "handler": function (response) {
                     // Handle Razorpay payment success response
                     form.submit();
-                     
                 },
 
                 "theme": {

@@ -32,5 +32,6 @@ urlpatterns = [
         views.request_return_product,
         name="request_return_product",
     ),
-    path('view_all_order/', views.view_all_order, name="view_all_order")
+    path("view_all_order/", views.view_all_order, name="view_all_order"),
+    path("payment_failure/", views.payment_failure, name="payment_failure"),
 ]

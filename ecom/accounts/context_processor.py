@@ -1,5 +1,6 @@
 from cart_app.models import *
 
+
 def default(request):
     if request.user.is_authenticated:
         user = request.user

@@ -35,8 +35,8 @@ def register(request):
     try:
         if request.user.is_authenticated:
             return redirect("index")
-        
-        referral_code = request.GET.get('ref')
+
+        referral_code = request.GET.get("ref")
 
         if request.method == "POST":
             first_name = request.POST.get("f_name")
@@ -47,10 +47,10 @@ def register(request):
             password2 = request.POST.get("pass2")
             referral_code_manual = request.POST.get("referral_code")
             print(referral_code)
-            
+
             if referral_code_manual:
                 referral_code = referral_code_manual
-                
+
             if referral_code:
                 if not Customer.objects.filter(referral_code=referral_code).exists():
                     messages.error(request, "Invalid Referral Code")
@@ -58,7 +58,19 @@ def register(request):
                     return redirect("register")
                 else:
                     request.session["referral_code"] = referral_code
-                    print(f"[DEBUG] Referral Code in sessions: {request.session.get("referral_code")}")
+                    print(
+                        f"[DEBUG] Referral Code in sessions: {request.session.get("referral_code")}"
+                    )
+            request.session['form_data'] = {
+                "first_name": first_name,
+                "last_name": last_name,
+                "username": username,
+                "email": email,
+                "password1": password1,
+                "password2": password2,
+                "referral_code": referral_code,
+            }
+            print(f"[DEBUG] Form data: {request.session['form_data']}")
 
             if not all([first_name, last_name, username, email, password1, password2]):
                 messages.error(request, "Please fill up all the fields.")
@@ -84,8 +96,6 @@ def register(request):
                 messages.error(request, "The passwords do not match")
                 print("The passwords do not match")
                 return redirect("register")
-
-            
 
             try:
                 validate_password(password1, user=User)
@@ -136,11 +146,12 @@ def register(request):
             )
             print(otp)
             messages.success(request, f"Welcome {first_name}")
-
+            del request.session['form_data']
             return redirect("my_otp")
 
         else:
-            return render(request, "register.html")
+            form_data = request.session.get('form_data', {})
+            return render(request, "register.html", {"form_data": form_data})
 
     except ValidationError as e:
         messages.error(request, ", ".join(e))
@@ -150,7 +161,6 @@ def register(request):
         messages.error(request, str(e))
         print(str(e))
         return redirect("register")
-
 
 
 def generate_otp_and_send_email(email):
@@ -224,61 +234,87 @@ def otp(request):
                 )
                 user.save()
                 del request.session["user_data"]
-                
+
                 if referral_code:
                     if Customer.objects.filter(referral_code=referral_code).exists():
                         print(f"[DEBUG] Referral code {referral_code} exists")
                         print(f"users : {user}")
 
-                        
-                        referred_customer = Customer.objects.get(referral_code=referral_code)
+                        referred_customer = Customer.objects.get(
+                            referral_code=referral_code
+                        )
                         referred_customer.referral_count += 1
                         referred_customer.save()
                         print(f"referredddd customerrsss : {referred_customer}")
-                        
+
                         referred_customer_user = referred_customer.user
-                        referred_customer_credit, created = Wallet.objects.get_or_create(user=referred_customer_user)
+                        referred_customer_credit, created = (
+                            Wallet.objects.get_or_create(user=referred_customer_user)
+                        )
                         referred_customer_credit.balance += 100
                         referred_customer_credit.referral_deposit += 100
                         referred_customer_credit.save()
-                        
+
                         referred_transaction_id = "REFERRAL_"
                         referred_transaction_id += get_random_string(4, "MOZ0123456789")
-                        while Wallet_transaction.objects.filter(transaction_id=referred_transaction_id).exists():
-                            referred_transaction_id += get_random_string(4, "MOZ0123456789")
-                        print(f"[DEBUG] Transaction ID for referred customer: {referred_transaction_id}")
-                        
-                        referred_customer_transaction = Wallet_transaction.objects.create(
-                            wallet=referred_customer_credit,
-                            transaction_id=referred_transaction_id,
-                            money_deposit =100
+                        while Wallet_transaction.objects.filter(
+                            transaction_id=referred_transaction_id
+                        ).exists():
+                            referred_transaction_id += get_random_string(
+                                4, "MOZ0123456789"
+                            )
+                        print(
+                            f"[DEBUG] Transaction ID for referred customer: {referred_transaction_id}"
                         )
-                        print(f"[DEBUG] referred_customer_transaction {referred_customer_transaction} created successfully.")
-                        
+
+                        referred_customer_transaction = (
+                            Wallet_transaction.objects.create(
+                                wallet=referred_customer_credit,
+                                transaction_id=referred_transaction_id,
+                                money_deposit=100,
+                            )
+                        )
+                        print(
+                            f"[DEBUG] referred_customer_transaction {referred_customer_transaction} created successfully."
+                        )
+
                         customer = Customer.objects.get(user=user)
                         customer.referred_person = referred_customer_user.username
                         customer.save()
-                        
-                        
-                        referring_customer_credit, created = Wallet.objects.get_or_create(user=customer.user)
+
+                        referring_customer_credit, created = (
+                            Wallet.objects.get_or_create(user=customer.user)
+                        )
                         referring_customer_credit.balance += 50
                         referring_customer_credit.referral_deposit += 50
                         referring_customer_credit.save()
-                        
+
                         referring_transaction_id = "REFERRAL_"
-                        referring_transaction_id += get_random_string(4, "MOZ0123456789")
-                        while Wallet_transaction.objects.filter(transaction_id=referring_transaction_id).exists():
-                            referring_transaction_id += get_random_string(4, "MOZ0123456789")
-                        print(f"[DEBUG] Transaction ID for referring customer: {referring_transaction_id}")
-                        
-                        referring_customer_transaction = Wallet_transaction.objects.create(
-                            wallet=referring_customer_credit,
-                            transaction_id=referring_transaction_id,
-                            money_deposit = 50
+                        referring_transaction_id += get_random_string(
+                            4, "MOZ0123456789"
                         )
-                        print(f"[DEBUG] referring_customer_transaction {referring_customer_transaction} created successfully.")
-                        messages.success(request, f"{user.username} created successfully.")
-                        return redirect("login")
+                        while Wallet_transaction.objects.filter(
+                            transaction_id=referring_transaction_id
+                        ).exists():
+                            referring_transaction_id += get_random_string(
+                                4, "MOZ0123456789"
+                            )
+                        print(
+                            f"[DEBUG] Transaction ID for referring customer: {referring_transaction_id}"
+                        )
+
+                        referring_customer_transaction = (
+                            Wallet_transaction.objects.create(
+                                wallet=referring_customer_credit,
+                                transaction_id=referring_transaction_id,
+                                money_deposit=50,
+                            )
+                        )
+                        print(
+                            f"[DEBUG] referring_customer_transaction {referring_customer_transaction} created successfully."
+                        )
+                    messages.success(request, f"{user.username} created successfully.")
+                    return redirect("login")
             else:
                 messages.error(request, "Invalid OTP, try again.")
                 return redirect("my_otp")
@@ -450,19 +486,19 @@ def log_out(request):
     return redirect("index")
 
 
-
 @never_cache
 def index(request):
     if request.user.is_authenticated:
+        banners = Banner.objects.filter(is_listed = True).order_by("-id")
         products_color = ProductColorImage.objects.filter(product__is_deleted=False)
         products = Product.objects.filter(is_listed=True)
         context = {
-        "products_color": products_color,
-        "products": products,
+            "products_color": products_color,
+            "products": products,
+            'banners' : banners
         }
         return render(request, "index.html", context)
     return render(request, "index.html")
-
 
 
 @never_cache
@@ -703,10 +739,10 @@ def kids_page(request):
 def shop_page(request):
     ordering = request.GET.get("ordering", "name")
     products_color = ProductColorImage.objects.filter(is_listed=True, is_deleted=False)
-    colors = ProductColorImage.objects.filter(is_listed=True, is_deleted=False).distinct("color")
+    colors = ProductColorImage.objects.filter(
+        is_listed=True, is_deleted=False
+    ).distinct("color")
     brands = Brand.objects.filter(is_listed=True)
-
-    
 
     min_price = request.GET.get("min_price")
     max_price = request.GET.get("max_price")
@@ -733,7 +769,6 @@ def shop_page(request):
         for category in categories_filter:
             category_filters |= Q(product__category__name=category)
         products_color = products_color.filter(category_filters)
-    
 
     if ordering == "name":
         products_color = products_color.order_by("product__name")
@@ -766,8 +801,8 @@ def shop_page(request):
         "page_obj": products,
         "is_paginated": product_Paginator.num_pages > 1,
         "paginator": product_Paginator,
-        'brands' : brands,
-        'colors' : colors
+        "brands": brands,
+        "colors": colors,
     }
     return render(request, "shop.html", context)
 
@@ -783,48 +818,47 @@ def search_pro(request):
                 product__is_deleted=False, product__name__icontains=query
             )
 
-
             context = {"products_color": products_color, "query": query}
             return render(request, "filter/search.html", context)
     except Exception as e:
         messages.error(request, "Something went wrong please try again.")
         return redirect("index")
-    
+
 
 @never_cache
 def filtered_products_cat(request):
     print("Filtered products by category, brand, and color")
     print("Request:", request)
-    selected_category_ids = request.GET.getlist('category')  
-    selected_brand_ids = request.GET.getlist('brand')
-    selected_color_ids = request.GET.getlist('color')
+    selected_category_ids = request.GET.getlist("category")
+    selected_brand_ids = request.GET.getlist("brand")
+    selected_color_ids = request.GET.getlist("color")
 
-    
-    
     print("Selected category:", selected_category_ids)
     print("Selected brand:", selected_brand_ids)
     print("Selected color:", selected_color_ids)
-    
+
     categories = Category.objects.filter(is_listed=True)
     brands = Brand.objects.filter(is_listed=True)
-    colors = ProductColorImage.objects.filter(is_deleted = False, is_listed = True).distinct("color")
-    
+    colors = ProductColorImage.objects.filter(
+        is_deleted=False, is_listed=True
+    ).distinct("color")
+
     products = ProductColorImage.objects.filter(
-        Q(product__category__in=selected_category_ids) |
-        Q(product__brand__in=selected_brand_ids) |
-        Q(color__in=selected_color_ids)
+        Q(product__category__in=selected_category_ids)
+        | Q(product__brand__in=selected_brand_ids)
+        | Q(color__in=selected_color_ids)
     ).distinct()
-    
+
     selected_category_ids = [int(category_id) for category_id in selected_category_ids]
     selected_brand_ids = [int(brand_id) for brand_id in selected_brand_ids]
     selected_color_ids = [color for color in selected_color_ids]
 
     print("Products:", products)
-    
+
     context = {
-        'categories': categories,
-        'brands': brands,
-        'colors': colors,
+        "categories": categories,
+        "brands": brands,
+        "colors": colors,
         "products_color": products,
         "selected_category": selected_category_ids,
         "selected_brand": selected_brand_ids,
@@ -836,7 +870,7 @@ def filtered_products_cat(request):
 @never_cache
 def filter_products_by_price(request):
     try:
-        if request.method == 'GET':
+        if request.method == "GET":
             min_price = request.GET.get("min", 500)[1:]
             max_price = request.GET.get("max", 50000)[1:]
 
@@ -844,33 +878,39 @@ def filter_products_by_price(request):
             print("Maximum price:", max_price)
 
             product_color_images = ProductColorImage.objects.filter(
-            product__is_listed=True, product__is_deleted=False
+                product__is_listed=True, product__is_deleted=False
             )
             categories = Category.objects.filter(is_listed=True)
             brands = Brand.objects.filter(is_listed=True)
-            colors = ProductColorImage.objects.filter(is_deleted = False, is_listed = True).distinct("color")
-            
+            colors = ProductColorImage.objects.filter(
+                is_deleted=False, is_listed=True
+            ).distinct("color")
 
             # Annotate the queryset with the offer price
             product_color_images = product_color_images.annotate(
                 calculated_offer_price=ExpressionWrapper(
-                    F('product__price') - (F('product__percentage') * F('product__price') / 100),
-                    output_field=FloatField()
+                    F("product__price")
+                    - (F("product__percentage") * F("product__price") / 100),
+                    output_field=FloatField(),
                 )
             )
 
             # Filter product color images based on the offer price
             if min_price is not None:
-                product_color_images = product_color_images.filter(calculated_offer_price__gte=min_price)
+                product_color_images = product_color_images.filter(
+                    calculated_offer_price__gte=min_price
+                )
             if max_price is not None:
-                product_color_images = product_color_images.filter(calculated_offer_price__lte=max_price)
+                product_color_images = product_color_images.filter(
+                    calculated_offer_price__lte=max_price
+                )
 
                 print("Filtered products:", product_color_images)
             context = {
                 "products_color": product_color_images,
-                 'categories' : categories,
-                 'brands' : brands,
-                 'colors' : colors
+                "categories": categories,
+                "brands": brands,
+                "colors": colors,
             }
             return render(request, "shop.html", context)
     except Exception as e:
@@ -1104,16 +1144,17 @@ def edit_address(request, address_id):
 
 
 def delete_address(request, address_id):
-    try:
-        if not request.user.is_authenticated:
+    # try:
+        if request.user.is_authenticated:
             data = Address.objects.get(id=address_id)
-            data.delete()
+            data.is_deleted = True
+            data.save()
             messages.success(request, "Address deleted successfully.")
             return redirect("address")
         else:
             return redirect("login")
-    except:
-        return redirect("address")
+    # except:
+    #     return redirect("address")
 
 
 # _______________________________________________X_________________________X__________________________
@@ -1140,19 +1181,22 @@ def invoice(request, product_id):
         order_items = OrderItem.objects.get(id=product_id, order__customer=user)
         total = order_items.product.product.offer_price * order_items.qty
         context = {"order_items": order_items, "total": total}
-        html_string = render_to_string('invoice.html', context)
+        html_string = render_to_string("invoice.html", context)
 
         # Define the configuration for pdfkit
-        config = pdfkit.configuration(wkhtmltopdf='C:\\Users\\DELL\\OneDrive\\Desktop\\Python\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
+        config = pdfkit.configuration(
+            wkhtmltopdf="C:\\Users\\DELL\\OneDrive\\Desktop\\Python\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"
+        )
 
         pdf = pdfkit.from_string(html_string, False, configuration=config)
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = 'filename="invoice.pdf"'
+        response = HttpResponse(pdf, content_type="application/pdf")
+        response["Content-Disposition"] = 'filename="invoice.pdf"'
 
         return response
     else:
         return redirect("login")
         # return render(request, "invoice.html", context)
+
 
 def referral(request):
     if request.user.is_authenticated:
@@ -1165,6 +1209,10 @@ def referral(request):
         referral_link = request.build_absolute_uri(
             sign_up_url + f"?ref={referral_code}"
         )
-        return render(request, 'referral.html', {'customer': customer, 'amount': amount, 'referral_link': referral_link})
+        return render(
+            request,
+            "referral.html",
+            {"customer": customer, "amount": amount, "referral_link": referral_link},
+        )
     else:
         return redirect("login")

@@ -1,6 +1,8 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from django.dispatch import receiver
+from django.db.models.signals import *
 
 
 # Create your models here.
@@ -17,8 +19,8 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
-    
-    
+
+
 class Brand(models.Model):
     name = models.CharField(max_length=50)
     description = models.TextField(blank=True, null=True)
@@ -27,6 +29,19 @@ class Brand(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class CategoryOffer(models.Model):
+    category = models.OneToOneField(Category, on_delete=models.CASCADE)
+    offer_name = models.CharField(max_length=100, null=True, blank=True)
+    discount_percentage = models.PositiveIntegerField()
+    is_active = models.BooleanField(default=True)
+    start_date = models.DateField(auto_now_add=True)
+    end_date = models.DateField()
+
+    def __str__(self):
+        return f"{self.category.name} - {self.discount_percentage}% DISCOUNT FROM {self.start_date} :- {self.end_date}"
+
 
 class Product(models.Model):
     name = models.CharField(max_length=100)
@@ -53,7 +68,14 @@ class Product(models.Model):
 
     @property
     def offer_price(self):
-        offer_price = self.price - (self.percentage * self.price / 100)
+        category_offer = CategoryOffer.objects.filter(category=self.category).first()
+
+        if category_offer and category_offer.discount_percentage > self.percentage:
+            offer_percentage = category_offer.discount_percentage
+        else:
+            offer_percentage = self.percentage
+
+        offer_price = self.price - (offer_percentage * self.price / 100)
         return round(offer_price)
 
 
@@ -72,7 +94,7 @@ class ProductColorImage(models.Model):
     is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.color}"
+        return f"{self.product.name} {self.color}"
 
 
 class ProductSize(models.Model):
@@ -91,19 +113,13 @@ class ProductSize(models.Model):
         return f"{product_name} {self.productcolor.color} - {self.size}"
 
 
+@receiver(post_save, sender=ProductSize)
+def product_stock_management(sender, instance, **kwargs):
+    product_color_image = instance.productcolor
+    if all(size.quantity == 0 for size in product_color_image.size.all()):
+        product_color_image.is_listed = False
+        product_color_image.save(update_fields=["is_listed"])
 
-
-class CategoryOffer(models.Model):
-    category = models.OneToOneField(Category, on_delete=models.CASCADE)
-    offer_name = models.CharField(max_length=100, null=True, blank=True)
-    discount_percentage = models.PositiveIntegerField()
-    is_active = models.BooleanField(default=True)
-    start_date = models.DateField(auto_now_add=True)
-    end_date = models.DateField()
-
-    def __str__(self):
-        return f"{self.category.name} - {self.discount_percentage}% DISCOUNT FROM {self.start_date} :- {self.end_date}"
-        
 
 class Coupon(models.Model):
     coupon_code = models.CharField(max_length=100, unique=True)
@@ -119,3 +135,17 @@ class Coupon(models.Model):
 
     def __str__(self):
         return f"{self.coupon_code} till {self.expiry_date} for {self.usage_limit} Customers."
+
+
+
+class Banner(models.Model):
+    name = models.CharField(max_length=200)
+    banner_image = models.ImageField(upload_to="images/banner")
+    product_color_image = models.ForeignKey(ProductColorImage, on_delete=models.CASCADE, related_name="banner")
+    title = models.CharField(max_length=200)
+    subtitle = models.CharField(max_length=200)
+    price = models.CharField(max_length=200)
+    is_listed = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"{self.name} - {self.title}"

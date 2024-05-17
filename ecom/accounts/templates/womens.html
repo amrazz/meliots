@@ -135,7 +135,7 @@
                                                             
 
                                 <ul class="product__hover">
-                                    <li><a href="{{ color.image1.url }}"  style="border-radius: 5px;" class="image-popup"><span
+                                    <li><a href="{{ color.image1.url }}"  class="image-popup"><span
                                                 class="arrow_expand"></span></a></li>
                                                 <li><form action="{% url 'wishlist_add' color.id %}" method="post">
                                                     {% csrf_token %}

@@ -1,0 +1,27 @@
+{% extends "header.html" %}
+{% load static %}
+{% load crispy_forms_filters %}
+{% block content %}
+{% block title %}
+<title>Edit Banner</title>
+{% endblock title %}
+
+
+
+<div class="container-fluid">
+    <!-- Row 1 -->
+    <div class="row">
+        <div class="col-lg-12">
+            <form method="post" action="{% url 'edit_banner' banner.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <br><br>
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-primary d-flex text-center">Add Banner</button>
+                </div>
+            </form><br>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

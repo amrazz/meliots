@@ -27,7 +27,6 @@ urlpatterns = [
     path("product_size/", views.product_size, name="product_size"),
     path("category_offer/", views.category_offer, name="category_offer"),
     path("add_category_offer/", views.add_category_offer, name="add_category_offer"),
-
     path("edit_product/<int:product_id>/", views.edit_product, name="edit_product"),
     path(
         "product_is_deleted/<int:product_id>/",
@@ -65,6 +64,11 @@ urlpatterns = [
         views.download_sales_report,
         name="download_sales_report",
     ),
-    path('view_brand/', views.view_brand, name="view_brand"),
-    path('add_brand/', views.add_brand, name="add_brand"),
+    path("view_brand/", views.view_brand, name="view_brand"),
+    path("add_brand/", views.add_brand, name="add_brand"),
+    path("banner/", views.banner, name="banner"),
+    path("add_banner/", views.add_banner, name="add_banner"),
+    path('admin/edit-banner/<int:banner_id>/', views.edit_banner, name='edit_banner'),
+    path('delete-banner/<int:banner_id>/', views.delete_banner, name='delete_banner'),
+
 ]

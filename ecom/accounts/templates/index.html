@@ -1,6 +1,66 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Style+Script&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+<title>Bootstrap Example</title>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+  .title{
+  font-family: 'Style Script', cursive!important;
+  font-weight: 400;
+  font-style: normal;
+}
+    .carousel-item {
+        position: relative;
+    }
+
+    .carousel-caption {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: #fff;
+    }
+
+    .carousel-caption h5 {
+        font-size: 2em;
+        font-weight: bold;
+    }
+
+    .carousel-caption p {
+        font-size: 1.2em;
+    }
+
+    .carousel-caption .price {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+
+    .carousel-item img {
+        width: 100%;
+        height: auto;
+    }
+
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 5%;
+    }
+  a{
+    text-decoration: none;
+  }
+  *{
+    font-family: "Montserrat", sans-serif;
+ 
+  }
+</style>
+
     <!-- Categories Section Begin -->
     <section class="categories">
       <!-- <div class="form-outline d-flex">
@@ -10,18 +70,38 @@
       <div class="container-fluid">
         <div class="row">
           <div class="col-lg-6 p-0">
-            <div class="categories__item categories__large__item set-bg" data-setbg="{% static 'img/categories/category-1.jpg' %}">
-              <div class="categories__text">
-                <h1>Women's fashion</h1>
-                <p>Sitamet, consectetur adipiscing elit, sed do eiusmod tempor incidid-unt labore edolore magna aliquapendisse ultrices gravida.</p>
-                <a href="{% url 'womens_page' %}">Shop now</a>
-              </div>
+            <div class="categories__item categories__large__item set-bg" style="margin-top: -59px;margin-bottom: -184px;">
+                <div id="carouselExample" style="width: 698px;margin-left: -69px;margin-top: -173px;" class="carousel slide">
+                    <div class="carousel-inner">
+                        {% for banner in banners %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ banner.banner_image.url }}" style="width: 698px;height: 376px;" class="d-block w-100" alt="{{ banner.title }}">
+                            <div class="carousel-caption">
+                                <h1 class="title" style="font-family: 'Style Script', cursive;font-weight:400;font-style: normal;">{{ banner.title }}</h1>
+                                <p>{{ banner.subtitle }}</p>
+                                <div class="price">₹{{ banner.price }} only buy now. </div>
+                                <div class="categories__text">
+                                  <a  href="{% url 'shop_page' %}">Shop now</a>
+                                </div>
+                              </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button class="carousel-control-prev text-dark " type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>  
+                    <button class="carousel-control-next text-dark " type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
             </div>
-          </div>
+        </div>
           <div class="col-lg-6">
-            <div class="row">
+            <div class="row" style="margin-bottom: 310px;">
               <div class="col-lg-6 col-md-6 col-sm-6 p-0">
-                <div class="categories__item set-bg" data-setbg="{% static 'img/categories/category-2.jpg' %}">
+                <div class="categories__item set-bg" style="height: 214px;" data-setbg="{% static 'img/categories/category-2.jpg' %}">
                   <div class="categories__text">
                     <h4>Men’s fashion</h4>
                     <p>358 items</p>
@@ -30,7 +110,7 @@
                 </div>
               </div>
               <div class="col-lg-6 col-md-6 col-sm-6 p-0">
-                <div class="categories__item set-bg" data-setbg="{% static 'img/categories/category-3.jpg' %}">
+                <div class="categories__item set-bg" style="height: 214px;" data-setbg="{% static 'img/categories/category-3.jpg' %}">
                   <div class="categories__text">
                     <h4>Kid’s fashion</h4>
                     <p>273 items</p>
@@ -39,7 +119,7 @@
                 </div>
               </div>
               <div class="col-lg-6 col-md-6 col-sm-6 p-0" id = 'b4'>
-                <div class="categories__item set-bg" data-setbg="{% static 'img/accessory.jpg' %}">
+                <div class="categories__item set-bg" style="width: 701px;margin-top:-106px;height: 140px;" data-setbg="{% static 'img/accessory.jpg' %}">
                   <div class="categories__text">
                     <h4>Accessories</h4>
                     <p>792 items</p>
@@ -55,7 +135,7 @@
     <!-- Categories Section End -->
 
     <!-- Product Section Begin -->
-    <section class="product spad">
+    <section class="product spad" style="margin-top: -187px;">
       <div class="container">
         <div class="row">
           <div class="col-lg-4 col-md-4">
@@ -66,9 +146,9 @@
           <div class="col-lg-8 col-md-8">
             <ul class="filter__controls">
               <li class="active" data-filter="*">All</li>
-              <li data-filter=".women">Women’s</li>
-              <li data-filter=".men">Men’s</li>
-              <li data-filter=".kid">Kid’s</li>
+              <li data-filter=".women">Women's</li>
+              <li data-filter=".men">Men's</li>
+              <li data-filter=".kid">Kid's</li>
               <li data-filter=".accessories">Accessories</li>
               <li data-filter=".cosmetic">Cosmetics</li>
             </ul>
@@ -78,9 +158,10 @@
           {% for color in products_color %}
           <div class="col-lg-3 col-md-4 col-sm-6 mix men women kid">
               <div class="product__item">
-                  <div class="product__item__pic set-bg" data-setbg = '{{color.image1.url}}'>
-                    
-                      <div class="label new" >{{color.product.percentage}} % OFFER</div>
+                  <div class="product__item__pic set-bg" >
+                    <a href="{% url 'product_detail' color.id %}"><img src="{{ color.image1.url }}"
+                      alt=""></a>
+                      <div class="label new offer" >{{color.product.percentage}} % OFFER</div>
                       <ul class="product__hover">
                           <li>
                               <a href="{{color.image1.url}}" class="image-popup"><span class="arrow_expand"></span></a>
@@ -88,9 +169,7 @@
                           <li>
                               <a href="#"><span class="icon_heart_alt"></span></a>
                           </li>
-                          <li>
-                              <a href="#"><span class="icon_bag_alt"></span></a>
-                          </li>
+                          
                       </ul>
                   </div>
                   <div class="product__item__text">
@@ -158,178 +237,7 @@
     <!-- Banner Section End -->
 
     <!-- Trend Section Begin -->
-    <section class="trend spad">
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-4 col-md-4 col-sm-6">
-            <div class="trend__content">
-              <div class="section-title">
-                <h4>Hot Trend</h4>
-              </div>
-              <div class="trend__item">
-                <div class="trend__item__pic">
-                  <img src="{% static 'img/trend/ht-1.jpg' %}" alt="" />
-                </div>
-                <div class="trend__item__text">
-                  <h6>Chain bucket bag</h6>
-                  <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                  </div>
-                  <div class="product__price">$ 59.0</div>
-                </div>
-              </div>
-              <div class="trend__item">
-                <div class="trend__item__pic">
-                  <img src="{% static 'img/trend/ht-2.jpg' %}" alt="" />
-                </div>
-                <div class="trend__item__text">
-                  <h6>Pendant earrings</h6>
-                  <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                  </div>
-                  <div class="product__price">$ 59.0</div>
-                </div>
-              </div>
-              <div class="trend__item">
-                <div class="trend__item__pic">
-                  <img src="{% static 'img/trend/ht-3.jpg' %}" alt="" />
-                </div>
-                <div class="trend__item__text">
-                  <h6>Cotton T-Shirt</h6>
-                  <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                  </div>
-                  <div class="product__price">$ 59.0</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-4 col-sm-6">
-            <div class="trend__content">
-              <div class="section-title">
-                <h4>Best seller</h4>
-              </div>
-              <div class="trend__item">
-                <div class="trend__item__pic">
-                  <img src="{% static 'img/trend/bs-1.jpg' %}" alt="" />
-                </div>
-                <div class="trend__item__text">
-                  <h6>Cotton T-Shirt</h6>
-                  <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                  </div>
-                  <div class="product__price">$ 59.0</div>
-                </div>
-              </div>
-              <div class="trend__item">
-                <div class="trend__item__pic">
-                  <img src="{% static 'img/trend/bs-2.jpg' %}" alt="" />
-                </div>
-                <div class="trend__item__text">
-                  <h6>Zip-pockets pebbled tote <br />briefcase</h6>
-                  <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                  </div>
-                  <div class="product__price">$ 59.0</div>
-                </div>
-              </div>
-              <div class="trend__item">
-                <div class="trend__item__pic">
-                  <img src="{% static 'img/trend/bs-3.jpg' %}" alt="" />
-                </div>
-                <div class="trend__item__text">
-                  <h6>Round leather bag</h6>
-                  <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                  </div>
-                  <div class="product__price">$ 59.0</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-4 col-sm-6">
-            <div class="trend__content">
-              <div class="section-title">
-                <h4>Feature</h4>
-              </div>
-              <div class="trend__item">
-                <div class="trend__item__pic">
-                  <img src="{% static 'img/trend/f-1.jpg' %}" alt="" />
-                </div>
-                <div class="trend__item__text">
-                  <h6>Bow wrap skirt</h6>
-                  <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                  </div>
-                  <div class="product__price">$ 59.0</div>
-                </div>
-              </div>
-              <div class="trend__item">
-                <div class="trend__item__pic">
-                  <img src="{% static 'img/trend/f-2.jpg' %} " alt="" />
-                </div>
-                <div class="trend__item__text">
-                  <h6>Metallic earrings</h6>
-                  <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                  </div>
-                  <div class="product__price">$ 59.0</div>
-                </div>
-              </div>
-              <div class="trend__item">
-                <div class="trend__item__pic">
-                  <img src="{% static 'img/trend/f-3.jpg' %}" alt="" />
-                </div>
-                <div class="trend__item__text">
-                  <h6>Flap cross-body bag</h6>
-                  <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                  </div>
-                  <div class="product__price">$ 59.0</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <!-- Trend Section End -->
+   
 
     <!-- Discount Section Begin -->
     <section class="discount">

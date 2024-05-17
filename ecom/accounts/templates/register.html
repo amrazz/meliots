@@ -9,36 +9,58 @@
       <div class="form-container">
         <div class="welcome-msg">Welcome !!!</div>
         <div class="signup-msg">Create an account</div>
-        <form method="post" >
+        <form method="post">
           {% csrf_token %}
           <div class="form-group">
             <label for="first-name">First Name</label>
-            <input autocomplete="off" type="text" class="form-control" id="first-name" name="f_name" placeholder="Enter your first name" required>
+            <input autocomplete="off" type="text" class="form-control" id="first-name" name="f_name"
+              placeholder="Enter your first name" required value="{{ form_data.first_name }}" oninput="validateForm()"
+              required>
+            <span id="first-name-error" class="error"></span>
+
           </div>
           <div class="form-group">
             <label for="last-name">Last Name</label>
-            <input autocomplete="off" type="text" class="form-control" id="last-name" name="l_name" placeholder="Enter your last name" required>
+            <input autocomplete="off" type="text" class="form-control" id="last-name" name="l_name"
+              placeholder="Enter your last name" required value="{{ form_data.last_name }}" oninput="validateForm()"
+              required>
+            <span id="first-name-error" class="error"></span>
+
           </div>
           <div class="form-group">
             <label for="username">Username</label>
-            <input autocomplete="off" type="text" class="form-control" id="username" name="username" placeholder="Enter a username" required>
+            <input autocomplete="off" type="text" class="form-control" id="username" name="username"
+              placeholder="Enter a username" required value="{{ form_data.username }}" oninput="validateForm()"
+              required>
+            <span id="first-name-error" class="error"></span>
+
           </div>
           <div class="form-group">
             <label for="email">Email</label>
-            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required
+              value="{{ form_data.email }}" oninput="validateForm()" required>
+            <span id="first-name-error" class="error"></span>
+
           </div>
           <div class="form-group">
             <label for="password">Password</label>
-            <input autocomplete="off" type="password" class="form-control" id="password" name="pass1" placeholder="Enter a password" required  >
+            <input autocomplete="off" type="password" class="form-control" id="password" name="pass1"
+              placeholder="Enter a password" oninput="validateForm()" required>
+            <span id="first-name-error" class="error"></span>
+
           </div>
           <div class="form-group">
             <label for="confirm-password">Confirm Password</label>
-            <input autocomplete="off" type="password" class="form-control" id="confirm-pass2" name="pass2" placeholder="Confirm your password" required>
+            <input autocomplete="off" type="password" class="form-control" id="confirm-pass2" name="pass2"
+              placeholder="Confirm your password" oninput="validateForm()" required>
+            <span id="first-name-error" class="error"></span>
+
           </div>
           <div class="form-group">
             <div class="d-flex"><label for="confirm-password">Referral Code(Optional)</label>
             </div>
-            <input autocomplete="off" type="password" class="form-control" id="referral_code" name="referral_code" placeholder="Enter your referral code">
+            <input autocomplete="off" type="password" class="form-control" id="referral_code" name="referral_code"
+              value="{{ form_data.referral_code }}" placeholder="Enter your referral code">
           </div>
           <button type="submit" class="btn btn-primary btn-block rounded">Sign Up</button>
         </form>
@@ -51,22 +73,23 @@
 
         <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
-                        <script>
-                            {% if messages %}
-                            {% for message in messages %}
-                            {% if message.tags == 'error' %}
-                            swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
-                            {% elif message.tags == 'success' %}
-                            swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
-                            {% else %}
-                            swal("Message", "{{ message }}"); // Display general message
-                            {% endif %}
-                            {% endfor %}
-                            {% endif %}
-                        </script>
+        <script>
+          {% if messages %}
+          {% for message in messages %}
+          {% if message.tags == 'error' %}
+          swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
+          {% elif message.tags == 'success' %}
+          swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
+          {% else %}
+          swal("Message", "{{ message }}"); // Display general message
+          {% endif %}
+          {% endfor %}
+          {% endif %}
+        </script>
       </div>
     </div>
-    <div class="col-lg-6"><img src="https://cdn.builder.io/api/v1/image/assets/TEMP/1a12343ddf6817b46a145815a50657abe2d18271441a9b0cdad0489742907d67?apiKey=04953d70f2ec47bc87e43c3e384dd0ac&"
+    <div class="col-lg-6"><img
+        src="https://cdn.builder.io/api/v1/image/assets/TEMP/1a12343ddf6817b46a145815a50657abe2d18271441a9b0cdad0489742907d67?apiKey=04953d70f2ec47bc87e43c3e384dd0ac&"
         class="img-fluid" alt="Signup Image">
     </div>
   </div>
@@ -77,13 +100,15 @@
     padding: 50px;
 
   }
+
   .col-lg-6 {
     -ms-flex: 0 0 50%;
     flex: 0 0 50%;
     max-width: 37%;
     margin-left: 100px;
-}
-  .container-fluid{
+  }
+
+  .container-fluid {
     background-color: #d9d9d9;
   }
 
@@ -100,9 +125,10 @@
     margin-bottom: 20px;
   }
 
-  .messages h5{
-    color:red
+  .messages h5 {
+    color: red
   }
+
   .signup-msg {
     font-size: 18px;
     margin-bottom: 30px;
@@ -130,15 +156,69 @@
     color: #4045c8;
     font-weight: bold;
   }
-  .msg
 
-  .img-fluid {
+  .msg .img-fluid {
     max-width: 140%;
     height: auto;
     border-radius: 10px;
     margin-top: 18px;
   }
-
 </style>
+
+<script>
+  // Function to validate the input fields in real-time
+  function validateForm() {
+    // Get input field values
+    var firstName = document.getElementById('first-name').value;
+    var lastName = document.getElementById('last-name').value;
+    var username = document.getElementById('username').value;
+    var email = document.getElementById('email').value;
+    var password1 = document.getElementById('password').value;
+    var password2 = document.getElementById('confirm-pass2').value;
+
+    // Validate first name
+    var firstNameError = document.getElementById('first-name-error');
+    if (firstName.length < 2) {
+      firstNameError.innerText = 'First name must be at least 2 characters long';
+      firstNameError.style.color = 'red'; // Set color to red for error
+    } else {
+      firstNameError.innerText = '';
+    }
+
+    // Validate last name
+    var lastNameError = document.getElementById('last-name-error');
+    if (lastName.length < 2) {
+      lastNameError.innerText = 'Last name must be at least 2 characters long';
+      lastNameError.style.color = 'red'; // Set color to red for error
+    } else {
+      lastNameError.innerText = '';
+    }
+
+    // Validate username
+    var usernameError = document.getElementById('username-error');
+    // Add validation logic for username as needed
+
+    // Validate email
+    var email = document.getElementById('email').value;
+    var emailError = document.getElementById('email-error');
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      emailError.innerText = 'Please enter a valid email address';
+      emailError.style.color = 'red'; // Set color to red for error
+    } else {
+      emailError.innerText = '';
+    }
+
+    // Check if passwords match
+    var passwordError = document.getElementById('password-error');
+    if (password1 !== password2) {
+      passwordError.innerText = 'Passwords do not match';
+      passwordError.style.color = 'red'; // Set color to red for error
+    } else {
+      passwordError.innerText = '';
+    }
+  }
+</script>
+
 
 {% endblock content %}

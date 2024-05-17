@@ -18,7 +18,7 @@ class Address(models.Model):
     postal_code = models.CharField(max_length=20)
     country = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=12)
-
+    is_deleted = models.BooleanField(default=False, blank=True, null=True)
     def __str__(self):
         return f"{self.user.username}:{self.house_name}"
 
@@ -47,12 +47,13 @@ def Create_User_Customer(sender, instance, created, **kwargs):
     if created:
         Customer.objects.create(user=instance)
         print("customer created successfully!!")
-        
+
+
 @receiver(post_save, sender=Customer)
 def generate_referral_code(sender, instance, created, **kwargs):
     if created:
         if not instance.referral_code:
-            referral_code = 'REF'
+            referral_code = "REF"
             referral_code += get_random_string(5, "IJKLMOZ0123456789")
             while Customer.objects.filter(referral_code=referral_code).exists():
                 referral_code += get_random_string(5, "IJKLMOZ0123456789")

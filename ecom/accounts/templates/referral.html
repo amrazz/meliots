@@ -9,6 +9,9 @@
 {% block content %}
 
 <style>
+    .ref{
+        width: 776px;
+    }
     .count{
         height: 260px;
         transition: background-color 0.3s ease;
@@ -93,8 +96,8 @@
     margin-right: 111px;
 }
 .ref_count {
-    width: 117px;
-    height: 115px;
+    width: 107px;
+    height: 107px;
     border-radius: 78px;
     background-color: rgb(255, 255, 255);
     margin-top: -22px;
@@ -103,8 +106,8 @@
 }
 .outer 
     {
-    width: 147px;
-    height: 144px;
+    width: 146px;
+    height: 138px;
     background-color: #007bff;
     margin-top: 27px;
     border-radius: 70px;
@@ -203,7 +206,7 @@
                         <div class="d-flex">
                             <div class="outer">
                                 <div class="ref_count">
-                                    <h5 class="text-center" style="margin-top: 37px;padding-top: 37px;"><span class="referral-count text-center "><h3 class="text-success " style="margin-top: 1px;font-size: revert-layer;">{% if amount > 0 %} ₹{{amount}} + {% else %} ₹0 {% endif %}</h3></span></h5>
+                                    <h5 class="text-center" style="margin-top: 37px;padding-top: 37px;"><span class="referral-count text-center "><h3 class="text-success " style="margin-top: 1px;font-size: revert-layer;">{% if amount > 0 %} ₹{{amount}}+ {% else %} ₹0 {% endif %}</h3></span></h5>
                                 </div>
                             </div>
                             <div>

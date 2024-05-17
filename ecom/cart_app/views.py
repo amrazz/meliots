@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, HttpResponse,get_object_or_404
+from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.http import JsonResponse
 from .models import *
 from django.contrib import messages, auth
@@ -9,6 +9,7 @@ from django.db.models import Count
 from django.utils.crypto import get_random_string
 import razorpay
 from django.conf import settings
+from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -275,6 +276,7 @@ def initiate_payment(items):
         "amount": items[0]["amount"],
     }
     print(data["amount"])
+    print("this is the amount in the imitia paymnt")
     razorpay_order = razorpay_client.order.create(data=data)
     razorpay_order_id = razorpay_order["id"]
     for item in items:
@@ -286,6 +288,7 @@ def initiate_payment(items):
     return razorpay_order_id
 
 
+@transaction.atomic
 def place_order(request):
     if request.method == "POST":
         address_id = request.POST.get("select_address")
@@ -338,9 +341,6 @@ def place_order(request):
                 }
             ]
             order_id = initiate_payment(items)
-            if order_id is None:
-                messages.error(request, "Payment initiation failed. Please try again.")
-                return redirect("checkout")
             payment = Payment.objects.create(
                 method_name=pm,
                 amount=total,
@@ -349,6 +349,208 @@ def place_order(request):
                 pending=False,
                 success=True,
             )
+            if order_id is None:
+                print("hdhfjkshdjkfhdsf")
+                messages.error(request, "Payment initiation failed. Please try again.")
+                payment.success = False
+                payment.failed = True
+                payment.pending = True
+                payment.save()
+                print("dfh paymne  sussufillll")
+
+                order = Order.objects.create(
+                    customer=customer,
+                    address=address,
+                    payment_method=pm,
+                    subtotal=subtotal,
+                    shipping_charge=shipping_fee,
+                    total=total,
+                    paid=False,
+                    tracking_id=tk_id,
+                    coupon_applied=coupon_applied,
+                    coupon_name=coupon_name,
+                    coupon_discount_percentage=coupon_discount_percentage,
+                    discounted_price=discounted_price,
+                    payment=payment,
+                    status="Payment Failed",
+                )
+                for cart_item in cart:
+                    OrderItem.objects.create(
+                        order=order,
+                        status="Pending",
+                        product=cart_item.product,
+                        each_price=cart_item.product.product.offer_price,
+                        qty=cart_item.quantity,
+                        size=cart_item.product_size,
+                    )
+                    print("come hererefersdfasdfdsf")
+
+                    product = cart_item.product.pk
+                    print(product)
+                    product_size = ProductSize.objects.filter(productcolor__id=product)
+                    print(product_size)
+                    if product_size.exists():
+                        for qty in product_size:
+                            print("in the if product_size")
+                            qty.quantity -= cart_item.quantity
+                            qty.save()
+                    print("product quantity is reduced")
+
+                cart.delete()
+
+                keys_to_delete = [
+                    "coupon_applied",
+                    "coupon_name",
+                    "coupon_discount_percentage",
+                    "discounted_price",
+                ]
+                for key in keys_to_delete:
+                    if key in request.session:
+                        del request.session[key]
+                return redirect("payment_failure")
+            else:
+                try:
+                    order = Order.objects.create(
+                        customer=customer,
+                        address=address,
+                        payment_method=pm,
+                        subtotal=subtotal,
+                        shipping_charge=shipping_fee,
+                        total=total,
+                        paid=True,
+                        tracking_id=tk_id,
+                        coupon_applied=coupon_applied,
+                        coupon_name=coupon_name,
+                        coupon_discount_percentage=coupon_discount_percentage,
+                        discounted_price=discounted_price,
+                        payment_transaction_id=order_id,
+                        payment=payment,
+                        status="Payment Successful",
+                    )
+                    for cart_item in cart:
+                        OrderItem.objects.create(
+                            order=order,
+                            status="Order Placed",
+                            product=cart_item.product,
+                            each_price=cart_item.product.product.offer_price,
+                            qty=cart_item.quantity,
+                            size=cart_item.product_size,
+                        )
+                        product = cart_item.product.pk
+                        print(product)
+                        product_size = ProductSize.objects.filter(
+                            productcolor__id=product
+                        )
+                        print(product_size)
+                        if product_size.exists():
+                            for qty in product_size:
+                                print("in the if product_size")
+                                qty.quantity -= cart_item.quantity
+                                qty.save()
+                                print("product quantity is reduced")
+
+                    cart.delete()
+
+                    keys_to_delete = [
+                        "coupon_applied",
+                        "coupon_name",
+                        "coupon_discount_percentage",
+                        "discounted_price",
+                    ]
+                    for key in keys_to_delete:
+                        if key in request.session:
+                            del request.session[key]
+
+                    return redirect("order_detail")
+                except Exception:
+                    pass
+
+        if request.POST.get("payment_method") == "wallet":
+            user_customers = customer.user
+            balance = Wallet.objects.get(user=user_customers)
+            if balance.balance < total:
+                messages.error(request, "Insufficient balance in your wallet.")
+                return redirect("checkout")
+            else:
+                transaction_id = "WALLET_TRANSFER_" + get_random_string(
+                    4, "ABC123456789"
+                )
+                while Order.objects.filter(tracking_id=transaction_id).exists():
+                    transaction_id += get_random_string(4, "ABC123456789")
+                payment = Payment.objects.create(
+                    method_name=pm,
+                    amount=total,
+                    transaction_id=transaction_id,
+                    paid_at=timezone.now(),
+                    pending=False,
+                    success=True,
+                )
+                try:
+                    order = Order.objects.create(
+                        customer=customer,
+                        address=address,
+                        payment_method=pm,
+                        subtotal=subtotal,
+                        shipping_charge=shipping_fee,
+                        total=total,
+                        paid=True,
+                        tracking_id=tk_id,
+                        coupon_applied=coupon_applied,
+                        coupon_name=coupon_name,
+                        coupon_discount_percentage=coupon_discount_percentage,
+                        discounted_price=discounted_price,
+                        payment_transaction_id=transaction_id,
+                        payment=payment,
+                        status="Payment Successful",
+                    )
+                    for cart_item in cart:
+                        order_item = OrderItem.objects.create(
+                            order=order,
+                            status="Order Placed",
+                            product=cart_item.product,
+                            each_price=cart_item.product.product.offer_price,
+                            qty=cart_item.quantity,
+                            size=cart_item.product_size,
+                        )
+                        product = cart_item.product.pk
+                        print(product)
+                        product_size = ProductSize.objects.filter(
+                            productcolor__id=product
+                        )
+                        print(product_size)
+                        if product_size.exists():
+                            for qty in product_size:
+                                print("in the if product_size")
+                                qty.quantity -= cart_item.quantity
+                                qty.save()
+                                print("product quantity is reduced")
+                    balance.balance -= total
+                    balance.save()
+                    wallet_transaction = Wallet_transaction.objects.create(
+                        wallet=balance,
+                        order_item=order_item,
+                        transaction_id=transaction_id,
+                        money_withdrawn=total,
+                    )
+
+                    cart.delete()
+
+                    keys_to_delete = [
+                        "coupon_applied",
+                        "coupon_name",
+                        "coupon_discount_percentage",
+                        "discounted_price",
+                    ]
+                    for key in keys_to_delete:
+                        if key in request.session:
+                            del request.session[key]
+
+                    messages.success(request, "Order placed successfully.")
+                    return redirect("order_detail")
+                except Exception:
+                    return redirect("payment_failure")
+
+        elif request.POST.get("payment_method") == "COD":
             order = Order.objects.create(
                 customer=customer,
                 address=address,
@@ -356,23 +558,35 @@ def place_order(request):
                 subtotal=subtotal,
                 shipping_charge=shipping_fee,
                 total=total,
-                paid=True,
                 tracking_id=tk_id,
                 coupon_applied=coupon_applied,
                 coupon_name=coupon_name,
                 coupon_discount_percentage=coupon_discount_percentage,
                 discounted_price=discounted_price,
-                payment_transaction_id=order_id,
-                payment=payment,
+                status="Pending",
             )
+
             for cart_item in cart:
                 OrderItem.objects.create(
                     order=order,
                     status="Order Placed",
                     product=cart_item.product,
+                    each_price=cart_item.product.product.offer_price,
                     qty=cart_item.quantity,
                     size=cart_item.product_size,
                 )
+                print("come hererefersdfasdfdsf")
+
+                product = cart_item.product.pk
+                print(product)
+                product_size = ProductSize.objects.filter(productcolor__id=product)
+                print(product_size)
+                if product_size.exists():
+                    for qty in product_size:
+                        print("in the if product_size")
+                        qty.quantity -= cart_item.quantity
+                        qty.save()
+                        print("product quantity is reduced")
 
             cart.delete()
 
@@ -386,48 +600,10 @@ def place_order(request):
                 if key in request.session:
                     del request.session[key]
 
+            messages.success(request, "Order placed successfully.")
             return redirect("order_detail")
         else:
-
-            order = Order.objects.create(
-                customer=customer,
-                address=address,
-                payment_method=pm,
-                subtotal=subtotal,
-                shipping_charge=shipping_fee,
-                total=total,
-                tracking_id=tk_id,
-                coupon_applied=coupon_applied,
-                coupon_name=coupon_name,
-                coupon_discount_percentage=coupon_discount_percentage,
-                discounted_price=discounted_price,
-            )
-
-        for cart_item in cart:
-            OrderItem.objects.create(
-                order=order,
-                status="Order Placed",
-                product=cart_item.product,
-                qty=cart_item.quantity,
-                size=cart_item.product_size,
-            )
-
-        cart.delete()
-
-        keys_to_delete = [
-            "coupon_applied",
-            "coupon_name",
-            "coupon_discount_percentage",
-            "discounted_price",
-        ]
-        for key in keys_to_delete:
-            if key in request.session:
-                del request.session[key]
-
-        messages.success(request, "Order placed successfully.")
-        return redirect("order_detail")
-    else:
-        return redirect("checkout")
+            return redirect("checkout")
 
 
 def payment_success(request):
@@ -451,22 +627,27 @@ def payment_success(request):
         # Perform any required actions (e.g., update the order status)
         return render(request, "op.html")
     except razorpay.errors.SignatureVerificationError as e:
-
-        return HttpResponse(f"The payment is failed due to the {str(e)} reasons")
+        return redirect("payment_failure")
 
 
 # ____________________________________________________________________________________________________________________
 def order_detail(request):
-    return render(request, "op.html")  # order purchased
+    return render(request, "op.html")
+
+
+def payment_failure(request):
+    return render(request, "opf.html")
+
 
 def view_all_order(request):
     if request.user.is_authenticated:
         user = request.user
-        customer = Customer.objects.get(user = user)
-        orders = OrderItem.objects.filter(order__customer = customer)
-        return render(request, "view_all_order.html", {'orders' : orders, },)
+        customer = Customer.objects.get(user=user)
+        orders = Order.objects.filter(customer=customer).order_by("-created_at")
+        return render(request, "view_all_order.html", {"orders": orders})
     else:
-        return redirect('login')
+        return redirect("login")
+
 
 def view_order(request, ord_id):
     if request.user.is_authenticated:
@@ -476,23 +657,29 @@ def view_order(request, ord_id):
         context = {"order": order, "items": items}
         return render(request, "view_order.html", context)
     else:
-        return redirect('login')
+        return redirect("login")
+
 
 def view_status(request, order_id):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user=request.user.pk)
         order_items = OrderItem.objects.get(pk=order_id)
-        currentTime = timezone.now().date()  
+        currentTime = timezone.now().date()
         status_info = {
             "Order Placed": {"color": "#009608", "label": "Order Placed"},
             "Shipped": {"color": "#009608", "label": "Shipped"},
             "Out for Delivery": {"color": "#009608", "label": "Out for Delivery"},
             "Delivered": {"color": "#009608", "label": "Delivered"},
         }
-        context = {"order_items": order_items, "status_info": status_info, "currentTime": currentTime}
+        context = {
+            "order_items": order_items,
+            "status_info": status_info,
+            "currentTime": currentTime,
+        }
         return render(request, "view_status.html", context)
     else:
-        return redirect('login')
+        return redirect("login")
+
 
 def request_cancel_order(request, order_id):
     print(order_id)
@@ -511,7 +698,7 @@ def request_return_product(request, order_id):
         seven_days = timezone.now() - timedelta(days=7)
         order_item = OrderItem.objects.get(pk=order_id)
         print(order_item)
-        
+
         if order_item.created_at > seven_days and order_item.status == "Delivered":
             print("reached here")
             order_item.request_return = True
@@ -524,7 +711,6 @@ def request_return_product(request, order_id):
             )
             return redirect("view_status", order_id)
     return redirect("login")
-
 
 
 # _______________________________________________________________________________________________________________________

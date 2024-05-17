@@ -63,12 +63,22 @@ class Payment(models.Model):
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    address = models.ForeignKey(Address, on_delete=models.CASCADE)
+    address = models.ForeignKey(Address, on_delete=models.DO_NOTHING, null=True, blank=True)
     payment_method = models.CharField(max_length=100, null=False)
     payment_transaction_id = models.CharField(max_length=100, null=True, blank=True)
     payment = models.ForeignKey(
         Payment, on_delete=models.PROTECT, null=True, blank=True
     )
+    STATUS_CHOICES = (
+        ("Delivered", "Delivered"),
+        ("Pending", "Pending"),
+        ("Payment Failed", "Payment Failed"),
+        ("Payment Successful", "Payment Successful"),
+        ("Returned", "Returned"),
+    )
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
+
     tracking_id = models.CharField(max_length=100, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     subtotal = models.PositiveBigIntegerField(default=0, blank=True, null=True)
@@ -96,10 +106,16 @@ class OrderItem(models.Model):
         ("Refunded", "Refunded"),
         ("Cancelled", "Cancelled"),
     )
-    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
-    product = models.ForeignKey(ProductColorImage, on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        ProductColorImage,
+        related_name="product_order",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+    each_price = models.PositiveBigIntegerField(default=0, blank=True, null=True)
     size = models.CharField(max_length=12, default="S")
     qty = models.PositiveIntegerField(default=0)
     request_cancel = models.BooleanField(default=False)
@@ -117,7 +133,7 @@ class OrderItem(models.Model):
 class Wallet(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     balance = models.PositiveBigIntegerField(blank=True, default=0)
-    referral_deposit =  models.PositiveBigIntegerField(blank=True, default=0)
+    referral_deposit = models.PositiveBigIntegerField(blank=True, default=0)
 
     def __str__(self):
         name = f"{self.user.first_name} {self.user.last_name} "
@@ -135,7 +151,9 @@ def Create_User_Wallet(sender, instance, created, **kwargs):
 
 class Wallet_transaction(models.Model):
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE)
-    order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE, null=True, blank=True)
+    order_item = models.ForeignKey(
+        OrderItem, on_delete=models.CASCADE, null=True, blank=True
+    )
     transaction_id = models.CharField(
         max_length=50,
         unique=True,

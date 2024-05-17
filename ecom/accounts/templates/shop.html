@@ -199,8 +199,9 @@
                     <div class="col-lg-4 col-md-6">
                         <div class="product__item">
 
-                            <div class="product__item__pic set-bg" data-setbg="{{color.image1.url}}">
-
+                            <div class="product__item__pic set-bg" >
+                                <a href="{% url 'product_detail' color.id %}"><img src="{{ color.image1.url }}"
+                                    alt=""></a>
                                 {% if color.is_listed and color.product.category.is_listed %}
                                 <div class="label new">New</div>
                                 {% else %}
