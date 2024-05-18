@@ -61,7 +61,7 @@ def register(request):
                     print(
                         f"[DEBUG] Referral Code in sessions: {request.session.get("referral_code")}"
                     )
-            request.session['form_data'] = {
+            request.session["form_data"] = {
                 "first_name": first_name,
                 "last_name": last_name,
                 "username": username,
@@ -146,11 +146,11 @@ def register(request):
             )
             print(otp)
             messages.success(request, f"Welcome {first_name}")
-            del request.session['form_data']
+            del request.session["form_data"]
             return redirect("my_otp")
 
         else:
-            form_data = request.session.get('form_data', {})
+            form_data = request.session.get("form_data", {})
             return render(request, "register.html", {"form_data": form_data})
 
     except ValidationError as e:
@@ -313,8 +313,8 @@ def otp(request):
                         print(
                             f"[DEBUG] referring_customer_transaction {referring_customer_transaction} created successfully."
                         )
-                    messages.success(request, f"{user.username} created successfully.")
-                    return redirect("login")
+                messages.success(request, f"{user.username} created successfully.")
+                return redirect("login")
             else:
                 messages.error(request, "Invalid OTP, try again.")
                 return redirect("my_otp")
@@ -488,17 +488,25 @@ def log_out(request):
 
 @never_cache
 def index(request):
+    banners = Banner.objects.filter(is_listed=True).order_by("-id")
+    products_color = ProductColorImage.objects.filter(product__is_deleted=False)
+    products = Product.objects.filter(is_listed=True)
+    context = {
+            "products_color": products_color,
+            "products": products,
+            "banners": banners,
+        }
     if request.user.is_authenticated:
-        banners = Banner.objects.filter(is_listed = True).order_by("-id")
+        banners = Banner.objects.filter(is_listed=True).order_by("-id")
         products_color = ProductColorImage.objects.filter(product__is_deleted=False)
         products = Product.objects.filter(is_listed=True)
         context = {
             "products_color": products_color,
             "products": products,
-            'banners' : banners
+            "banners": banners,
         }
         return render(request, "index.html", context)
-    return render(request, "index.html")
+    return render(request, "index.html", context)
 
 
 @never_cache
@@ -1054,8 +1062,8 @@ def add_address(request):
                 [
                     first_name,
                     last_name,
-                    city,
                     email,
+                    city,
                     state,
                     country,
                     postal_code,
@@ -1064,11 +1072,44 @@ def add_address(request):
                 ]
             ):
                 messages.error(request, "Please fill up all the fields.")
-                print("not all")
                 return redirect("add_address")
-            if len(mobile_number) < 10 and len(mobile_number) > 12:
-                messages.error(request, "Moblie number is not valid.")
-                print("moblie")
+
+            # Name validation: only letters and single spaces between words
+            name_pattern = r'^[a-zA-Z]+(?:\s[a-zA-Z]+)*$'
+            if not re.match(name_pattern, first_name):
+                messages.error(request, "First name must contain only letters and single spaces.")
+                return redirect("add_address")
+
+            if not re.match(name_pattern, last_name):
+                messages.error(request, "Last name must contain only letters and single spaces.")
+                return redirect("add_address")
+
+            # Mobile number length validation
+            if len(mobile_number) < 10 or len(mobile_number) > 12:
+                messages.error(request, "Mobile number is not valid.")
+                return redirect("add_address")
+
+
+            location_pattern = r'^[a-zA-Z\s]+$'
+            if not re.match(location_pattern, city):
+                messages.error(request, "City name must contain only letters and spaces.")
+                return redirect("add_address")
+
+            if not re.match(location_pattern, state):
+                messages.error(request, "State name must contain only letters and spaces.")
+                return redirect("add_address")
+
+            if not re.match(location_pattern, country):
+                messages.error(request, "Country name must contain only letters and spaces.")
+                return redirect("add_address")
+
+            if not re.match(location_pattern, house_name):
+                messages.error(request, "House name must contain only letters and spaces.")
+                return redirect("add_address")
+
+            # Postal code validation: only digits
+            if not postal_code.isdigit():
+                messages.error(request, "Postal code must contain only digits.")
                 return redirect("add_address")
             address = Address.objects.create(
                 user=user,
@@ -1145,16 +1186,18 @@ def edit_address(request, address_id):
 
 def delete_address(request, address_id):
     # try:
-        if request.user.is_authenticated:
-            data = Address.objects.get(id=address_id)
-            data.is_deleted = True
-            data.save()
-            messages.success(request, "Address deleted successfully.")
-            return redirect("address")
-        else:
-            return redirect("login")
-    # except:
-    #     return redirect("address")
+    if request.user.is_authenticated:
+        data = Address.objects.get(id=address_id)
+        data.is_deleted = True
+        data.save()
+        messages.success(request, "Address deleted successfully.")
+        return redirect("address")
+    else:
+        return redirect("login")
+
+
+# except:
+#     return redirect("address")
 
 
 # _______________________________________________X_________________________X__________________________

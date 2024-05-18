@@ -20,8 +20,10 @@ from django.utils.crypto import get_random_string
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from io import BytesIO
 import xlsxwriter
+from django.utils import timezone
+
 from .forms import CategoryOfferForm, BannerForm
-from datetime import datetime
+from datetime import datetime, timedelta
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -838,20 +840,22 @@ def order(request):
     to_date = request.GET.get("to")
     search = request.GET.get("search")
     sort_by = request.GET.get("sort_by")
-
+    print(f"{from_date} and {to_date}")
     if request.user.is_superuser:
         if not sort_by:
             sort_by = "-created_at"
         if from_date:
             from_date = datetime.strptime(from_date, "%Y-%m-%d")
+            from_date = timezone.make_aware(from_date.replace(hour=0, minute=0, second=0, microsecond=0))
         if to_date:
             to_date = datetime.strptime(to_date, "%Y-%m-%d")
+            to_date = timezone.make_aware(to_date.replace(hour=23, minute=59, second=59, microsecond=999999))
 
         order_details = Order.objects.all().order_by(sort_by)
 
         if from_date and to_date:
             order_details = Order.objects.filter(
-                order__created_at__range=[from_date, to_date]
+                created_at__range=[from_date, to_date]
             ).order_by(sort_by)
         elif from_date:
             order_details = Order.objects.filter(created_at__gte=from_date).order_by(
@@ -1182,15 +1186,23 @@ def sales_report(request):
                 status="Delivered",
             ).order_by("created_at")
 
+            filters = {}
             if from_date:
+                filters['from_date'] = from_date
                 order = order.filter(created_at__gte=from_date)
-            elif to_date:
+            if to_date:
+                filters['to_date'] = to_date
                 order = order.filter(created_at__lte=to_date)
-            elif month:
+            if month:
+                filters['month'] = month
                 year, month = map(int, month.split("-"))
                 order = order.filter(created_at__year=year, created_at__month=month)
-            elif year:
+            if year:
+                filters['year'] = year
                 order = order.filter(created_at__year=year)
+
+            # Store filters in session
+            request.session['filters'] = filters
 
             count = order.count()
             total = order.aggregate(total=Sum("order__total"))["total"]
@@ -1220,9 +1232,22 @@ def sales_report(request):
 def download_sales_report(request):
     if request.user.is_superuser:
         if request.method == "GET":
+            filters = request.session.get('filters', {})
             sales_data = OrderItem.objects.filter(
                 Q(cancel=False) & Q(return_product=False) & Q(status="Delivered")
             )
+
+            if 'from_date' in filters:
+                sales_data = sales_data.filter(created_at__gte=filters['from_date'])
+            if 'to_date' in filters:
+                sales_data = sales_data.filter(created_at__lte=filters['to_date'])
+            if 'month' in filters:
+                year, month = map(int, filters['month'].split("-"))
+                sales_data = sales_data.filter(created_at__year=year, created_at__month=month)
+            if 'year' in filters:
+                sales_data = sales_data.filter(created_at__year=filters['year'])
+            if 'from' in filters and 'to_date' in filters:
+                sales_data = sales_data.filter(created_at__range=[filters['from'], filters['to']])
 
             overall_sales_count = request.session.get("overall_sales_count")
             overall_order_amount = request.session.get("overall_order_amount")
