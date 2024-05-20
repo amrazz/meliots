@@ -8,6 +8,7 @@ from django.views.decorators.cache import never_cache
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
 from django.db.models import F, ExpressionWrapper, DecimalField
+from django.contrib.auth import authenticate, login as auth_login
 from django.conf import settings
 from ecom.settings import EMAIL_HOST_USER
 from validate_email_address import validate_email
@@ -349,28 +350,22 @@ def resend_otp(request):
 
 @never_cache
 def log_in(request):
-    try:
-        if request.user.is_authenticated:
+    if request.user.is_authenticated:
+        return redirect("index")
+    
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            auth_login(request, user)
             return redirect("index")
-
-        if request.method == "POST":
-            username = request.POST.get("username")
-            password = request.POST.get("password")
-
-            ext_user = authenticate(request, username=username, password=password)
-
-            if ext_user is not None:
-                auth.login(request, ext_user)
-                return redirect("index")
-            else:
-                messages.error(request, "The username or password is incorrect.")
-                return redirect("login")
         else:
-            return render(request, "log.html")
-
-    except Exception as e:
-        messages.error(request, str(e))
-        return redirect("login")
+            messages.error(request, "The username or password is incorrect.")
+            return redirect("login")
+    
+    return render(request, "log.html")
 
 
 @never_cache

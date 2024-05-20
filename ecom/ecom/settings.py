@@ -27,7 +27,7 @@ SECRET_KEY = "django-insecure-iy*7oiv=1()na$^(2vj_@$+qc_am^ogz#yh+uk+&g5h9*zf!y5
 DEBUG = True
 
 
-ALLOWED_HOSTS = ['www.meliotis.shop','meliotis.shop','0.0.0.0', '16.170.208.82']
+ALLOWED_HOSTS = ['www.meliotis.shop','meliotis.shop','0.0.0.0', '16.170.208.82', 'localhost']
 
 
 CSRF_TRUSTED_ORIGINS = [
@@ -122,6 +122,7 @@ DATABASES = {
         "PORT": "5432",
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
