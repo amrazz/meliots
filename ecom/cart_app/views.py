@@ -73,12 +73,13 @@ def shop_cart(request):
 @never_cache
 def add_to_cart(request, pro_id):
     if request.user.is_authenticated:
-        if request.method == "POST":
+         if request.method == "POST":
             product = ProductColorImage.objects.get(id=pro_id)
             selected_size = request.POST.get("size")
             size = ProductSize.objects.filter(
                 productcolor__id=pro_id, size=selected_size
             ).first()
+
 
             if not size:
                 messages.error(request, "Selected size is not available.")
@@ -109,7 +110,6 @@ def add_to_cart(request, pro_id):
 
             messages.success(request, "Product added to Cart.")
             return redirect("shop_cart")
-        return redirect("shop_cart")
     else:
         return redirect("login")
 
