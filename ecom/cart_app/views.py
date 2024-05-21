@@ -252,7 +252,7 @@ def checkout(request):
             custom = Customer.objects.get(user=request.user.pk)
             user_cart = User_Cart.objects.get(customer=custom)
             cart_items = CartItem.objects.filter(user_cart=user_cart)
-            addresses = Address.objects.filter(user=request.user)
+            addresses = Address.objects.filter(user=request.user, is_deleted=False)
 
             if not addresses.exists():
                 messages.warning(

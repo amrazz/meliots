@@ -71,4 +71,5 @@ urlpatterns = [
     path('admin/edit-banner/<int:banner_id>/', views.edit_banner, name='edit_banner'),
     path('delete-banner/<int:banner_id>/', views.delete_banner, name='delete_banner'),
 
+
 ]

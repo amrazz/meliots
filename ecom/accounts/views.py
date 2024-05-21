@@ -314,6 +314,8 @@ def otp(request):
                         print(
                             f"[DEBUG] referring_customer_transaction {referring_customer_transaction} created successfully."
                         )
+                        messages.success(request, f"{user.username} created successfully.")
+                        return redirect("login")
                 messages.success(request, f"{user.username} created successfully.")
                 return redirect("login")
             else:
@@ -1031,12 +1033,14 @@ def address(request):
     try:
         if request.user.is_authenticated:
             address = Address.objects.filter(user=request.user.pk)
-            context = {"address": address}
+            next_page = request.GET.get('next', '')
+            context = {"address": address, "next_page": next_page}
             return render(request, "address.html", context)
         else:
             return redirect("login")
     except:
         return render(request, "address.html")
+
 
 
 def add_address(request):

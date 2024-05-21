@@ -55,7 +55,18 @@
             <div>
                 <label for="exampleInputType" class="form-label ">Type</label>
                 <input type="text" required autocomplete="off" class="form-control"
-                    onkeydown="moveToNext(event, 'exampleInputPrice')" name="type" placeholder="" id="exampleInputType">
+                    onkeydown="moveToNext(event, 'exampleInputBrand')" name="type" placeholder="eg : Shirt, T-shirt ..." id="exampleInputType">
+            </div>
+            <br><br>
+            <div class="form-group">
+                <label for="productBrand">Brand</label>
+                <select name="brand" id="productBrand" class="form-control">
+                    {% for brand in brands %}
+                        <option value="{{ brand.pk }}" {% if brand.pk == color_image.product.brand.id %}selected{% endif %}>
+                            {{ brand.name }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
             <br><br>
             <div>
@@ -66,14 +77,14 @@
             </div>
             <div>
                 <label for="exampleInputPercentage" class="form-label ">percentage </label>
-                <input type="number" required autocomplete="off" class="form-control"
+                <input type="number" autocomplete="off" class="form-control"
                     onkeydown="moveToNext(event, 'exampleInputExp_date')" name="percentage" placeholder="%"
                     id="exampleInputPercentage">
             </div>
             <br><br>
             <div>
                 <label for="exampleInputExp_date" class="form-label ">Expiry Date </label>
-                <input type="date" required autocomplete="off" class="form-control"
+                <input type="date" autocomplete="off" class="form-control"
                     onkeydown="moveToNext(event, 'exampleInputDescription')" name="exp_date" placeholder="DD/MM/YY"
                     id="exampleInputExp_date">
             </div>
@@ -87,7 +98,7 @@
                 placeholder="Description" rows="7"></textarea>
         </div>
         <br><br>
-        <a href="{% url 'add_product' %}"><button type="submit" <button type="submit"
+        <a href="{% url 'add_product' %}"><button type="submit" type="submit"
                 class="btn btn-primary d-flex justify-content-end">Add Product</button>
             </form>
             <br>

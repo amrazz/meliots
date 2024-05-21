@@ -1,4 +1,5 @@
 from PIL import Image
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, HttpResponse
 from django.core.files.uploadedfile import UploadedFile
 from django.contrib.auth.models import User
@@ -10,6 +11,7 @@ from django.contrib.auth import login, logout
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from .models import *
+from django.urls import reverse
 from cart_app.models import *
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
@@ -65,6 +67,8 @@ def dashboard(request):
         ordered_items = OrderItem.objects.filter(status="Delivered")
         # total_revenuee = ordered_items.values('created_at__date').annotate(total_revenue=Sum('order__total')).order_by('-created_at')
         # print(total_revenuee)
+        
+        
         delivered_orders_per_day = (
             ordered_items.annotate(delivery_date=TruncDate("created_at"))
             .values("delivery_date")
@@ -445,6 +449,7 @@ def restore(request, cat_id):
 def product(request):
     # try:
         if request.user.is_superuser:
+            next_url = request.GET.get('next', '/')
             products = ProductColorImage.objects.filter(is_deleted=False).order_by("id")
             page = request.GET.get("page", 1)
             product_Paginator = Paginator(products, PRODUCT_PER_PAGE)
@@ -488,10 +493,9 @@ def is_valid_image(file):
 def edit_product(request, product_id):
     try:
         color_image = ProductColorImage.objects.get(id=product_id)
-        print(color_image.color)
         sizes = ProductSize.objects.filter(productcolor_id=color_image.pk)
         brands = Brand.objects.all()
-        print("sizes", " :", sizes)
+
         if request.method == "POST":
             name = request.POST.get("name")
             category_id = request.POST.get("category")
@@ -499,6 +503,7 @@ def edit_product(request, product_id):
             price = request.POST.get("price")
             percentage = request.POST.get("percentage")
             brand = request.POST.get("brand")
+
             if int(percentage) < 0 or int(percentage) > 100:
                 messages.error(request, "The percentage must be between 0 and 100.")
                 return redirect("product")
@@ -526,6 +531,7 @@ def edit_product(request, product_id):
             if float(price) < 0:
                 messages.error(request, "The price cannot be negative number.")
                 return redirect("product")
+
             image1 = request.FILES.get("image1")
             image2 = request.FILES.get("image2")
             image3 = request.FILES.get("image3")
@@ -568,34 +574,25 @@ def edit_product(request, product_id):
                     color_image.image4 = image4
                 color_image.save()
 
-            s = request.POST.get("S")
-            m = request.POST.get("M")
-            l = request.POST.get("L")
-
-            if ProductSize.objects.filter(productcolor=color_image, size="S").exists():
-                ProductSize.objects.filter(productcolor=color_image, size="S").update(
-                    quantity=s
-                )
-            if ProductSize.objects.filter(productcolor=color_image, size="M").exists():
-                ProductSize.objects.filter(productcolor=color_image, size="M").update(
-                    quantity=m
-                )
-            if ProductSize.objects.filter(productcolor=color_image, size="L").exists():
-                ProductSize.objects.filter(productcolor=color_image, size="L").update(
-                    quantity=l
-                )
+            for size in sizes:
+                size_quantity = request.POST.get(size.size)
+                if size_quantity is not None:
+                    size.quantity = size_quantity
+                    size.save()
 
             messages.success(request, "Product updated successfully.")
-            return redirect("product")
+            page = request.GET.get('page', 1)
+            return HttpResponseRedirect(reverse('product') + '?page=' + str(page))
         else:
+            available_sizes = [size.size for size in sizes]
             return render(
-                request,
-                "product/edit_product.html",
-                {"color_image": color_image, "sizes": sizes, "brands": brands},
+                request, "product/edit_product.html",
+                {"color_image": color_image, "sizes": sizes, "brands": brands, "available_sizes": available_sizes},
             )
     except Product.DoesNotExist:
         messages.error(request, "Product not found.")
         return redirect("product")
+
 
 
 @never_cache
@@ -614,9 +611,11 @@ def product_search(request):
 # ____________________________________________________________________________________________________________________________________________________
 @never_cache
 def add_product(request):
-    try:
+    # try:
         if request.user.is_superuser:
             categories = Category.objects.all()
+            brands = Brand.objects.all()
+            print(categories, brands)
             if request.method == "POST":
                 name = request.POST.get("name")
                 category = request.POST.get("category")
@@ -624,13 +623,19 @@ def add_product(request):
                 price = request.POST.get("price")
                 percentage = request.POST.get("percentage")
                 exp_date = request.POST.get("exp_date")
+                brand = request.POST.get("brand")
 
                 description = request.POST.get("description")
 
                 if not all([name, type, price, description]):
                     messages.error(request, "All fields are required.")
                     return redirect("add_product")
-
+                if brand:
+                    if not Brand.objects.filter(id=brand).exists():
+                        messages.error(request, "Invalid brand.")
+                        return redirect("add_product")
+                    else:
+                        brand = Brand.objects.filter(brand = brand).first()
                 if Product.objects.filter(name=name).exists():
                     messages.error(request, "Product with this name already exists.")
                     return redirect("add_product")
@@ -641,31 +646,36 @@ def add_product(request):
                 except ValueError:
                     messages.error(request, "Please enter a valid positive price.")
                     return redirect("add_product")
+                if not percentage:
+                    percentage = 0
                 add_product = Product.objects.create(
                     name=name,
                     category_id=category,
                     type=type,
+                    brand = brand,
                     price=price,
                     percentage=percentage,
-                    per_expiry_date=exp_date,
                     description=description,
                 )
+                
+                if exp_date:
+                    add_product.per_expiry_date = exp_date
                 add_product.save()
                 print("product added successfully")
                 return redirect("product_image")
             return render(
-                request, "product/add_product.html", {"categories": categories}
+                request, "product/add_product.html", {"categories": categories, "brands": brands}
             )
-    except Exception as e:
-        messages.error(request, str(e))
-    return redirect("admin_login")
+    # except Exception as e:
+    #     messages.error(request, str(e))
+    # return redirect("admin_login")
 
 
 @never_cache
 def product_image(request):
     try:
         if request.user.is_superuser:
-            products = Product.objects.all()
+            products = Product.objects.all().order_by('id')
             if request.method == "POST":
                 product_id = request.POST.get("product")
                 color = request.POST.get("color")
@@ -721,14 +731,17 @@ def product_size(request):
                 product_color_id = request.POST.get("product_color")
                 size = request.POST.get("size")
                 quantity = request.POST.get("quantity")
+                print(f"this is the size {size} and quantity {quantity}")
                 product_color = get_object_or_404(
                     ProductColorImage, id=product_color_id
                 )
                 product_size = ProductSize.objects.create(
-                    productcolor=product_color, size=size, quantity=quantity
+                    productcolor=product_color,
+                    size=size,
+                    quantity=quantity
                 )
-                print(product_size)
-                product_size.save()
+                print(f"{product_size} created successfully")
+                
 
                 return redirect("product")
             else:
@@ -797,7 +810,8 @@ def product_is_deleted(request, product_id):
         products = ProductColorImage.objects.get(id=product_id)
         products.is_deleted = True
         products.save()
-        return redirect("product")
+        page = request.GET.get('page', 1)
+        return HttpResponseRedirect(reverse('product') + '?page=' + str(page))
     except Exception as e:
         messages.error(request, str(e))
         return redirect("product")
@@ -821,7 +835,8 @@ def product_is_listed(request, product_id):
     product_color = ProductColorImage.objects.get(id=product_id)
     product_color.is_listed = True
     product_color.save()
-    return redirect("product")
+    page = request.GET.get('page', 1)
+    return HttpResponseRedirect(reverse('product') + '?page=' + str(page))
 
 
 @never_cache
@@ -829,7 +844,8 @@ def product_is_unlisted(request, product_id):
     product_color = ProductColorImage.objects.get(id=product_id)
     product_color.is_listed = False
     product_color.save()
-    return redirect("product")
+    page = request.GET.get('page', 1)
+    return HttpResponseRedirect(reverse('product') + '?page=' + str(page))
 
 
 # ____________________________________________________________________________________________________________________________________________________
@@ -1001,7 +1017,7 @@ def return_order(request, return_id):
             )
             print("Refund amount:", refund_amount)
 
-            user = request.user
+            user = return_order.order.customer.user
             wallet, created = Wallet.objects.get_or_create(user=user)
             wallet.balance += float(refund_amount)
             wallet.save()
