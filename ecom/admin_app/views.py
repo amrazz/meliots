@@ -23,7 +23,6 @@ from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from io import BytesIO
 import xlsxwriter
 from django.utils import timezone
-
 from .forms import CategoryOfferForm, BannerForm
 from datetime import datetime, timedelta
 from reportlab.pdfgen import canvas
@@ -64,10 +63,16 @@ def admin_login(request):
 @never_cache
 def dashboard(request):
     if request.user.is_superuser:
-        ordered_items = OrderItem.objects.filter(status="Delivered")
-        # total_revenuee = ordered_items.values('created_at__date').annotate(total_revenue=Sum('order__total')).order_by('-created_at')
-        # print(total_revenuee)
-        
+        month = request.GET.get('month')
+        if month:
+            year, month = map(int, month.split('-'))
+            ordered_items = OrderItem.objects.filter(
+                status="Delivered",
+                created_at__year=year,
+                created_at__month=month
+            )
+        else:
+            ordered_items = OrderItem.objects.filter(status="Delivered")
         
         delivered_orders_per_day = (
             ordered_items.annotate(delivery_date=TruncDate("created_at"))
@@ -76,12 +81,15 @@ def dashboard(request):
             .order_by("delivery_date")
         )
 
-        delivery_data = list(
-            delivered_orders_per_day.values("delivery_date", "total_orders")
-        )
+        delivery_data = list(delivered_orders_per_day.values("delivery_date", "total_orders"))
 
-        print(f"Delivered Orders Per Day: {delivery_data}")
-        print(f"Number of Delivered Orders: {ordered_items.count()}")
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            response_data = {
+                "labels": [item["delivery_date"].strftime("%Y-%m-%d") for item in delivery_data],
+                "data": [item["total_orders"] for item in delivery_data]
+            }
+            return JsonResponse(response_data)
+
         best_seller = (
             ProductColorImage.objects.filter(
                 is_deleted=False,
@@ -94,20 +102,14 @@ def dashboard(request):
 
         start_date = datetime.strptime("2024-01-01", "%Y-%m-%d")
         end_date = datetime.strptime("2024-12-31", "%Y-%m-%d")
-
         orders_per_year = OrderItem.objects.filter(
             status="Delivered", created_at__range=(start_date, end_date)
         )
         orders_per_month = OrderItem.objects.filter(
             status="Delivered", created_at__range=("2024-05-01", "2024-05-31")
         )
-
-        total_sum_per_year = orders_per_year.aggregate(total_price=Sum("order__total"))[
-            "total_price"
-        ]
-        total_sum_per_month = orders_per_month.aggregate(
-            total_price=Sum("order__total")
-        )["total_price"]
+        total_sum_per_year = orders_per_year.aggregate(total_price=Sum("order__total"))["total_price"]
+        total_sum_per_month = orders_per_month.aggregate(total_price=Sum("order__total"))["total_price"]
 
         top_3_category = (
             Product.objects.filter(
@@ -119,21 +121,18 @@ def dashboard(request):
             .annotate(category_count=Count("category"))
             .order_by("-category_count")[:3]
         )
-        print(top_3_category)
 
         category_count = [item["category_count"] for item in top_3_category]
         category_sum = sum(category_count)
         top_5_brand = (
-            best_seller.values(
-                "product__brand__name",
-            )
+            best_seller.values("product__brand__name")
             .annotate(brand_count=Count("product__brand__id"))
             .order_by("-brand_count")
             .distinct()[:5]
         )
         brand_count = top_5_brand.count()
         brand_sum = sum(brand_count for brand in top_5_brand)
-        print(top_5_brand)
+
         context = {
             "delivered_orders_per_day": delivery_data,
             "total_sum_per_month": total_sum_per_month,

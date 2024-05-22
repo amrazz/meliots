@@ -184,21 +184,24 @@
 </div>
 <script>
     function updateQuantity(size, rowIndex) {
-        var sizes = document.getElementById('size-dropdown-' + rowIndex).options;
-        var quantities = {};
-        sizes.forEach(function (option) {
-            quantities[option.value] = option.textContent;
-        });
-        document.getElementById('quantity-display-' + rowIndex).textContent = quantities[size];
-    }
-</script>
-<script>
-    function updateQuantity(size, rowIndex) {
         var selectedOption = document.getElementById('size-dropdown-' + rowIndex).options[document.getElementById('size-dropdown-' + rowIndex).selectedIndex];
         var quantity = selectedOption.getAttribute('data-quantity');
         document.getElementById('quantity-display-' + rowIndex).textContent = quantity;
     }
+
+    window.onload = function() {
+        var productCount = {{ products|length }};
+        for (var i = 1; i <= productCount; i++) {
+            var sizeDropdown = document.getElementById('size-dropdown-' + i);
+            if (sizeDropdown) {
+                var firstOption = sizeDropdown.options[0];
+                var quantity = firstOption.getAttribute('data-quantity');
+                document.getElementById('quantity-display-' + i).textContent = quantity;
+            }
+        }
+    }
 </script>
+
 
 
 
