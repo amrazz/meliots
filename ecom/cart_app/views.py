@@ -167,6 +167,7 @@ def checkout(request):
 
         if request.user.is_authenticated:
             user = Customer.objects.get(user=request.user.pk)
+            order = OrderItem.objects.filter(order__customer=user)
             cart = CartItem.objects.filter(user_cart__customer=user)
             coupons = Coupon.objects.filter(is_active=True, expiry_date__gt=today)
 
@@ -229,6 +230,11 @@ def checkout(request):
                     cpn = Coupon.objects.filter(
                         coupon_code=get_coupon, is_active=True
                     ).first()
+                    if cpn:
+                        if Order.objects.filter(customer=user, coupon_name=cpn.coupon_name).exists():
+                            messages.error(request, "You can only user one coupon. You have already used this coupon.")
+                            return redirect("checkout")
+                        
                     if cpn:
                         if total >= cpn.minimum_amount and total <= cpn.maximum_amount:
                             discount_amount = (total * cpn.discount_percentage) / 100
