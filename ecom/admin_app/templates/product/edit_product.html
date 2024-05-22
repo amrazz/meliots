@@ -7,6 +7,7 @@
 <title>Edit Product</title>
 {% endblock title %}
 
+
 <head>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
@@ -64,18 +65,12 @@
                 <div class="form-group">
                     <label for="productSizes">Sizes & Quantities</label>
                     <div class="input-group mb-3">
+                        {% for size in sizes %}
                         <div class="input-group-prepend">
-                            <span class="input-group-text">S</span>
+                            <span class="input-group-text">{{ size.size }}</span>
                         </div>
-                        <input type="number" step="1" name="S" id="S" class="form-control" value="{{ sizes.0.quantity }}">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">M</span>
-                        </div>
-                        <input type="number" step="1" name="M" id="M" class="form-control" value="{{ sizes.1.quantity }}">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">L</span>
-                        </div>
-                        <input type="number" step="1" name="L" id="L" class="form-control" value="{{ sizes.2.quantity }}">
+                        <input type="number" step="1" name="{{ size.size }}" id="{{ size.size }}" class="form-control" value="{{ size.quantity }}">
+                        {% endfor %}
                     </div>
                 </div>
                 
@@ -125,5 +120,33 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var availableSizes = {{ available_sizes|safe }};
+        
+        // Disable all input fields initially
+        document.querySelectorAll('.input-group input').forEach(function(input) {
+            input.disabled = true;
+        });
+
+        availableSizes.forEach(function(size) {
+            var input = document.querySelector(`input[name="${size}"]`);
+            if (input) {
+                input.disabled = false; // Enable the input field for the available size
+            }
+        });
+
+        // If there is only one size available, disable the input field
+        if (availableSizes.length === 1) {
+            var singleSizeInput = document.querySelector(`input[name="${availableSizes[0]}"]`);
+            if (singleSizeInput) {
+                singleSizeInput.disabled = true; // Disable the input field as it's the only size available
+            }
+        }
+    });
+</script>
+
+       
 
 {% endblock content %}

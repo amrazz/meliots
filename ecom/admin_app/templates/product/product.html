@@ -37,16 +37,21 @@
                     <h3>Manage Product</h3>
 
                 </div>
-                <div class="d-flex justify-content-end">
-                    <a href="{% url 'product_recycle_bin' %}">
-                        <i class="fa-sharp fa-solid fa-trash fa-shake"
-                            style="font-size: xx-large; margin-right: 10px;"></i>
-                    </a>
+                <div class="d-flex justify-content-between">
+                   <div>
+                    <a class="btn btn-primary" href="{% url 'add_product' %}">Add Product</a>
+                   </div>
+                    <div>
+                        <a href="{% url 'product_recycle_bin' %}">
+                            <i class="fa-sharp fa-solid fa-trash fa-shake"
+                                style="font-size: xx-large; margin-right: 10px;"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
         <br>
-        <form action="{% url 'product_search' %}" method='post'>
+        <form action="{% url 'product_search' %}?next={{ next_url }}"></form>
             {% csrf_token %}
             <div class="input-group mb-3 mt-3">
                 <input type="text" class="form-control" name='search_product' placeholder="Search product"
@@ -183,22 +188,25 @@
 </div><br><br><br>
 </div>
 <script>
-    function updateQuantity(size, rowIndex) {
-        var sizes = document.getElementById('size-dropdown-' + rowIndex).options;
-        var quantities = {};
-        sizes.forEach(function (option) {
-            quantities[option.value] = option.textContent;
-        });
-        document.getElementById('quantity-display-' + rowIndex).textContent = quantities[size];
-    }
-</script>
-<script>
+    // Function to update the quantity display
     function updateQuantity(size, rowIndex) {
         var selectedOption = document.getElementById('size-dropdown-' + rowIndex).options[document.getElementById('size-dropdown-' + rowIndex).selectedIndex];
         var quantity = selectedOption.getAttribute('data-quantity');
         document.getElementById('quantity-display-' + rowIndex).textContent = quantity;
     }
+
+    // Function to initialize the quantity display for all products
+    function initializeQuantities() {
+        var allSizeDropdowns = document.querySelectorAll('[id^="size-dropdown-"]');
+        allSizeDropdowns.forEach(function(dropdown, index) {
+            updateQuantity(dropdown.value, index + 1);
+        });
+    }
+
+    // Call the initializeQuantities function when the window loads
+    window.onload = initializeQuantities;
 </script>
+
 
 
 
