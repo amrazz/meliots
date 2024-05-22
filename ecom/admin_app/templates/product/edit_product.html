@@ -7,7 +7,6 @@
 <title>Edit Product</title>
 {% endblock title %}
 
-
 <head>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
@@ -62,7 +61,7 @@
                     <input type="date" name="exp_date" id="producPriceExpDate" class="form-control"
                         value="{{ color_image.product.per_expiry_date }}">
                 </div>
-                <div class="form-group">
+               <div class="form-group">
                     <label for="productSizes">Sizes & Quantities</label>
                     <div class="input-group mb-3">
                         {% for size in sizes %}
@@ -120,33 +119,5 @@
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var availableSizes = {{ available_sizes|safe }};
-        
-        // Disable all input fields initially
-        document.querySelectorAll('.input-group input').forEach(function(input) {
-            input.disabled = true;
-        });
-
-        availableSizes.forEach(function(size) {
-            var input = document.querySelector(`input[name="${size}"]`);
-            if (input) {
-                input.disabled = false; // Enable the input field for the available size
-            }
-        });
-
-        // If there is only one size available, disable the input field
-        if (availableSizes.length === 1) {
-            var singleSizeInput = document.querySelector(`input[name="${availableSizes[0]}"]`);
-            if (singleSizeInput) {
-                singleSizeInput.disabled = true; // Disable the input field as it's the only size available
-            }
-        }
-    });
-</script>
-
-       
 
 {% endblock content %}
