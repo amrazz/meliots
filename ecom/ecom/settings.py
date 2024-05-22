@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-iy*7oiv=1()na$^(2vj_@$+qc_am^ogz#yh+uk+&g5h9*zf!y5"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 
 ALLOWED_HOSTS = ['www.meliotis.shop','meliotis.shop','0.0.0.0', '16.170.208.82', 'localhost']
@@ -115,8 +115,8 @@ WSGI_APPLICATION = "ecom.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "ecomdata",
-        "USER": "postgres",
+        "NAME": "database",
+        "USER": "admin",
         "PASSWORD": "amraz",
         "HOST": "localhost",
         "PORT": "5432",
