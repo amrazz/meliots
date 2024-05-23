@@ -27,6 +27,7 @@ razorpay_client = razorpay.Client(
 def custom_404(request, exception):
     return render(request, "404.html", status=404)
 
+
 def clear_coupon_session(request):
     if request.session.get("coupon_applied", False):
         del request.session["coupon_applied"]
@@ -34,6 +35,7 @@ def clear_coupon_session(request):
         del request.session["coupon_discount_percentage"]
         del request.session["discounted_price"]
         messages.warning(request, "Coupon has been removed due to changes in the cart.")
+
 
 @never_cache
 @login_required(login_url="login")
@@ -73,13 +75,12 @@ def shop_cart(request):
 @never_cache
 def add_to_cart(request, pro_id):
     if request.user.is_authenticated:
-         if request.method == "POST":
+        if request.method == "POST":
             product = ProductColorImage.objects.get(id=pro_id)
             selected_size = request.POST.get("size")
             size = ProductSize.objects.filter(
                 productcolor__id=pro_id, size=selected_size
             ).first()
-
 
             if not size:
                 messages.error(request, "Selected size is not available.")
@@ -106,7 +107,7 @@ def add_to_cart(request, pro_id):
                 product_size=selected_size,
             )
             cart_item.save()
-            clear_coupon_session(request)  
+            clear_coupon_session(request)
 
             messages.success(request, "Product added to Cart.")
             return redirect("shop_cart")
@@ -118,7 +119,7 @@ def delete_cart_items(request, pro_id):
     cart_items = CartItem.objects.get(id=pro_id)
     print(pro_id)
     cart_items.delete()
-    clear_coupon_session(request)  
+    clear_coupon_session(request)
     messages.success(request, "Product removed from Cart")
     return redirect("shop_cart")
 
@@ -131,7 +132,7 @@ def update_total_price(request):
         cart_item = CartItem.objects.get(id=cart_item_id)
         cart_item.quantity = new_quantity
         cart_item.save()
-        clear_coupon_session(request)  
+        clear_coupon_session(request)
         new_total_price = cart_item.total_price
 
         user = Customer.objects.get(user=request.user.pk)
@@ -231,10 +232,15 @@ def checkout(request):
                         coupon_code=get_coupon, is_active=True
                     ).first()
                     if cpn:
-                        if Order.objects.filter(customer=user, coupon_name=cpn.coupon_name).exists():
-                            messages.error(request, "You can only user one coupon. You have already used this coupon.")
+                        if Order.objects.filter(
+                            customer=user, coupon_name=cpn.coupon_name
+                        ).exists():
+                            messages.error(
+                                request,
+                                "You can only user one coupon. You have already used this coupon.",
+                            )
                             return redirect("checkout")
-                        
+
                     if cpn:
                         if total >= cpn.minimum_amount and total <= cpn.maximum_amount:
                             discount_amount = (total * cpn.discount_percentage) / 100

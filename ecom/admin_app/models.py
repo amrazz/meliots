@@ -137,15 +137,16 @@ class Coupon(models.Model):
         return f"{self.coupon_code} till {self.expiry_date} for {self.usage_limit} Customers."
 
 
-
 class Banner(models.Model):
     name = models.CharField(max_length=200)
     banner_image = models.ImageField(upload_to="images/banner")
-    product_color_image = models.ForeignKey(ProductColorImage, on_delete=models.CASCADE, related_name="banner")
+    product_color_image = models.ForeignKey(
+        ProductColorImage, on_delete=models.CASCADE, related_name="banner"
+    )
     title = models.CharField(max_length=200)
     subtitle = models.CharField(max_length=200)
     price = models.CharField(max_length=200)
     is_listed = models.BooleanField(default=True)
-    
+
     def __str__(self):
         return f"{self.name} - {self.title}"

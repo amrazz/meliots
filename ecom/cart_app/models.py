@@ -63,7 +63,9 @@ class Payment(models.Model):
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    address = models.ForeignKey(Address, on_delete=models.DO_NOTHING, null=True, blank=True)
+    address = models.ForeignKey(
+        Address, on_delete=models.DO_NOTHING, null=True, blank=True
+    )
     payment_method = models.CharField(max_length=100, null=False)
     payment_transaction_id = models.CharField(max_length=100, null=True, blank=True)
     payment = models.ForeignKey(

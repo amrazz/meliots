@@ -27,13 +27,14 @@ def update_product_status(sender, instance, created, **kwargs):
         product = Product.objects.get(id=instance.id)
         product.percentage = 0
         product.save()
-        
-        product_color = ProductColorImage.objects.filter(product = instance).first()
+
+        product_color = ProductColorImage.objects.filter(product=instance).first()
         for color in product_color:
-            banners = Banner.objects.filter(product_color_image = color).first()
+            banners = Banner.objects.filter(product_color_image=color).first()
             for banner in banners:
                 banner.is_listed = False
                 banner.save()
+
 
 @receiver(post_save, sender=CategoryOffer)
 def update_category_offer(sender, instance, created, **kwargs):

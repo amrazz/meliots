@@ -314,7 +314,9 @@ def otp(request):
                         print(
                             f"[DEBUG] referring_customer_transaction {referring_customer_transaction} created successfully."
                         )
-                        messages.success(request, f"{user.username} created successfully.")
+                        messages.success(
+                            request, f"{user.username} created successfully."
+                        )
                         return redirect("login")
                 messages.success(request, f"{user.username} created successfully.")
                 return redirect("login")
@@ -354,19 +356,19 @@ def resend_otp(request):
 def log_in(request):
     if request.user.is_authenticated:
         return redirect("index")
-    
+
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
         user = authenticate(request, username=username, password=password)
-        
+
         if user is not None:
             auth_login(request, user)
             return redirect("index")
         else:
             messages.error(request, "The username or password is incorrect.")
             return redirect("login")
-    
+
     return render(request, "log.html")
 
 
@@ -489,10 +491,10 @@ def index(request):
     products_color = ProductColorImage.objects.filter(product__is_deleted=False)
     products = Product.objects.filter(is_listed=True)
     context = {
-            "products_color": products_color,
-            "products": products,
-            "banners": banners,
-        }
+        "products_color": products_color,
+        "products": products,
+        "banners": banners,
+    }
     if request.user.is_authenticated:
         banners = Banner.objects.filter(is_listed=True).order_by("-id")
         products_color = ProductColorImage.objects.filter(product__is_deleted=False)
@@ -1033,14 +1035,13 @@ def address(request):
     try:
         if request.user.is_authenticated:
             address = Address.objects.filter(user=request.user.pk)
-            next_page = request.GET.get('next', '')
+            next_page = request.GET.get("next", "")
             context = {"address": address, "next_page": next_page}
             return render(request, "address.html", context)
         else:
             return redirect("login")
     except:
         return render(request, "address.html")
-
 
 
 def add_address(request):
@@ -1074,13 +1075,17 @@ def add_address(request):
                 return redirect("add_address")
 
             # Name validation: only letters and single spaces between words
-            name_pattern = r'^[a-zA-Z]+(?:\s[a-zA-Z]+)*$'
+            name_pattern = r"^[a-zA-Z]+(?:\s[a-zA-Z]+)*$"
             if not re.match(name_pattern, first_name):
-                messages.error(request, "First name must contain only letters and single spaces.")
+                messages.error(
+                    request, "First name must contain only letters and single spaces."
+                )
                 return redirect("add_address")
 
             if not re.match(name_pattern, last_name):
-                messages.error(request, "Last name must contain only letters and single spaces.")
+                messages.error(
+                    request, "Last name must contain only letters and single spaces."
+                )
                 return redirect("add_address")
 
             # Mobile number length validation
@@ -1088,22 +1093,29 @@ def add_address(request):
                 messages.error(request, "Mobile number is not valid.")
                 return redirect("add_address")
 
-
-            location_pattern = r'^[a-zA-Z\s]+$'
+            location_pattern = r"^[a-zA-Z\s]+$"
             if not re.match(location_pattern, city):
-                messages.error(request, "City name must contain only letters and spaces.")
+                messages.error(
+                    request, "City name must contain only letters and spaces."
+                )
                 return redirect("add_address")
 
             if not re.match(location_pattern, state):
-                messages.error(request, "State name must contain only letters and spaces.")
+                messages.error(
+                    request, "State name must contain only letters and spaces."
+                )
                 return redirect("add_address")
 
             if not re.match(location_pattern, country):
-                messages.error(request, "Country name must contain only letters and spaces.")
+                messages.error(
+                    request, "Country name must contain only letters and spaces."
+                )
                 return redirect("add_address")
 
             if not re.match(location_pattern, house_name):
-                messages.error(request, "House name must contain only letters and spaces.")
+                messages.error(
+                    request, "House name must contain only letters and spaces."
+                )
                 return redirect("add_address")
 
             # Postal code validation: only digits

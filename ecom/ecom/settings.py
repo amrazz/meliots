@@ -27,12 +27,18 @@ SECRET_KEY = "django-insecure-iy*7oiv=1()na$^(2vj_@$+qc_am^ogz#yh+uk+&g5h9*zf!y5
 DEBUG = True
 
 
-ALLOWED_HOSTS = ['www.meliotis.shop','meliotis.shop','0.0.0.0', '16.170.208.82', 'localhost']
+ALLOWED_HOSTS = [
+    "www.meliotis.shop",
+    "meliotis.shop",
+    "0.0.0.0",
+    "16.170.208.82",
+    "localhost",
+]
 
 
 CSRF_TRUSTED_ORIGINS = [
-	'http://meliotis.shop',
-	]
+    "http://meliotis.shop",
+]
 
 # Application definition
 
@@ -115,8 +121,8 @@ WSGI_APPLICATION = "ecom.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "database",
-        "USER": "admin",
+        "NAME": "ecomdata",
+        "USER": "postgres",
         "PASSWORD": "amraz",
         "HOST": "localhost",
         "PORT": "5432",
@@ -159,10 +165,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [
-  os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, "static"),
 ]
 
 MEDIA_URL = "/media/"

@@ -63,17 +63,15 @@ def admin_login(request):
 @never_cache
 def dashboard(request):
     if request.user.is_superuser:
-        month = request.GET.get('month')
+        month = request.GET.get("month")
         if month:
-            year, month = map(int, month.split('-'))
+            year, month = map(int, month.split("-"))
             ordered_items = OrderItem.objects.filter(
-                status="Delivered",
-                created_at__year=year,
-                created_at__month=month
+                status="Delivered", created_at__year=year, created_at__month=month
             )
         else:
             ordered_items = OrderItem.objects.filter(status="Delivered")
-        
+
         delivered_orders_per_day = (
             ordered_items.annotate(delivery_date=TruncDate("created_at"))
             .values("delivery_date")
@@ -81,12 +79,16 @@ def dashboard(request):
             .order_by("delivery_date")
         )
 
-        delivery_data = list(delivered_orders_per_day.values("delivery_date", "total_orders"))
+        delivery_data = list(
+            delivered_orders_per_day.values("delivery_date", "total_orders")
+        )
 
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
             response_data = {
-                "labels": [item["delivery_date"].strftime("%Y-%m-%d") for item in delivery_data],
-                "data": [item["total_orders"] for item in delivery_data]
+                "labels": [
+                    item["delivery_date"].strftime("%Y-%m-%d") for item in delivery_data
+                ],
+                "data": [item["total_orders"] for item in delivery_data],
             }
             return JsonResponse(response_data)
 
@@ -108,8 +110,12 @@ def dashboard(request):
         orders_per_month = OrderItem.objects.filter(
             status="Delivered", created_at__range=("2024-05-01", "2024-05-31")
         )
-        total_sum_per_year = orders_per_year.aggregate(total_price=Sum("order__total"))["total_price"]
-        total_sum_per_month = orders_per_month.aggregate(total_price=Sum("order__total"))["total_price"]
+        total_sum_per_year = orders_per_year.aggregate(total_price=Sum("order__total"))[
+            "total_price"
+        ]
+        total_sum_per_month = orders_per_month.aggregate(
+            total_price=Sum("order__total")
+        )["total_price"]
 
         top_3_category = (
             Product.objects.filter(
@@ -274,57 +280,60 @@ def edit_category(request, cat_id):
     return redirect("admin_login")
 
 
-
-def banner(request): 
+def banner(request):
     if request.user.is_superuser:
         banner = Banner.objects.all().order_by("-id")
-        return render(request, 'view_banner.html', {'banner': banner})
-    
-    
+        return render(request, "view_banner.html", {"banner": banner})
+
+
 def add_banner(request):
     if request.user.is_superuser:
-        if request.method == 'POST':
+        if request.method == "POST":
             form = BannerForm(request.POST, request.FILES)
             print(form)
             if form.is_valid():
                 print(form)
                 banner = form.save(commit=False)
-                product_color_image = form.cleaned_data['product_color_image']
+                product_color_image = form.cleaned_data["product_color_image"]
                 product = product_color_image.product
                 if product.percentage == 0:
-                    messages.error(request, 'The product percentage is 0 so give an offer and add banner.')
+                    messages.error(
+                        request,
+                        "The product percentage is 0 so give an offer and add banner.",
+                    )
                 else:
                     banner.price = product.offer_price
                     banner.save()
-                    messages.success(request, 'Banner added successfully.')
-                    return redirect('banner')
+                    messages.success(request, "Banner added successfully.")
+                    return redirect("banner")
             else:
-                messages.error(request, 'Form is not valid. Please check the data.')
+                messages.error(request, "Form is not valid. Please check the data.")
         else:
             form = BannerForm()
-        return render(request, 'add_banner.html', {'form': form})
+        return render(request, "add_banner.html", {"form": form})
+
 
 def edit_banner(request, banner_id):
     banner = get_object_or_404(Banner, id=banner_id)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = BannerForm(request.POST, request.FILES, instance=banner)
         if form.is_valid():
             form.save()
-            return redirect('banner')
+            return redirect("banner")
     else:
         form = BannerForm(instance=banner)
-    return render(request, 'edit_banner.html', {'form': form, 'banner' : banner})
+    return render(request, "edit_banner.html", {"form": form, "banner": banner})
+
 
 def delete_banner(request, banner_id):
     if request.user.is_superuser:
         banner = get_object_or_404(Banner, id=banner_id)
         banner.delete()
-        return redirect('banner')
+        return redirect("banner")
     else:
         messages.error(request, "You do not have permission to access this page.")
-        return redirect('admin_login')
-
+        return redirect("admin_login")
 
 
 def category_offer(request):
@@ -333,7 +342,8 @@ def category_offer(request):
             category__is_listed=True, category__is_deleted=False
         )
         return render(
-            request, "category/cat_offer.html", {"category_off": category_off})
+            request, "category/cat_offer.html", {"category_off": category_off}
+        )
 
 
 def add_category_offer(request):
@@ -448,7 +458,7 @@ def restore(request, cat_id):
 def product(request):
     try:
         if request.user.is_superuser:
-            next_url = request.GET.get('next', '/')
+            next_url = request.GET.get("next", "/")
             products = ProductColorImage.objects.filter(is_deleted=False).order_by("id")
             page = request.GET.get("page", 1)
             product_Paginator = Paginator(products, PRODUCT_PER_PAGE)
@@ -582,18 +592,23 @@ def edit_product(request, product_id):
                     size.save()
 
             messages.success(request, "Product updated successfully.")
-            page = request.GET.get('page', 1)
-            return HttpResponseRedirect(reverse('product') + '?page=' + str(page))
+            page = request.GET.get("page", 1)
+            return HttpResponseRedirect(reverse("product") + "?page=" + str(page))
         else:
             available_sizes = [size.size for size in sizes]
             return render(
-                request, "product/edit_product.html",
-                {"color_image": color_image, "sizes": sizes, "brands": brands, "available_sizes": available_sizes},
+                request,
+                "product/edit_product.html",
+                {
+                    "color_image": color_image,
+                    "sizes": sizes,
+                    "brands": brands,
+                    "available_sizes": available_sizes,
+                },
             )
     except Product.DoesNotExist:
         messages.error(request, "Product not found.")
         return redirect("product")
-
 
 
 @never_cache
@@ -612,7 +627,7 @@ def product_search(request):
 # ____________________________________________________________________________________________________________________________________________________
 @never_cache
 def add_product(request):
-    # try:
+    try:
         if request.user.is_superuser:
             categories = Category.objects.all()
             brands = Brand.objects.all()
@@ -636,7 +651,7 @@ def add_product(request):
                         messages.error(request, "Invalid brand.")
                         return redirect("add_product")
                     else:
-                        brand = Brand.objects.filter(brand = brand).first()
+                        brand = Brand.objects.filter(id=brand).first()
                 if Product.objects.filter(name=name).exists():
                     messages.error(request, "Product with this name already exists.")
                     return redirect("add_product")
@@ -653,30 +668,35 @@ def add_product(request):
                     name=name,
                     category_id=category,
                     type=type,
-                    brand = brand,
                     price=price,
                     percentage=percentage,
                     description=description,
                 )
-                
+
                 if exp_date:
                     add_product.per_expiry_date = exp_date
                 add_product.save()
+                if brand:
+                    add_product.brand = (brand,)
+                add_product.save()
+
                 print("product added successfully")
                 return redirect("product_image")
             return render(
-                request, "product/add_product.html", {"categories": categories, "brands": brands}
+                request,
+                "product/add_product.html",
+                {"categories": categories, "brands": brands},
             )
-    # except Exception as e:
-    #     messages.error(request, str(e))
-    # return redirect("admin_login")
+    except Exception as e:
+        messages.error(request, str(e))
+    return redirect("admin_login")
 
 
 @never_cache
 def product_image(request):
     try:
         if request.user.is_superuser:
-            products = Product.objects.all().order_by('id')
+            products = Product.objects.all().order_by("id")
             if request.method == "POST":
                 product_id = request.POST.get("product")
                 color = request.POST.get("color")
@@ -737,12 +757,10 @@ def product_size(request):
                     ProductColorImage, id=product_color_id
                 )
                 product_size = ProductSize.objects.create(
-                    productcolor=product_color,
-                    size=size,
-                    quantity=quantity
+                    productcolor=product_color, size=size, quantity=quantity
                 )
                 print(f"{product_size} created successfully")
-                
+
                 messages.success(request, "Product size created successfully.")
                 return redirect("product")
             else:
@@ -811,8 +829,8 @@ def product_is_deleted(request, product_id):
         products = ProductColorImage.objects.get(id=product_id)
         products.is_deleted = True
         products.save()
-        page = request.GET.get('page', 1)
-        return HttpResponseRedirect(reverse('product') + '?page=' + str(page))
+        page = request.GET.get("page", 1)
+        return HttpResponseRedirect(reverse("product") + "?page=" + str(page))
     except Exception as e:
         messages.error(request, str(e))
         return redirect("product")
@@ -836,8 +854,8 @@ def product_is_listed(request, product_id):
     product_color = ProductColorImage.objects.get(id=product_id)
     product_color.is_listed = True
     product_color.save()
-    page = request.GET.get('page', 1)
-    return HttpResponseRedirect(reverse('product') + '?page=' + str(page))
+    page = request.GET.get("page", 1)
+    return HttpResponseRedirect(reverse("product") + "?page=" + str(page))
 
 
 @never_cache
@@ -845,8 +863,8 @@ def product_is_unlisted(request, product_id):
     product_color = ProductColorImage.objects.get(id=product_id)
     product_color.is_listed = False
     product_color.save()
-    page = request.GET.get('page', 1)
-    return HttpResponseRedirect(reverse('product') + '?page=' + str(page))
+    page = request.GET.get("page", 1)
+    return HttpResponseRedirect(reverse("product") + "?page=" + str(page))
 
 
 # ____________________________________________________________________________________________________________________________________________________
@@ -863,10 +881,14 @@ def order(request):
             sort_by = "-created_at"
         if from_date:
             from_date = datetime.strptime(from_date, "%Y-%m-%d")
-            from_date = timezone.make_aware(from_date.replace(hour=0, minute=0, second=0, microsecond=0))
+            from_date = timezone.make_aware(
+                from_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            )
         if to_date:
             to_date = datetime.strptime(to_date, "%Y-%m-%d")
-            to_date = timezone.make_aware(to_date.replace(hour=23, minute=59, second=59, microsecond=999999))
+            to_date = timezone.make_aware(
+                to_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            )
 
         order_details = Order.objects.all().order_by(sort_by)
 
@@ -1205,21 +1227,21 @@ def sales_report(request):
 
             filters = {}
             if from_date:
-                filters['from_date'] = from_date
+                filters["from_date"] = from_date
                 order = order.filter(created_at__gte=from_date)
             if to_date:
-                filters['to_date'] = to_date
+                filters["to_date"] = to_date
                 order = order.filter(created_at__lte=to_date)
             if month:
-                filters['month'] = month
+                filters["month"] = month
                 year, month = map(int, month.split("-"))
                 order = order.filter(created_at__year=year, created_at__month=month)
             if year:
-                filters['year'] = year
+                filters["year"] = year
                 order = order.filter(created_at__year=year)
 
             # Store filters in session
-            request.session['filters'] = filters
+            request.session["filters"] = filters
 
             count = order.count()
             total = order.aggregate(total=Sum("order__total"))["total"]
@@ -1249,22 +1271,26 @@ def sales_report(request):
 def download_sales_report(request):
     if request.user.is_superuser:
         if request.method == "GET":
-            filters = request.session.get('filters', {})
+            filters = request.session.get("filters", {})
             sales_data = OrderItem.objects.filter(
                 Q(cancel=False) & Q(return_product=False) & Q(status="Delivered")
             )
 
-            if 'from_date' in filters:
-                sales_data = sales_data.filter(created_at__gte=filters['from_date'])
-            if 'to_date' in filters:
-                sales_data = sales_data.filter(created_at__lte=filters['to_date'])
-            if 'month' in filters:
-                year, month = map(int, filters['month'].split("-"))
-                sales_data = sales_data.filter(created_at__year=year, created_at__month=month)
-            if 'year' in filters:
-                sales_data = sales_data.filter(created_at__year=filters['year'])
-            if 'from' in filters and 'to_date' in filters:
-                sales_data = sales_data.filter(created_at__range=[filters['from'], filters['to']])
+            if "from_date" in filters:
+                sales_data = sales_data.filter(created_at__gte=filters["from_date"])
+            if "to_date" in filters:
+                sales_data = sales_data.filter(created_at__lte=filters["to_date"])
+            if "month" in filters:
+                year, month = map(int, filters["month"].split("-"))
+                sales_data = sales_data.filter(
+                    created_at__year=year, created_at__month=month
+                )
+            if "year" in filters:
+                sales_data = sales_data.filter(created_at__year=filters["year"])
+            if "from" in filters and "to_date" in filters:
+                sales_data = sales_data.filter(
+                    created_at__range=[filters["from"], filters["to"]]
+                )
 
             overall_sales_count = request.session.get("overall_sales_count")
             overall_order_amount = request.session.get("overall_order_amount")

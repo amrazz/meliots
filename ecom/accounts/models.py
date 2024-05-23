@@ -19,6 +19,7 @@ class Address(models.Model):
     country = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=12)
     is_deleted = models.BooleanField(default=False, blank=True, null=True)
+
     def __str__(self):
         return f"{self.user.username}:{self.house_name}"
 
