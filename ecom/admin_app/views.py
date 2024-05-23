@@ -756,6 +756,10 @@ def product_size(request):
                 product_color = get_object_or_404(
                     ProductColorImage, id=product_color_id
                 )
+
+                if ProductSize.objects.filter(productcolor=product_color, size=size).exists():
+                    messages.error(request, "This size already exists for the selected product color.")
+                    return redirect("product_size")
                 product_size = ProductSize.objects.create(
                     productcolor=product_color, size=size, quantity=quantity
                 )
