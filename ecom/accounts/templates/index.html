@@ -77,6 +77,7 @@
           <div id="carouselExample" style="width: 698px;margin-left: -69px;margin-top: -173px;" class="carousel slide">
             <div class="carousel-inner">
 
+              {% if banner %}
               {% for banner in banners %}
               <div class="carousel-item {% if forloop.first %}active{% endif %}">
                 <img src="{{ banner.banner_image.url }}" style="width: 698px;height: 376px;" class="d-block w-100"
@@ -91,6 +92,15 @@
                 </div>
               </div>
               {% endfor %}
+              {% else %}
+              <img src="{% static 'img/categories/category-1.jpg' %}" style="width: 698px;height: 376px;" class="d-block w-100">
+              <!-- <div class="categories__text">
+                <h1>Women’s fashion</h1>
+                <p>Sitamet, consectetur adipiscing elit, sed do eiusmod tempor incidid-unt labore
+                edolore magna aliquapendisse ultrices gravida.</p>
+                <a href="#">Shop now</a>
+            </div> -->
+              {% endif %}
             </div>
             <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample"
               data-bs-slide="prev">
@@ -169,8 +179,12 @@
       <div class="col-lg-3 col-md-4 col-sm-6 mix men women kid">
         <div class="product__item">
           <div class="product__item__pic set-bg">
-            <a href="{% url 'product_detail' color.id %}"><img src="{{ color.image1.url }}" alt=""></a>
+            {% if color.is_listed and color.product.category.is_listed %}
             <div class="label new offer">{{color.product.percentage}} % OFFER</div>
+            {% else %}
+            <div class="label new" style="background-color: red;">Out Of Stock</div>
+            {% endif %}
+            <a href="{% url 'product_detail' color.id %}"><img src="{{ color.image1.url }}" alt=""></a>
             <ul class="product__hover">
               <li>
                 <a href="{{color.image1.url}}" class="image-popup"><span class="arrow_expand"></span></a>

@@ -446,7 +446,7 @@ def restore(request, cat_id):
 
 @never_cache
 def product(request):
-    # try:
+    try:
         if request.user.is_superuser:
             next_url = request.GET.get('next', '/')
             products = ProductColorImage.objects.filter(is_deleted=False).order_by("id")
@@ -470,9 +470,9 @@ def product(request):
         else:
             messages.error(request, "Only admins are allowed.")
             return redirect("admin_login")
-    # except Exception as e:
-    #     messages.error(request, str(e))
-    #     return redirect("admin_login")
+    except Exception as e:
+        messages.error(request, str(e))
+        return redirect("admin_login")
 
 
 def is_valid_image(file):
@@ -550,7 +550,8 @@ def edit_product(request, product_id):
                 return redirect("product")
 
             category = Category.objects.get(id=category_id)
-            brand = Brand.objects.get(id=brand)
+            if brand:
+                brand = Brand.objects.get(id=brand)
 
             color_image.product.name = name
             color_image.product.per_expiry_date = exp_date
@@ -559,7 +560,8 @@ def edit_product(request, product_id):
             color_image.product.price = price
             color_image.product.percentage = percentage
             color_image.product.category = category
-            color_image.product.brand = brand
+            if brand:
+                color_image.product.brand = brand
             color_image.product.save()
 
             if color_image:
@@ -741,7 +743,7 @@ def product_size(request):
                 )
                 print(f"{product_size} created successfully")
                 
-
+                messages.success(request, "Product size created successfully.")
                 return redirect("product")
             else:
                 return render(

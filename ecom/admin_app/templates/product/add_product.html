@@ -29,7 +29,7 @@
                 {% csrf_token %}
                 <br><br>
 
-                <div class=">
+                <div class="">
                 <div>
                     <label for=" exampleInputPrice" class="form-label">Name</label>
                     <input type="text" required autocomplete="off" class="form-control"
@@ -61,8 +61,9 @@
             <div class="form-group">
                 <label for="productBrand">Brand</label>
                 <select name="brand" id="productBrand" class="form-control">
+                    <option value="">Choose Brand</option>
                     {% for brand in brands %}
-                        <option value="{{ brand.pk }}" {% if brand.pk == color_image.product.brand.id %}selected{% endif %}>
+                        <option value="{{ brand.pk }}" >
                             {{ brand.name }}
                         </option>
                     {% endfor %}

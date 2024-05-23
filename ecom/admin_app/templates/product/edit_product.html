@@ -25,6 +25,7 @@
                 <div class="form-group">
                     <label for="productBrand">Brand</label>
                     <select name="brand" id="productBrand" class="form-control">
+                        <option value="">Choose Brand</option>
                         {% for brand in brands %}
                             <option value="{{ brand.pk }}" {% if brand.pk == color_image.product.brand.id %}selected{% endif %}>
                                 {{ brand.name }}
