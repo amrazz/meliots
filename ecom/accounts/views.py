@@ -1,35 +1,83 @@
 import re
+import json
 import random
-from django.shortcuts import render, redirect
-from django.contrib.auth.models import User
-from django.http import HttpResponse
-from django.contrib import messages, auth
-from django.views.decorators.cache import never_cache
-from django.contrib.auth import authenticate, login, logout
+import pdfkit
+from .models import *
+from cart_app.models import *
+from admin_app.models import *
+from django.urls import reverse
+from django.conf import settings
+from django.utils import timezone
+from django.db import transaction
+from django.dispatch import receiver
 from django.core.mail import send_mail
+from datetime import datetime, timedelta
+from django.contrib import messages, auth
+from ecom.settings import EMAIL_HOST_USER
+from django.db.models import Q, FloatField
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect
+from django.db.models.signals import post_save
+from django.core.validators import validate_email
+from validate_email_address import validate_email
+from django.http import HttpResponse, JsonResponse
+from django.core.exceptions import ValidationError
+from django.template.loader import render_to_string
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import never_cache
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password
 from django.db.models import F, ExpressionWrapper, DecimalField
 from django.contrib.auth import authenticate, login as auth_login
-from django.conf import settings
-from ecom.settings import EMAIL_HOST_USER
-from validate_email_address import validate_email
 from django.contrib.auth.password_validation import validate_password
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
-from django.contrib.auth.hashers import check_password
-from django.utils import timezone
-from django.db.models import Q, FloatField
-from datetime import datetime, timedelta
+from django.contrib.auth import authenticate, login, logout,get_backends
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.http import JsonResponse
-from django.template.loader import render_to_string
-from admin_app.models import *
-from .models import *
-from django.urls import reverse
-import pdfkit
-from cart_app.models import *
+
 
 PRODUCT_PER_PAGE = 9
 
+
+@csrf_exempt
+def validate_register(request):
+    field_name = request.POST.get('field_name')
+    field_value = request.POST.get('field_value')
+    response = {'valid': True, 'error': ''}
+
+    try:
+        if field_name in ['f_name', 'l_name']:
+            if not field_value.isalpha():
+                raise ValidationError('Name must contain only letters')
+            elif len(field_value) < 2:
+                raise ValidationError('Name must be at least 2 characters long')
+        
+        if field_name == 'username':
+            if User.objects.filter(username=field_value).exists():
+                raise ValidationError('The username is already taken')
+            if not field_value.strip():
+                raise ValidationError('The username is not valid')
+
+        elif field_name == 'email':
+            if User.objects.filter(email=field_value).exists():
+                raise ValidationError('This email is already registered')
+            if not re.match(r"^[\w\.-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", field_value):
+                raise ValidationError('Please enter a valid email address')
+
+        elif field_name == 'pass1':
+            validate_password(field_value, user=User)
+            if len(field_value) < 6:
+                raise ValidationError('The password should be at least 6 characters')
+            if not any(char.isupper() for char in field_value):
+                raise ValidationError('Password must contain at least one uppercase letter')
+            if not any(char.islower() for char in field_value):
+                raise ValidationError('Password must contain at least one lowercase letter')
+            if not any(char.isdigit() for char in field_value):
+                raise ValidationError('Password must contain at least one digit')
+
+    except ValidationError as e:
+        response['valid'] = False
+        response['error'] = ', '.join(e.messages)
+
+    return JsonResponse(response)
 
 @never_cache
 def register(request):
@@ -47,122 +95,196 @@ def register(request):
             password1 = request.POST.get("pass1")
             password2 = request.POST.get("pass2")
             referral_code_manual = request.POST.get("referral_code")
-            print(referral_code)
 
             if referral_code_manual:
                 referral_code = referral_code_manual
 
             if referral_code:
                 if not Customer.objects.filter(referral_code=referral_code).exists():
-                    messages.error(request, "Invalid Referral Code")
-                    print("Invalid Referral Code")
-                    return redirect("register")
+                    return JsonResponse({'success': False, 'message': 'Invalid Referral Code'})
                 else:
                     request.session["referral_code"] = referral_code
-                    print(
-                        f"[DEBUG] Referral Code in sessions: {request.session.get("referral_code")}"
-                    )
-            request.session["form_data"] = {
-                "first_name": first_name,
-                "last_name": last_name,
-                "username": username,
-                "email": email,
-                "password1": password1,
-                "password2": password2,
-                "referral_code": referral_code,
-            }
-            print(f"[DEBUG] Form data: {request.session['form_data']}")
 
             if not all([first_name, last_name, username, email, password1, password2]):
-                messages.error(request, "Please fill up all the fields.")
-                print("Please fill up all the fields")
-                return redirect("register")
+                return JsonResponse({'success': False, 'message': 'Please fill up all the fields.'})
 
-            elif User.objects.filter(username=username).exists():
-                messages.error(request, "The username is already taken")
-                print("The username is already taken")
-                return redirect("register")
-
-            if not username.strip():
-                messages.error(request, "The username is not valid")
-                print("The username is not valid")
-                return redirect("register")
+            if User.objects.filter(username=username).exists():
+                return JsonResponse({'success': False, 'message': 'The username is already taken'})
 
             if len(password1) < 6:
-                messages.error(request, "The password should be at least 6 characters")
-                print("The password should be at least 6 characters")
-                return redirect("register")
+                return JsonResponse({'success': False, 'message': 'The password should be at least 6 characters'})
 
-            elif password1 != password2:
-                messages.error(request, "The passwords do not match")
-                print("The passwords do not match")
-                return redirect("register")
+            if password1 != password2:
+                return JsonResponse({'success': False, 'message': 'The passwords do not match'})
+
+            if not first_name.isalpha():
+                return JsonResponse({'success': False, 'message': 'First name must contain only letters'})
+
+            if not last_name.isalpha():
+                return JsonResponse({'success': False, 'message': 'Last name must contain only letters'})
 
             try:
                 validate_password(password1, user=User)
             except ValidationError as e:
-                messages.error(request, ", ".join(e))
-                print(", ".join(e))
-                return redirect("register")
+                return JsonResponse({'success': False, 'message': str(e)})
 
-            if not any(char.isupper() for char in password1):
-                messages.error(
-                    request, "Password must contain at least one uppercase letter"
+            if User.objects.filter(email=email).exists():
+                return JsonResponse({'success': False, 'message': 'This email is already registered'})
+
+            with transaction.atomic():
+                user = User.objects.create_user(
+                    first_name=first_name, 
+                    last_name=last_name, 
+                    username=username, 
+                    email=email, 
+                    password=password1
                 )
-                print("Password must contain at least one uppercase letter")
-                return redirect("register")
+                user.save()
 
-            if not any(char.islower() for char in password1):
-                messages.error(
-                    request, "Password must contain at least one lowercase letter"
-                )
-                print("Password must contain at least one lowercase letter")
-                return redirect("register")
+                user_profile = User_profile.objects.create(user=user, is_verified=False)
+                user_profile.user.is_active = False
+                user_profile.save()
+                user_id = user_profile.user.pk 
+                otp = generate_otp()
+                otp_generated_at = timezone.now().isoformat()
+                print(otp, otp_generated_at)
+                send_otp_email(email, otp)
+                store_user_data_in_session(request, user_id, otp, otp_generated_at)
 
-            if not any(char.isdigit() for char in password1):
-                messages.error(request, "Password must contain at least one digit")
-                print("Password must contain at least one digit")
-                return redirect("register")
-
-            elif not re.match(r"^[\w\.-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
-                messages.error(request, "Please enter a valid email address")
-                print("Please enter a valid email address")
-                return redirect("register")
-
-            elif User.objects.filter(email=email).exists():
-                messages.error(request, "This email is already registered")
-                print("This email is already registered")
-                return redirect("register")
-
-            otp, otp_generated_at = generate_otp_and_send_email(email)
-            store_user_data_in_session(
-                request,
-                first_name,
-                last_name,
-                username,
-                email,
-                password1,
-                otp,
-                otp_generated_at,
-            )
-            print(otp)
-            messages.success(request, f"Welcome {first_name}")
-            del request.session["form_data"]
-            return redirect("my_otp")
-
+            return JsonResponse({'success': True, 'message': f'Welcome {first_name}'})
         else:
             form_data = request.session.get("form_data", {})
             return render(request, "register.html", {"form_data": form_data})
 
     except ValidationError as e:
-        messages.error(request, ", ".join(e))
-        print(", ".join(e))
-        return redirect("register")
+        return JsonResponse({'success': False, 'message': str(e)})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+def generate_otp():
+    return random.randint(1000, 9999)
+
+def send_otp_email(email, otp):
+    send_mail(
+        subject="Your OTP for verification",
+        message=f"Your OTP for verification is: {otp}",
+        from_email=EMAIL_HOST_USER,
+        recipient_list=[email],
+        fail_silently=True,
+    )
+
+def store_user_data_in_session(request, user_id, otp, otp_generated_at):
+    request.session["user_data"] = {
+        "user_id": user_id,
+        "otp": otp,
+        "otp_generated_at": otp_generated_at,
+    }
+
+
+
+@never_cache
+def otp(request):
+    try:
+        if request.user.is_authenticated:
+            return redirect("index")
+
+        email = request.session.get("user_data", {}).get("email", "")
+        if request.method == "POST":
+            otp_digits = [request.POST.get(f"digit{i}") for i in range(1, 5)]
+            if None in otp_digits:
+                messages.error(request, "Invalid OTP format, please try again.")
+                return redirect("my_otp")
+
+            entered_otp = int("".join(otp_digits))
+            stored_otp = request.session.get("user_data", {}).get("otp")
+            user_data = request.session.get("user_data", {})
+            otp_generated_at = user_data.get("otp_generated_at", "")
+            user_id = user_data.get("user_id", "")
+            print(f"this is user id {user_id}")
+            referral_code = request.session.get("referral_code", "")
+
+            try:
+                otp_generated_at_datetime = datetime.fromisoformat(otp_generated_at)
+            except ValueError:
+                otp_generated_at_datetime = None
+
+            if otp_generated_at_datetime and otp_generated_at_datetime + timedelta(minutes=5) < timezone.now():
+                messages.error(request, "OTP has expired. Please try again.")
+                return redirect("register")
+
+            if str(entered_otp) == str(stored_otp):
+                user = User.objects.get(id=user_id)
+                user_profile = User_profile.objects.get(user=user)
+                user_profile.is_verified = True
+                user_profile.user.is_active = True
+                user_profile.save()
+
+                del request.session["user_data"]
+                
+                
+                backend = get_backends()[0]
+                user.backend = f"{backend.__module__}.{backend.__class__.__name__}"
+
+                # Referral code handling
+                if referral_code:
+                    referred_customer = Customer.objects.get(referral_code=referral_code)
+                    referred_customer.referral_count += 1
+                    referred_customer.save()
+
+                    referred_customer_user = referred_customer.user
+                    referred_customer_credit, created = Wallet.objects.get_or_create(user=referred_customer_user)
+                    referred_customer_credit.balance += 100
+                    referred_customer_credit.referral_deposit += 100
+                    referred_customer_credit.save()
+
+                    referred_transaction_id = "REFERRAL_" + get_random_string(4, "MOZ0123456789")
+                    while Wallet_transaction.objects.filter(transaction_id=referred_transaction_id).exists():
+                        referred_transaction_id = "REFERRAL_" + get_random_string(4, "MOZ0123456789")
+
+                    Wallet_transaction.objects.create(
+                        wallet=referred_customer_credit,
+                        transaction_id=referred_transaction_id,
+                        money_deposit=100,
+                    )
+
+                    customer = Customer.objects.get(user=user)
+                    customer.referred_person = referred_customer_user.username
+                    customer.save()
+
+                    referring_customer_credit, created = Wallet.objects.get_or_create(user=customer.user)
+                    referring_customer_credit.balance += 50
+                    referring_customer_credit.referral_deposit += 50
+                    referring_customer_credit.save()
+
+                    referring_transaction_id = "REFERRAL_" + get_random_string(4, "MOZ0123456789")
+                    while Wallet_transaction.objects.filter(transaction_id=referring_transaction_id).exists():
+                        referring_transaction_id = "REFERRAL_" + get_random_string(4, "MOZ0123456789")
+
+                    Wallet_transaction.objects.create(
+                        wallet=referring_customer_credit,
+                        transaction_id=referring_transaction_id,
+                        money_deposit=50,
+                    )
+
+                    messages.success(request, f"{user.username} created successfully.")
+                    login(request, user)
+                    return redirect("index")
+
+                messages.success(request, f"{user.username} created successfully.")
+                login(request, user)
+                return redirect("index")
+            else:
+                messages.error(request, "Invalid OTP, try again.")
+                return redirect("my_otp")
+
+        return render(request, "otp.html", {"email": email})
+
     except Exception as e:
         messages.error(request, str(e))
-        print(str(e))
         return redirect("register")
-
+    
+    
+    
 
 def generate_otp_and_send_email(email):
     otp = random.randint(1000, 9999)
@@ -178,178 +300,30 @@ def generate_otp_and_send_email(email):
     return otp, otp_generated_at
 
 
-def store_user_data_in_session(
-    request, first_name, last_name, username, email, password, otp, otp_generated_at
-):
-    request.session["user_data"] = {
-        "first_name": first_name,
-        "last_name": last_name,
-        "username": username,
-        "email": email,
-        "password": password,
-        "otp": otp,
-        "otp_generated_at": otp_generated_at,
-    }
-
-
-@never_cache
-def otp(request):
-    try:
-        if request.user.is_authenticated:
-            return redirect("index")
-
-        email = request.session.get("user_data", {}).get("email", "")
-        print(f"[DEBUG] email: {email}")
-        if request.method == "POST":
-            otp_digits = [request.POST.get(f"digit{i}") for i in range(1, 5)]
-            print(f"[DEBUG] otp_digits: {otp_digits}")
-            if None in otp_digits:
-                messages.error(request, "Invalid OTP format, please try again.")
-                return redirect("my_otp")
-
-            entered_otp = int("".join(otp_digits))
-            stored_otp = request.session.get("user_data", {}).get("otp")
-            user_data = request.session.get("user_data", {})
-            otp_generated_at = user_data.get("otp_generated_at", "")
-            referral_code = request.session.get("referral_code", "")
-
-            try:
-                otp_generated_at_datetime = datetime.fromisoformat(otp_generated_at)
-            except ValueError:
-                otp_generated_at_datetime = None
-
-            if (
-                otp_generated_at_datetime
-                and otp_generated_at_datetime + timedelta(minutes=5) < timezone.now()
-            ):
-                messages.error(request, "OTP has expired. Please try again.")
-                return redirect("register")
-            print(f"[DEBUG] entered otp: {entered_otp} == stored_otp: {stored_otp}")
-            if str(entered_otp) == str(stored_otp):
-                user = User.objects.create_user(
-                    username=user_data["username"],
-                    first_name=user_data["first_name"],
-                    last_name=user_data["last_name"],
-                    email=user_data["email"],
-                    password=user_data["password"],
-                )
-                user.save()
-                del request.session["user_data"]
-
-                if referral_code:
-                    if Customer.objects.filter(referral_code=referral_code).exists():
-                        print(f"[DEBUG] Referral code {referral_code} exists")
-                        print(f"users : {user}")
-
-                        referred_customer = Customer.objects.get(
-                            referral_code=referral_code
-                        )
-                        referred_customer.referral_count += 1
-                        referred_customer.save()
-                        print(f"referredddd customerrsss : {referred_customer}")
-
-                        referred_customer_user = referred_customer.user
-                        referred_customer_credit, created = (
-                            Wallet.objects.get_or_create(user=referred_customer_user)
-                        )
-                        referred_customer_credit.balance += 100
-                        referred_customer_credit.referral_deposit += 100
-                        referred_customer_credit.save()
-
-                        referred_transaction_id = "REFERRAL_"
-                        referred_transaction_id += get_random_string(4, "MOZ0123456789")
-                        while Wallet_transaction.objects.filter(
-                            transaction_id=referred_transaction_id
-                        ).exists():
-                            referred_transaction_id += get_random_string(
-                                4, "MOZ0123456789"
-                            )
-                        print(
-                            f"[DEBUG] Transaction ID for referred customer: {referred_transaction_id}"
-                        )
-
-                        referred_customer_transaction = (
-                            Wallet_transaction.objects.create(
-                                wallet=referred_customer_credit,
-                                transaction_id=referred_transaction_id,
-                                money_deposit=100,
-                            )
-                        )
-                        print(
-                            f"[DEBUG] referred_customer_transaction {referred_customer_transaction} created successfully."
-                        )
-
-                        customer = Customer.objects.get(user=user)
-                        customer.referred_person = referred_customer_user.username
-                        customer.save()
-
-                        referring_customer_credit, created = (
-                            Wallet.objects.get_or_create(user=customer.user)
-                        )
-                        referring_customer_credit.balance += 50
-                        referring_customer_credit.referral_deposit += 50
-                        referring_customer_credit.save()
-
-                        referring_transaction_id = "REFERRAL_"
-                        referring_transaction_id += get_random_string(
-                            4, "MOZ0123456789"
-                        )
-                        while Wallet_transaction.objects.filter(
-                            transaction_id=referring_transaction_id
-                        ).exists():
-                            referring_transaction_id += get_random_string(
-                                4, "MOZ0123456789"
-                            )
-                        print(
-                            f"[DEBUG] Transaction ID for referring customer: {referring_transaction_id}"
-                        )
-
-                        referring_customer_transaction = (
-                            Wallet_transaction.objects.create(
-                                wallet=referring_customer_credit,
-                                transaction_id=referring_transaction_id,
-                                money_deposit=50,
-                            )
-                        )
-                        print(
-                            f"[DEBUG] referring_customer_transaction {referring_customer_transaction} created successfully."
-                        )
-                        messages.success(
-                            request, f"{user.username} created successfully."
-                        )
-                        return redirect("login")
-                messages.success(request, f"{user.username} created successfully.")
-                return redirect("login")
-            else:
-                messages.error(request, "Invalid OTP, try again.")
-                return redirect("my_otp")
-
-        return render(request, "otp.html", {"email": email})
-
-    except Exception as e:
-        print(f"[DEBUG] Exception: {e}")
-        messages.error(request, str(e))
-        return redirect("register")
-
-
 @never_cache
 def resend_otp(request):
     try:
         user_data = request.session.get("user_data", {})
         email = user_data.get("email", "")
+        user_id = user_data.get("user_id", "")
+
+        if not user_id or not isinstance(user_id, int):
+            messages.error(request, "Invalid session data. Please register again.")
+            return redirect("register")
 
         new_otp, otp_generated_now = generate_otp_and_send_email(email)
         user_data["otp"] = new_otp
+        print(f"this is new otp {new_otp}")
         user_data["otp_generated_at"] = otp_generated_now
         request.session["user_data"] = user_data
-        print("new_otp : ", new_otp)
-        print("session :", user_data)
+
         messages.success(request, "New OTP sent successfully")
         return redirect("my_otp")
 
     except Exception as e:
         messages.error(request, str(e))
         return redirect("my_otp")
+
 
 
 @never_cache
@@ -776,6 +750,8 @@ def shop_page(request):
         for category in categories_filter:
             category_filters |= Q(product__category__name=category)
         products_color = products_color.filter(category_filters)
+        
+    
 
     if ordering == "name":
         products_color = products_color.order_by("product__name")
@@ -855,6 +831,24 @@ def filtered_products_cat(request):
         | Q(product__brand__in=selected_brand_ids)
         | Q(color__in=selected_color_ids)
     ).distinct()
+    
+    if selected_category_ids and selected_color_ids:
+        products = ProductColorImage.objects.filter(
+            Q(product__category__in=selected_category_ids)
+            & Q(color__in=selected_color_ids)
+        ).distinct()
+    if selected_category_ids and selected_brand_ids:
+        products = ProductColorImage.objects.filter(
+            Q(product__category__in=selected_category_ids)
+            & Q(product__brand__in=selected_brand_ids)
+        ).distinct()
+    if selected_brand_ids and selected_color_ids and selected_category_ids:
+        products = ProductColorImage.objects.filter(
+            Q(product__category__in=selected_category_ids)
+            & Q(product__brand__in=selected_brand_ids)
+            & Q(color__in=selected_color_ids)
+        ).distinct()
+        
 
     selected_category_ids = [int(category_id) for category_id in selected_category_ids]
     selected_brand_ids = [int(brand_id) for brand_id in selected_brand_ids]
@@ -1034,7 +1028,7 @@ def change_password(request, pass_id):
 def address(request):
     try:
         if request.user.is_authenticated:
-            address = Address.objects.filter(user=request.user.pk)
+            address = Address.objects.filter(user=request.user.pk, is_deleted = False)
             next_page = request.GET.get("next", "")
             context = {"address": address, "next_page": next_page}
             return render(request, "address.html", context)
@@ -1249,7 +1243,6 @@ def invoice(request, product_id):
         return response
     else:
         return redirect("login")
-        # return render(request, "invoice.html", context)
 
 
 def referral(request):

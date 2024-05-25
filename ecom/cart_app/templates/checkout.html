@@ -81,10 +81,13 @@
     {% endif %}
 </script>
 <!-- Checkout Section Begin -->
+
+
+{% if addresses %}
 <section class="checkout spad">
     <div class="container">
         <div class="d-flex justify-content-between ">
-            <a href="{% url 'address' %}" style="height: 40px;" class="btn btn-outline-primary">Add Address</a><br><br>
+        <a href="{% url 'address' %}" style="height: 40px;" class="btn btn-outline-primary">Add Address</a><br><br>
             <form action="{% url 'checkout' %}" method="post">
                 {% csrf_token %}
                 <select name="coupon_code" style="width: 253px; height: 56px; border-radius: 55px;">
@@ -96,21 +99,19 @@
                 </select>
                 {% if coupon_applied == False %}
                 <button type="submit" class="site-btn">Apply</button>
-
                 {% else %}
                 <button type="submit" class="site-btn">Remove</button>
                 <input type="hidden" name="action" value="remove_coupon">
                 {% endif %}
             </form>
-
         </div><br><br>
+        
+       
         <form action="{% url 'place_order' %}" class="checkout__form" method='post'>
             {% csrf_token %}
             <div class="row">
                 <div class="col-lg-8">
                     <h5 class="text-center">Billing detail</h5>
-
-
                     <div class="row address">
                         {% for i in addresses %}
                         <div class="card" style="width: 18rem;margin-right: 80px;">
@@ -138,8 +139,8 @@
                             </div>
                         </div>
                         {% endfor %}
+                        
                     </div>
-
                 </div>
                 <div class="col-lg-4">
                     <div class="checkout__order">
@@ -221,6 +222,171 @@
     </div>
     </div>
 </section>
+{% else %}
+
+<section class="checkout spad">
+    <div class="container">
+        <div class="d-flex justify-content-end ">
+       
+            <form action="{% url 'checkout' %}" method="post">
+                {% csrf_token %}
+                <select name="coupon_code" style="width: 253px; height: 56px; border-radius: 55px;">
+                    <option value="" class="text-center">Select a coupon</option>
+                    {% for coupon in coupons %}
+                    <option class="text-center" value="{{ coupon.coupon_code }}">{{ coupon.coupon_code }} -
+                        {{coupon.coupon_name }}</option>
+                    {% endfor %}
+                </select>
+                {% if coupon_applied == False %}
+                <button type="submit" class="site-btn">Apply</button>
+                {% else %}
+                <button type="submit" class="site-btn">Remove</button>
+                <input type="hidden" name="action" value="remove_coupon">
+                {% endif %}
+            </form>
+        </div><br><br>
+        
+            <div class="row">
+                <div class="col-lg-8">
+                    <h5 class="text-center"><strong>BILLING DETAILS</strong></h5><hr><br>
+                    <div class="row address">
+                        <form action="{% url 'add_address_' %}" method="post" class="checkout__form">
+                            {% csrf_token %}
+                            <div class="row d-flex justify-content-center">
+                                <div class="col-lg-8">
+                                    <div class="row">
+                                        <div class="col-lg-6 col-md-6 col-sm-6">
+                                            <div class="checkout__form__input">
+                                                <p>First Name <span>*</span></p>
+                                                <input type="text" name="first_name" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6 col-md-6 col-sm-6">
+                                            <div class="checkout__form__input">
+                                                <p>Last Name <span>*</span></p>
+                                                <input type="text" name="last_name" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-12">
+                                            <div class="checkout__form__input">
+                                                <p>Email ID <span>*</span></p>
+                                                <input type="email" name="email" required>
+                                            </div>
+                                            <div class="checkout__form__input">
+                                                <p>Town/City <span>*</span></p>
+                                                <input type="text" name="city" required>
+                                            </div>
+                                            <div class="checkout__form__input">
+                                                <p>State <span>*</span></p>
+                                                <input type="text" name="state" required>
+                                            </div>
+                                            <div class="checkout__form__input">
+                                                <p>Country <span>*</span></p>
+                                                <input type="text" name="country" required>
+                                            </div>
+                                            <div class="checkout__form__input">
+                                                <p>Postcode/Zip <span>*</span></p>
+                                                <input type="text" maxlength="6" name="postal_code" required>
+                                            </div>
+                                            <div class="checkout__form__input">
+                                                <p>House Name <span>*</span></p>
+                                                <input type="text" name="house_name" required>
+                                            </div>
+                                            <div class="checkout__form__input">
+                                                <p>Mobile Number <span>*</span></p>
+                                                <input type="text" maxlength="12" name="mobile_number" required>
+                                            </div>
+                                            <div class="d-flex justify-content-center ">
+                                                <button type="submit" class="btn btn-outline-danger">Add Address</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="checkout__order">
+                        <h5 class="text-center">Your order</h5>
+                        <div class="checkout__order__product">
+                            <ul>
+                                <li>
+                                    <span class="top__text">Product</span>
+                                    <span class="top__text__right">Total</span>
+                                </li>
+                                {% for item in cartitems %}
+                                <li id="prod_name">{{ item.product.product.name }} X {{item.quantity}} <span
+                                        style="color: red;">₹
+                                        {{item.total_price }}</span><br></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div class="checkout__order__total">
+                            <ul>
+                                <li>Subtotal : <span>₹ {{sub_total}}.0</span></li><br>
+                                {% if discount_amount %}
+                                <li>Discounted Price : <span>₹ {{ discount_amount }}.0</span></li>
+
+                                <br>
+                                {% endif %}
+                                <li>Shipping Fee : <span>₹ {{shipping_fee}}</span></li><br>
+                                <li id="totalAmount">Total : <span>₹ {{total}}.0</span></li>
+
+                            </ul>
+                        </div>
+
+                        <legend>Payment Method</legend>
+
+                        <div class="form__radios">
+                            {% if total > 3000 %}
+                                <div class="form__radio">
+                                    <video id="cod-video" width="50" height="50" autoplay muted loop style="border-radius: 100px;">
+                                        <source src="https://d1jj76g3lut4fe.cloudfront.net/processed/thumb/05ggV0j3NkL863RlQG.mp4" type="video/mp4">
+                                    </video>
+                                    <label for="visa"><strike>COD</strike></label>
+                                    <input checked id="visa" name="payment_method" value="COD" type="radio" disabled>
+                                </div>
+                                {% else %}
+                                <div class="form__radio">
+                                    <video id="cod-video" width="50" height="50" autoplay muted loop style="border-radius: 100px;">
+                                        <source src="https://d1jj76g3lut4fe.cloudfront.net/processed/thumb/05ggV0j3NkL863RlQG.mp4" type="video/mp4">
+                                    </video>
+                                    <label for="visa">COD</label>
+                                    <input checked id="visa" name="payment_method" value="COD" type="radio" >
+                                </div>
+                            {% endif %}
+                            <div class="form__radio">
+                                <img style="width: 58px;height: 14px;padding-right: 7px;"
+                                    src="{% static 'img/Razorpay-icon.png' %}" alt="">
+                                <label for="razorpay">Razor Pay</label>
+                                <input id="razorpay" name="payment_method" type="radio" value="Razorpay">
+                            </div>
+                            <!-- <div class="form__radio">
+                                <video id="cod-video" width="50" height="50" autoplay muted loop style="border-radius: 100px;">
+                                    <source src="https://d1jj76g3lut4fe.cloudfront.net/processed/thumb/05ggV0j3NkL863RlQG.mp4" type="video/mp4">
+                                </video>
+                                <label for="visa">Wallet</label>
+                                <input checked id="visa" name="payment_method" value="wallet" type="radio" >
+                            </div> -->
+
+                                  <div class="form__radio">
+                                    <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script> 
+                                    <dotlottie-player src="https://lottie.host/e470aa01-1034-4047-b3b9-2fc76c6e1e69/8Zwovk56Nx.json" background="transparent" speed="1" style="width: 61px; height: 35px;" loop autoplay></dotlottie-player>
+                                <label for="visa">Wallet</label>
+                                <input checked id="visa" name="payment_method" value="wallet" type="radio" >
+                            </div>
+                        </div><br><br>
+
+                        <button type="submit" class="site-btn">Place order</button>
+                    </form>
+    </div>
+    </div>
+    </div>
+    </div>
+</section>
+{% endif %}
+
 <!-- Checkout Section End -->
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>

@@ -170,6 +170,7 @@
         <div class="row">
             <div class="col-lg-12">
                 <div class="shop__cart__table">
+                    {% if cart_items %}
                     <table>
                         <thead>
                             <tr>
@@ -232,8 +233,13 @@
                             </tr>
                             {% endfor %}
                         </tbody>
-
                     </table>
+                    {% else %}
+                    <hr><br><br><div class="d-flex justify-content-center ">
+                        <h3>THERE IS NO PRODUCT IN CART </h3>
+                    </div><br><br><hr><br><br>
+
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -279,6 +285,12 @@
 <!-- Shop Cart Section End -->
 
 <!-- JavaScript to handle quantity update -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
 <script>
     function updateQuantity(operation, cartItemId) {
         var quantityInputId = 'number_' + cartItemId;
@@ -296,8 +308,6 @@
             currentQuantity--;
         }
 
-        quantityInput.value = currentQuantity;
-
         // Send AJAX request to update the total price and shipping fee
         $.ajax({
             url: "{% url 'update_total_price' %}",
@@ -310,31 +320,34 @@
             success: function (response) {
                 if (response.new_total_price) {
                     // Update the total price and shipping fee in the HTML
+                    quantityInput.value = currentQuantity;
                     totalPriceElement.textContent = '₹ ' + response.new_total_price;
                     document.querySelector('.cart__total__procced ul li:first-child span').textContent = '₹ ' + response.subtotal + '.0';
                     if (response.shipping_fee === 'Free') {
                         document.getElementById('shipping_fee').textContent = response.shipping_fee;
-
                     } else {
                         document.getElementById('shipping_fee').textContent = '₹ ' + response.shipping_fee + '.0';
-
                     }
                     document.querySelector('.cart__total__procced ul li:last-child span').textContent = '₹ ' + response.total + '.0';
                 } else {
-                    // If the new total price is not provided, set it to 0 with the ₹ symbol
-                    totalPriceElement.textContent = '₹ 0';
+                    totalPriceElement.textContent = '₹ 0.0';
                 }
             },
-            error: function (xhr, status, error) {
-                // Do not show an alert for errors when the quantity is 0
-                if (currentQuantity > 1) {
-                    alert('Error updating total price: ' + error);
+            error: function (xhr) {
+                if (xhr.status === 400) {
+                    swal("Error!", xhr.responseJSON.error, "error"); 
+                    if (xhr.responseJSON.error.includes("There is only")) {
+                        var availableQuantity = parseInt(xhr.responseJSON.error.match(/\d+/)[0], 10);
+                        quantityInput.value = availableQuantity; // Set the quantity input to the available quantity
+                    }
+                } else {
+                    alert('Error updating total price: ' + xhr.statusText);
                 }
             }
         });
     }
-
 </script>
+
 
 
 <script>

@@ -9,61 +9,59 @@
       <div class="form-container">
         <div class="welcome-msg">Welcome !!!</div>
         <div class="signup-msg">Create an account</div>
-        <form method="post">
+        <form id="register-form" method="post">
           {% csrf_token %}
           <div class="form-group">
-            <label for="first-name">First Name</label>
-            <input autocomplete="off" type="text" class="form-control" id="first-name" name="f_name"
-              placeholder="Enter your first name" required value="{{ form_data.first_name }}" oninput="validateForm()"
-              required>
-            <span id="first-name-error" class="error"></span>
-
+            <label for="f_name">First Name</label>
+            <input autocomplete="off" type="text" class="form-control" id="f_name" name="f_name"
+              placeholder="Enter your first name" required value="{{ form_data.first_name }}">
+            <span id="f_name-error" class="error"></span>
           </div>
+
           <div class="form-group">
-            <label for="last-name">Last Name</label>
-            <input autocomplete="off" type="text" class="form-control" id="last-name" name="l_name"
-              placeholder="Enter your last name" required value="{{ form_data.last_name }}" oninput="validateForm()"
-              required>
-            <span id="first-name-error" class="error"></span>
-
+            <label for="l_name">Last Name</label>
+            <input autocomplete="off" type="text" class="form-control" id="l_name" name="l_name"
+              placeholder="Enter your last name" required value="{{ form_data.last_name }}">
+            <span id="l_name-error" class="error"></span>
           </div>
+          
           <div class="form-group">
             <label for="username">Username</label>
             <input autocomplete="off" type="text" class="form-control" id="username" name="username"
-              placeholder="Enter a username" required value="{{ form_data.username }}" oninput="validateForm()"
-              required>
-            <span id="first-name-error" class="error"></span>
-
+              placeholder="Enter a username" required value="{{ form_data.username }}">
+            <span id="username-error" class="error"></span>
           </div>
+
           <div class="form-group">
             <label for="email">Email</label>
             <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required
-              value="{{ form_data.email }}" oninput="validateForm()" required>
-            <span id="first-name-error" class="error"></span>
-
+              value="{{ form_data.email }}">
+            <span id="email-error" class="error"></span>
           </div>
+
           <div class="form-group">
             <label for="password">Password</label>
-            <input autocomplete="off" type="password" class="form-control" id="password" name="pass1"
-              placeholder="Enter a password" oninput="validateForm()" required>
-            <span id="first-name-error" class="error"></span>
-
+            <input autocomplete="off" type="password" class="form-control" id="pass1" name="pass1"
+              placeholder="Enter a password" required>
+            <span id="pass1-error" class="error"></span>
           </div>
-          <div class="form-group">
-            <label for="confirm-password">Confirm Password</label>
-            <input autocomplete="off" type="password" class="form-control" id="confirm-pass2" name="pass2"
-              placeholder="Confirm your password" oninput="validateForm()" required>
-            <span id="first-name-error" class="error"></span>
 
-          </div>
           <div class="form-group">
-            <div class="d-flex"><label for="confirm-password">Referral Code(Optional)</label>
-            </div>
-            <input autocomplete="off" type="password" class="form-control" id="referral_code" name="referral_code"
-              value="{{ form_data.referral_code }}" placeholder="Enter your referral code">
+            <label for="confirm_pass2">Confirm Password</label>
+            <input autocomplete="off" type="password" class="form-control" id="pass2" name="pass2"
+              placeholder="Confirm your password" required>
+            <span id="pass2-error" class="error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="referral_code">Referral Code(Optional)</label>
+            <input autocomplete="off" type="text" class="form-control" id="referral_code" name="referral_code" value=""
+              placeholder="Enter your referral code">
+            <span id="referral_code-error" class="error"></span>
           </div>
           <button type="submit" class="btn btn-primary btn-block rounded">Sign Up</button>
         </form>
+
         <div class="login-msg text-center ">
           <span>I already have an account?</span>
           <a href="{% url 'login' %}" class="sign-in-link align-content-sm-center ">Sign in</a>
@@ -165,60 +163,76 @@
   }
 </style>
 
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
 <script>
-  // Function to validate the input fields in real-time
-  function validateForm() {
-    // Get input field values
-    var firstName = document.getElementById('first-name').value;
-    var lastName = document.getElementById('last-name').value;
-    var username = document.getElementById('username').value;
-    var email = document.getElementById('email').value;
-    var password1 = document.getElementById('password').value;
-    var password2 = document.getElementById('confirm-pass2').value;
+  $(document).ready(function() {
+    function showValidationError(input, message) {
+      $(input).siblings('.error').text(message).css({
+          'color': 'red',
+          'list-style-type': 'none', 
+          'padding': 0, // Reset padding
+          'margin': 0 // Reset margin
+      }).show(); 
+    }
+    
 
-    // Validate first name
-    var firstNameError = document.getElementById('first-name-error');
-    if (firstName.length < 2) {
-      firstNameError.innerText = 'First name must be at least 2 characters long';
-      firstNameError.style.color = 'red'; // Set color to red for error
-    } else {
-      firstNameError.innerText = '';
+    function clearValidationError(input) {
+      $(input).siblings('.error').hide();
     }
 
-    // Validate last name
-    var lastNameError = document.getElementById('last-name-error');
-    if (lastName.length < 2) {
-      lastNameError.innerText = 'Last name must be at least 2 characters long';
-      lastNameError.style.color = 'red'; // Set color to red for error
-    } else {
-      lastNameError.innerText = '';
+    function validateField(fieldName, fieldValue) {
+      $.ajax({
+        url: '{% url "validate_register" %}',
+        method: 'POST',
+        data: {
+          'field_name': fieldName,
+          'field_value': fieldValue,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+          var inputSelector = '#' + fieldName.replace('_', '-');
+          if (response.valid) {
+            clearValidationError(inputSelector);
+          } else {
+            showValidationError(inputSelector, response.error);
+          }
+        }
+      });
     }
 
-    // Validate username
-    var usernameError = document.getElementById('username-error');
-    // Add validation logic for username as needed
+    $('input').on('input', function() {
+      var fieldName = $(this).attr('id').replace('-', '_');
+      var fieldValue = $(this).val();
+      validateField(fieldName, fieldValue);
+    });
 
-    // Validate email
-    var email = document.getElementById('email').value;
-    var emailError = document.getElementById('email-error');
-    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      emailError.innerText = 'Please enter a valid email address';
-      emailError.style.color = 'red'; // Set color to red for error
-    } else {
-      emailError.innerText = '';
-    }
-
-    // Check if passwords match
-    var passwordError = document.getElementById('password-error');
-    if (password1 !== password2) {
-      passwordError.innerText = 'Passwords do not match';
-      passwordError.style.color = 'red'; // Set color to red for error
-    } else {
-      passwordError.innerText = '';
-    }
-  }
+    $('#register-form').on('submit', function(event) {
+      event.preventDefault();
+      var formData = $(this).serialize();
+      $.ajax({
+        url: '{% url "register" %}',
+        method: 'POST',
+        data: formData,
+        success: function(response) {
+          if (response.success) {
+            swal("Success!", response.message, "success").then(() => {
+              window.location.href = "{% url 'my_otp' %}";
+            });
+          } else {
+            swal("Error!", response.message, "error");
+          }
+        }
+      });
+    });
+  });
 </script>
 
+
+  
 
 {% endblock content %}

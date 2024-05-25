@@ -13,6 +13,31 @@
 <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
 <style>
+
+
+    .checkout__form__input p {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .checkout__form__input input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        transition: border-color 0.2s ease;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        padding: 0.75rem 1.5rem;
+        border-radius: 5px;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+    }
     .path a {
         margin-bottom: 5px;
         color: #000;
@@ -57,8 +82,8 @@
             <div class="col-lg-12">
                 <div class="breadcrumb__links">
                     <a href="{% url 'index' %}"><i class="fa fa-home"></i> Home</a>
-                    <a href="{% url 'address' %}" "><i></i> Address</a>
-                    <a href=" {% url 'add_address' %}" "><i></i> Add Address</a>
+                    <a href="{% url 'address' %}"><i></i> Address</a>
+                    <a href=" {% url 'add_address' %}"><i></i> Add Address</a>
 
 
 
@@ -126,67 +151,59 @@
                                         <br />
                                         <br>
                                         <h5 class="d-flex justify-content-center">Add Address</h5>
-                                        <form action="{% url 'add_address' %}" method='post' class="checkout__form">
+                                        <form action="{% url 'add_address' %}" method="post" class="checkout__form">
                                             {% csrf_token %}
-                                            <div class="col-lg-8 d-flex justify-content-end ">
-                                                <div class="row">
-                                                    <div class="col-lg-6 col-md-6 col-sm-6">
-                                                        <div class="checkout__form__input">
-                                                            <p>First Name <span>*</span></p>
-                                                            <input type="text" name='first_name'>
+                                            <div class="row d-flex justify-content-center">
+                                                <div class="col-lg-8">
+                                                    <div class="row">
+                                                        <div class="col-lg-6 col-md-6 col-sm-6">
+                                                            <div class="checkout__form__input">
+                                                                <p>First Name <span>*</span></p>
+                                                                <input type="text" name="first_name" required>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="col-lg-6 col-md-6 col-sm-6">
-                                                        <div class="checkout__form__input">
-                                                            <p>Last Name <span>*</span></p>
-                                                            <input type="text" name='last_name'>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-12">
-                                                        <div class="checkout__form__input">
-                                                            <p>Email ID <span>*</span></p>
-                                                            <input type="email" name='email'>
+                                                        <div class="col-lg-6 col-md-6 col-sm-6">
+                                                            <div class="checkout__form__input">
+                                                                <p>Last Name <span>*</span></p>
+                                                                <input type="text" name="last_name" required>
+                                                            </div>
                                                         </div>
                                                         <div class="col-lg-12">
                                                             <div class="checkout__form__input">
+                                                                <p>Email ID <span>*</span></p>
+                                                                <input type="email" name="email" required>
+                                                            </div>
+                                                            <div class="checkout__form__input">
                                                                 <p>Town/City <span>*</span></p>
-                                                                <input type="text" name='city'>
+                                                                <input type="text" name="city" required>
                                                             </div>
                                                             <div class="checkout__form__input">
                                                                 <p>State <span>*</span></p>
-                                                                <input type="text" name='state'>
+                                                                <input type="text" name="state" required>
                                                             </div>
                                                             <div class="checkout__form__input">
-                                                                <p>Country<span>*</span></p>
-                                                                <input type="text" name='country'>
+                                                                <p>Country <span>*</span></p>
+                                                                <input type="text" name="country" required>
                                                             </div>
                                                             <div class="checkout__form__input">
-                                                                <p>Postcode/Zip<span>*</span></p>
-                                                                <input type="number" maxlength="6" name="postal_code">
+                                                                <p>Postcode/Zip <span>*</span></p>
+                                                                <input type="text" maxlength="6" name="postal_code" required>
                                                             </div>
                                                             <div class="checkout__form__input">
-                                                                <p>House Name<span>*</span></p>
-                                                                <input type="text" name='house_name'>
+                                                                <p>House Name <span>*</span></p>
+                                                                <input type="text" name="house_name" required>
                                                             </div>
-
-                                                            <div class="checkout__form__inpu">
-                                                                <div class="checkout__form__input">
-                                                                    <p>Moblie Number<span>*</span></p>
-                                                                    <input type="number" maxlength="12"
-                                                                        name="mobile_number">
-                                                                </div>
-
-                                                                <div class="d-flex justify-content-end">
-                                                                    <button type="submit" class="btn text-white"
-                                                                        style="background-color: red;">Add
-                                                                        Address</button>
-                                                                </div>
-
+                                                            <div class="checkout__form__input">
+                                                                <p>Mobile Number <span>*</span></p>
+                                                                <input type="text" maxlength="12" name="mobile_number" required>
+                                                            </div>
+                                                            <div class="d-flex justify-content-end">
+                                                                <button type="submit" class="btn btn-danger">Add Address</button>
                                                             </div>
                                                         </div>
-
                                                     </div>
-
+                                                </div>
+                                            </div>
                                         </form>
 
 
