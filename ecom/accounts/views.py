@@ -1243,7 +1243,6 @@ def invoice(request, product_id):
         return response
     else:
         return redirect("login")
-        # return render(request, "invoice.html", context)
 
 
 def referral(request):
