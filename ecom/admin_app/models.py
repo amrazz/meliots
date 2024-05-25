@@ -112,7 +112,7 @@ class ProductSize(models.Model):
         product_name = self.productcolor.product.name
         return f"{product_name} {self.productcolor.color} - {self.size}"
 
-
+# this is to unlist the product which all the sizes are 0
 @receiver(post_save, sender=ProductSize)
 def product_stock_management(sender, instance, **kwargs):
     product_color_image = instance.productcolor

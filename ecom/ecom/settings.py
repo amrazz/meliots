@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-iy*7oiv=1()na$^(2vj_@$+qc_am^ogz#yh+uk+&g5h9*zf!y5"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 
 ALLOWED_HOSTS = [
@@ -121,8 +121,8 @@ WSGI_APPLICATION = "ecom.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "database",
-        "USER": "admin",
+        "NAME": "ecomdata",
+        "USER": "postgres",
         "PASSWORD": "amraz",
         "HOST": "localhost",
         "PORT": "5432",

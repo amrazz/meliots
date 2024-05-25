@@ -25,7 +25,7 @@ def create_customer_cart(sender, instance, created, **kwargs):
 
 class CartItem(models.Model):
     user_cart = models.ForeignKey(User_Cart, on_delete=models.CASCADE)
-    product = models.ForeignKey(ProductColorImage, on_delete=models.CASCADE)
+    product = models.ForeignKey(ProductColorImage, on_delete=models.CASCADE, related_name='product_cart', null=True, blank=True)
     product_size = models.CharField(max_length=10, null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1, null=True, blank=True)
     coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
