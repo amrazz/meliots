@@ -819,7 +819,7 @@ def product_size(request):
                 if float(quantity) < 1:
                     messages.error(request, "Quantity must be atleast 1.")
                     return redirect("product_size")
-                if not ['S', 'M', 'L'] in [size]:
+                if size not in ['S', 'M', 'L']:
                     messages.error(request, "Size must be S, M or L.")
                     return redirect("product_size")
                 if not size.strip():
