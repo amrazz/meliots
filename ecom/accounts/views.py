@@ -144,12 +144,11 @@ def register(request):
                 user_profile = User_profile.objects.create(user=user, is_verified=False)
                 user_profile.user.is_active = False
                 user_profile.save()
+
                 user_id = user_profile.user.pk 
-                otp = generate_otp()
-                otp_generated_at = timezone.now().isoformat()
-                print(otp, otp_generated_at)
-                send_otp_email(email, otp)
-                store_user_data_in_session(request, user_id, otp, otp_generated_at)
+                otp, otp_generated_at = generate_otp_and_send_email(email)
+
+                store_user_data_in_session(request, user_id, otp, email, otp_generated_at)
 
             return JsonResponse({'success': True, 'message': f'Welcome {first_name}'})
         else:
@@ -161,10 +160,10 @@ def register(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
 
-def generate_otp():
-    return random.randint(1000, 9999)
+def generate_otp_and_send_email(email):
+    otp = random.randint(1000, 9999)
+    otp_generated_at = timezone.now().isoformat()
 
-def send_otp_email(email, otp):
     send_mail(
         subject="Your OTP for verification",
         message=f"Your OTP for verification is: {otp}",
@@ -172,15 +171,15 @@ def send_otp_email(email, otp):
         recipient_list=[email],
         fail_silently=True,
     )
+    return otp, otp_generated_at
 
-def store_user_data_in_session(request, user_id, otp, otp_generated_at):
+def store_user_data_in_session(request, user_id, otp, email, otp_generated_at):
     request.session["user_data"] = {
         "user_id": user_id,
         "otp": otp,
+        "email": email,
         "otp_generated_at": otp_generated_at,
     }
-
-
 
 @never_cache
 def otp(request):
@@ -196,11 +195,10 @@ def otp(request):
                 return redirect("my_otp")
 
             entered_otp = int("".join(otp_digits))
-            stored_otp = request.session.get("user_data", {}).get("otp")
             user_data = request.session.get("user_data", {})
+            stored_otp = user_data.get("otp")
             otp_generated_at = user_data.get("otp_generated_at", "")
             user_id = user_data.get("user_id", "")
-            print(f"this is user id {user_id}")
             referral_code = request.session.get("referral_code", "")
 
             try:
@@ -220,12 +218,10 @@ def otp(request):
                 user_profile.save()
 
                 del request.session["user_data"]
-                
-                
+
                 backend = get_backends()[0]
                 user.backend = f"{backend.__module__}.{backend.__class__.__name__}"
 
-                # Referral code handling
                 if referral_code:
                     referred_customer = Customer.objects.get(referral_code=referral_code)
                     referred_customer.referral_count += 1
@@ -282,23 +278,6 @@ def otp(request):
     except Exception as e:
         messages.error(request, str(e))
         return redirect("register")
-    
-    
-    
-
-def generate_otp_and_send_email(email):
-    otp = random.randint(1000, 9999)
-    otp_generated_at = timezone.now().isoformat()
-
-    send_mail(
-        subject="Your OTP for verification",
-        message=f"Your OTP for verification is: {otp}",
-        from_email=EMAIL_HOST_USER,
-        recipient_list=[email],
-        fail_silently=True,
-    )
-    return otp, otp_generated_at
-
 
 @never_cache
 def resend_otp(request):
@@ -313,7 +292,6 @@ def resend_otp(request):
 
         new_otp, otp_generated_now = generate_otp_and_send_email(email)
         user_data["otp"] = new_otp
-        print(f"this is new otp {new_otp}")
         user_data["otp_generated_at"] = otp_generated_now
         request.session["user_data"] = user_data
 
@@ -323,8 +301,6 @@ def resend_otp(request):
     except Exception as e:
         messages.error(request, str(e))
         return redirect("my_otp")
-
-
 
 @never_cache
 def log_in(request):

@@ -1,13 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
 
-
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     integrity="sha384-dZJphvWB4gBFHqhDyv4m3D7cycoqj/ZxVBbsKsW9ec9CSJ0+Emlwj8bs3iyCegQj" crossorigin="anonymous">
 
-<div class="container-fluid ">
-    <div class="row d-flex justify-content-center ">
+<div class="container-fluid">
+    <div class="row justify-content-center">
         <div class="col-lg-6">
             <style>
                 .otp-container {
@@ -15,16 +14,9 @@
                     box-shadow: 0px 19px 40px rgba(0, 0, 0, 0.05);
                     background-color: #fff;
                     align-items: center;
-                    padding: 30px 60px 69px;
-                    width: 599px;
-                    height: 695px;
-                }
-
-                .col-lg-6 {
-                    -ms-flex: 0 0 50%;
-                    flex: 0 0 50%;
-                    max-width: 50%;
-                    display: contents;
+                    padding: 30px 40px;
+                    max-width: 100%;
+                    margin-top: 30px;
                 }
 
                 .otp-header img {
@@ -33,6 +25,8 @@
                     object-position: center;
                     width: 198px;
                     max-width: 100%;
+                    display: block;
+                    margin: 0 auto;
                 }
 
                 .otp-title,
@@ -46,15 +40,15 @@
 
                 .otp-title {
                     color: #474646;
-                    margin-top: 45px;
-                    font: 600 22px Outfit, sans-serif;
+                    margin-top: 20px;
+                    font: 600 22px 'Outfit', sans-serif;
                 }
 
                 .email-description,
                 .email-display {
                     color: #000;
-                    margin-top: 39px;
-                    font: 400 15px Outfit, sans-serif;
+                    margin-top: 20px;
+                    font: 400 15px 'Outfit', sans-serif;
                 }
 
                 .email-display {
@@ -63,31 +57,33 @@
 
                 .otp-inputs {
                     display: flex;
-                    margin-top: 61px;
-                    justify-content: space-between;
-                    gap: 20px;
+                    justify-content: center;
+                    gap: 15px;
+                    margin-top: 40px;
                 }
 
                 .otp-input {
                     background-color: #f6f6f6;
-                    border-radius: 50%;
-                    width: 63px;
-                    height: 63px;
+                    border-radius: 10px;
+                    width: 50px;
+                    height: 50px;
                     border: 1px solid rgba(244, 149, 23, 1);
+                    text-align: center;
+                    font-size: 20px;
                 }
 
                 .timer {
                     color: #675b5b;
-                    margin-top: 40px;
-                    font: 400 12px Outfit, sans-serif;
+                    margin-top: 20px;
+                    font: 400 12px 'Outfit', sans-serif;
                     display: flex;
                     justify-content: center;
                 }
 
                 .actions {
                     display: flex;
-                    margin-top: 23px;
-                    gap: 8px;
+                    justify-content: center;
+                    margin-top: 15px;
                     font-size: 12px;
                     white-space: nowrap;
                 }
@@ -102,13 +98,6 @@
                     font-weight: 600;
                 }
 
-                .otp {
-                    width: 64px;
-                    height: 62px;
-                    border-radius: 10px;
-                    border-radius: 50px;
-                }
-
                 .submit-button {
                     background-color: #f8a435;
                     border: 1px solid rgba(249, 202, 140, 1);
@@ -117,49 +106,45 @@
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    margin-top: 54px;
-                }
-
-                .otp-inputs {
-                    display: flex;
-                    margin-top: 61px;
-                    justify-content: space-evenly;
-                    gap: 26px;
+                    margin-top: 30px;
+                    padding: 10px 20px;
+                    font-size: 16px;
                 }
 
                 .img-fluid {
                     max-width: 100%;
                     height: auto;
-                    padding-left: 310px;
                 }
 
                 @media (max-width: 991px) {
                     .otp-container {
-                        padding: 0 20px;
+                        padding: 20px;
                     }
 
                     .otp-inputs,
                     .actions {
-                        margin-top: 40px;
-                    }
-
-                    .action-prompt,
-                    .action-button,
-                    .timer {
-                        white-space: initial;
+                        margin-top: 30px;
                     }
 
                     .submit-button {
-                        padding: 0 20px;
+                        padding: 10px 20px;
+                    }
+                }
+
+                @media (max-width: 576px) {
+                    .otp-container {
+                        width: 100%;
+                        padding: 20px;
                     }
 
-                    .action-prompt a {
-                        color: #007bff;
-                        text-decoration: none;
-                        background-color: transparent;
-                        font-size: large !important;
+                    .otp-input {
+                        width: 45px;
+                        height: 45px;
                     }
 
+                    .submit-button {
+                        font-size: 14px;
+                    }
                 }
             </style>
 
@@ -175,7 +160,7 @@
                 <p class="email-display">{{email}}</p>
                 <form action="{% url 'my_otp' %}" method="post">
                     {% csrf_token %}
-                    <div class="container mb-3 d-flex justify-content-between  align-items-center py-4">
+                    <div class="otp-inputs">
                         <input type="text" autocomplete="off" class="form-control text-center otp-input" name="digit1"
                             maxlength="1" required autofocus />
                         <input type="text" autocomplete="off" class="form-control text-center otp-input" name="digit2"
@@ -188,206 +173,100 @@
                     <div class="timer" id="timer">02:00</div>
 
                     <div class="actions">
-                        <div class="action-prompt"> <a href="{% url 'resend_otp' %}">Didn't not get OTP?</a></div>
+                        <div class="action-prompt"><a href="{% url 'resend_otp' %}">Didn't get OTP?</a></div>
                     </div>
-                    <div class="d-flex justify-content-center mt-4"> <!-- Add this container around the button -->
-                        <button type='submit' class="submit-button">
-                            <div class="btn"><a href="">Submit</a></div>
+                    <div class="d-flex justify-content-center">
+                        <button type="submit" class="submit-button">
+                            Submit
                         </button>
                     </div>
-                    <br>
-                    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-
-                        <script>
-                            {% if messages %}
-                            {% for message in messages %}
-                            {% if message.tags == 'error' %}
-                            swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
-                            {% elif message.tags == 'success' %}
-                            swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
-                            {% else %}
-                            swal("Message", "{{ message }}"); // Display general message
-                            {% endif %}
-                            {% endfor %}
-                            {% endif %}
-                        </script>
                 </form>
+                <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+                <script>
+                    {% if messages %}
+                    {% for message in messages %}
+                    {% if message.tags == 'error' %}
+                    swal("Error!", "{{ message }}", "error");
+                    {% elif message.tags == 'success' %}
+                    swal("Success!", "{{ message }}", "success");
+                    {% else %}
+                    swal("Message", "{{ message }}");
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                </script>
             </section>
         </div>
     </div>
+</div>
 
-    <style>
-        .container-fluid {
-            background-color: #d9d9d9;
-            padding: 50px;
+<style>
+    .container-fluid {
+        background-color: #d9d9d9;
+        padding: 50px;
+    }
+
+    .btn a {
+        color: white !important;
+    }
+</style>
+
+<script>
+    const timerDuration = 120;
+    const timerElement = document.getElementById('timer');
+    const actionPrompt = document.querySelector('.action-prompt');
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+    }
+
+    function updateTimer() {
+        let remainingTime;
+        const userId = '{{ request.session.session_key }}';
+        const timerState = localStorage.getItem(`timerState_${userId}`);
+        if (timerState) {
+            remainingTime = parseInt(timerState);
+        } else {
+            remainingTime = timerDuration;
         }
 
-        .btn a {
-            color: white !important;
-        }
-
-        h5 {
-            margin: 0;
-            color: #111111;
-            font-weight: 400;
-            font-family: "Montserrat", sans-serif;
-
-            .forgot-password-link a {
-                color: #f8a435;
-                font-size: 14px;
-            }
-
-            .forgot-password-link a:hover {
-                color: #007bff;
-                text-decoration: none;
-            }
-
-            .form-container {
-                background-color: #fff;
-                padding: 30px;
-                border-radius: 10px;
-                box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
-                width: 610px;
-                height: 630px;
-            }
-
-            .welcome-msg {
-                font-size: 24px;
-                font-weight: bold;
-                margin-bottom: 20px;
-            }
-
-            .signup-msg {
-                font-size: 18px;
-                margin-bottom: 30px;
-            }
-
-            .form-group {
-                margin-bottom: 20px;
-            }
-
-            .form-group label {
-                font-weight: bold;
-            }
-
-            .btn-primary {
-                background-color: #f8a435;
-                border-color: #f8a435;
-            }
-
-            .btn-primary:hover {
-                background-color: #f6871f;
-                border-color: #f6871f;
-            }
-
-            .sign-in-link {
-                color: #4045c8;
-                font-weight: bold;
-            }
-
-            .img-fluid {
-                max-width: 100%;
-                height: auto;
-                border-radius: 10px;
-                margin-top: 18px;
-            }
-
-            .col-lg-6 {
-                display: contents;
-                margin-left: 100px !important;
-            }
-
-            .row {
-                display: -ms-flexbox;
-                display: flex;
-                -ms-flex-wrap: wrap;
-                flex-wrap: wrap;
-                margin-right: -15px;
-                justify-content: center;
-            }
-
-            @media (max-width: 992px) {
-                .container-fluid {
-                    padding: 20px;
-                }
-
-                .col-lg-6 {
-                    max-width: 100%;
-                }
-
-                .img-fluid {
-                    margin-top: 20px;
-                }
-            }
-    </style>
-    <script>
-        const timerDuration = 120; // Duration of the timer in seconds
-        const timerElement = document.getElementById('timer');
-        const actionPrompt = document.querySelector('.action-prompt'); // Select the action prompt element
-    
-        // Function to format time (convert seconds to MM:SS format)
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = seconds % 60;
-            return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
-        }
-    
-        // Function to update the timer
-        function updateTimer() {
-            let remainingTime;
-            const userId = '{{ request.session.session_key }}'; // Unique identifier for the user
-            const timerState = localStorage.getItem(`timerState_${userId}`);
-            if (timerState) {
-                remainingTime = parseInt(timerState);
+        const timerInterval = setInterval(() => {
+            timerElement.textContent = formatTime(remainingTime);
+            if (remainingTime <= 0) {
+                clearInterval(timerInterval);
+                timerElement.textContent = '00:00';
+                actionPrompt.style.display = 'block';
             } else {
-                remainingTime = timerDuration;
+                remainingTime -= 1;
+                localStorage.setItem(`timerState_${userId}`, remainingTime);
             }
-    
-            // Update the timer every second
-            const timerInterval = setInterval(() => {
-                timerElement.textContent = formatTime(remainingTime);
-                if (remainingTime <= 0) {
-                    clearInterval(timerInterval);
-                    timerElement.textContent = '00:00'; // Timer reached zero
-                    // Display the "Didn't get the OTP?" link
-                    actionPrompt.style.display = 'block';
-                    // Handle timer expiration here
-                } else {
-                    remainingTime -= 1;
-                    localStorage.setItem(`timerState_${userId}`, remainingTime);
-                }
-            }, 1000);
-    
-            // Remove timer state from local storage when the user navigates away from the OTP verification page
-            window.addEventListener('beforeunload', () => {
-                localStorage.removeItem(`timerState_${userId}`);
-            });
-        }
-    
-        // Initially hide the "Didn't get the OTP?" link
-        actionPrompt.style.display = 'none';
-    
-        updateTimer();
-    
-        // Get all OTP input fields
-        const otpInputs = document.querySelectorAll('.otp-input')
-    
-        // Add event listeners to each OTP input field
-        otpInputs.forEach((input, index) => {
-            input.addEventListener('input', (event) => {
-                // Move to the next input field when typing
-                if (event.target.value.length === 1 && index < otpInputs.length - 1) {
-                    otpInputs[index + 1].focus()
-                }
-            })
-    
-            // Move to the previous input field when pressing backspace
-            input.addEventListener('keydown', (event) => {
-                if (event.key === 'Backspace' && index > 0 && event.target.value.length === 0) {
-                    otpInputs[index - 1].focus()
-                }
-            })
+        }, 1000);
+
+        window.addEventListener('beforeunload', () => {
+            localStorage.removeItem(`timerState_${userId}`);
+        });
+    }
+
+    actionPrompt.style.display = 'none';
+    updateTimer();
+
+    const otpInputs = document.querySelectorAll('.otp-input')
+
+    otpInputs.forEach((input, index) => {
+        input.addEventListener('input', (event) => {
+            if (event.target.value.length === 1 && index < otpInputs.length - 1) {
+                otpInputs[index + 1].focus()
+            }
         })
-    </script>
-    
-    {% endblock content %}
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Backspace' && index > 0 && event.target.value.length === 0) {
+                otpInputs[index - 1].focus()
+            }
+        })
+    })
+</script>
+
+{% endblock content %}
