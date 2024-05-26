@@ -764,7 +764,7 @@ def product_image(request):
                 if not color.strip():
                     messages.error(request, "Color cannot be empty.")
                     return redirect("product_image")
-                if color.isalpha():
+                if not color.isalpha():
                     messages.error(request, "Color must contain only letters.")
                     return redirect("product_image")
                 if not all([is_valid_image(img) for img in [image1, image2, image3, image4]]):
@@ -820,7 +820,7 @@ def product_size(request):
                     messages.error(request, "Quantity must be atleast 1.")
                     return redirect("product_size")
                 if not ['S', 'M', 'L'] in [size]:
-                    messages.error(request, "Invalid size.")
+                    messages.error(request, "Size must be S, M or L.")
                     return redirect("product_size")
                 if not size.strip():
                     messages.error(request, "Size cannot be empty.")
