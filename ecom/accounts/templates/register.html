@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
 
-
 {% block content %}
 <div class="container-fluid">
-  <div class="row">
-    <div class="col-lg-6">
+  <div class="row justify-content-center">
+    <div class="col-lg-6 d-flex align-items-center">
       <div class="form-container">
         <div class="welcome-msg">Welcome !!!</div>
         <div class="signup-msg">Create an account</div>
@@ -68,9 +67,7 @@
         </div>
         <br>
 
-
         <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-
         <script>
           {% if messages %}
           {% for message in messages %}
@@ -86,28 +83,17 @@
         </script>
       </div>
     </div>
-    <div class="col-lg-6"><img
-        src="https://cdn.builder.io/api/v1/image/assets/TEMP/1a12343ddf6817b46a145815a50657abe2d18271441a9b0cdad0489742907d67?apiKey=04953d70f2ec47bc87e43c3e384dd0ac&"
+    <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center">
+      <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/1a12343ddf6817b46a145815a50657abe2d18271441a9b0cdad0489742907d67?apiKey=04953d70f2ec47bc87e43c3e384dd0ac&"
         class="img-fluid" alt="Signup Image">
     </div>
   </div>
 </div>
 
 <style>
-  .container {
-    padding: 50px;
-
-  }
-
-  .col-lg-6 {
-    -ms-flex: 0 0 50%;
-    flex: 0 0 50%;
-    max-width: 37%;
-    margin-left: 100px;
-  }
-
   .container-fluid {
     background-color: #d9d9d9;
+    padding: 50px;
   }
 
   .form-container {
@@ -115,16 +101,15 @@
     padding: 30px;
     border-radius: 10px;
     box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px;
+    margin: auto;
   }
 
   .welcome-msg {
     font-size: 24px;
     font-weight: bold;
     margin-bottom: 20px;
-  }
-
-  .messages h5 {
-    color: red
   }
 
   .signup-msg {
@@ -155,31 +140,87 @@
     font-weight: bold;
   }
 
-  .msg .img-fluid {
-    max-width: 140%;
+  .img-fluid {
+    max-width: 100%;
     height: auto;
     border-radius: 10px;
     margin-top: 18px;
   }
+
+  @media (max-width: 992px) {
+    .container-fluid {
+      padding: 20px;
+    }
+
+    .form-container {
+      width: 100%;
+      padding: 20px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .form-container {
+      width: 100%;
+      padding: 15px;
+    }
+
+    .welcome-msg {
+      font-size: 20px;
+    }
+
+    .signup-msg {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .btn-primary {
+      padding: 10px;
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .form-container {
+      padding: 10px;
+    }
+
+    .welcome-msg {
+      font-size: 18px;
+    }
+
+    .signup-msg {
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .btn-primary {
+      padding: 8px;
+      font-size: 12px;
+    }
+  }
 </style>
-
-
-
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
 <script>
-  $(document).ready(function() {
+  $(document).ready(function () {
     function showValidationError(input, message) {
       $(input).siblings('.error').text(message).css({
-          'color': 'red',
-          'list-style-type': 'none', 
-          'padding': 0, // Reset padding
-          'margin': 0 // Reset margin
-      }).show(); 
+        'color': 'red',
+        'list-style-type': 'none',
+        'padding': 0, // Reset padding
+        'margin': 0 // Reset margin
+      }).show();
     }
-    
 
     function clearValidationError(input) {
       $(input).siblings('.error').hide();
@@ -194,7 +235,7 @@
           'field_value': fieldValue,
           'csrfmiddlewaretoken': '{{ csrf_token }}'
         },
-        success: function(response) {
+        success: function (response) {
           var inputSelector = '#' + fieldName.replace('_', '-');
           if (response.valid) {
             clearValidationError(inputSelector);
@@ -205,20 +246,20 @@
       });
     }
 
-    $('input').on('input', function() {
+    $('input').on('input', function () {
       var fieldName = $(this).attr('id').replace('-', '_');
       var fieldValue = $(this).val();
       validateField(fieldName, fieldValue);
     });
 
-    $('#register-form').on('submit', function(event) {
+    $('#register-form').on('submit', function (event) {
       event.preventDefault();
       var formData = $(this).serialize();
       $.ajax({
         url: '{% url "register" %}',
         method: 'POST',
         data: formData,
-        success: function(response) {
+        success: function (response) {
           if (response.success) {
             swal("Success!", response.message, "success").then(() => {
               window.location.href = "{% url 'my_otp' %}";
@@ -231,8 +272,4 @@
     });
   });
 </script>
-
-
-  
-
 {% endblock content %}

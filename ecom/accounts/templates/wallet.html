@@ -26,14 +26,12 @@
         text-align: left;
         margin-right: auto;
         margin-top: 10px;
-        height: 500px;
     }
 
     .checkout__form__input input[type="date"] {
         cursor: pointer;
     }
 
-    /* Change cursor for gender radio buttons */
     .gender-inputs input[type="radio"] {
         cursor: pointer;
     }
@@ -41,11 +39,16 @@
     .align-right-btn {
         float: right;
     }
+
     #walletAmountDisplay {
         font-size: 24px;
         font-weight: bold;
         margin-top: 20px;
         text-align: center;
+    }
+
+    .breadcrumb__links a {
+        font-size: 18px;
     }
 </style>
 
@@ -64,144 +67,92 @@
 </div>
 <!-- Breadcrumb End -->
 
-
-
 <!-- Personal info Section Begin -->
 <section class="checkout spad">
     <div class="container">
-        <form action="#" class="checkout__form">
-            <div class="row d-flex justify-content-end">
+        <div class="row">
+            <div class="col-lg-3">
                 <div class="path">
-                    <div class="l">
-                        <a href="{% url 'profile' %}" >personal Information</a>
-
-                    </div>
+                    <a href="{% url 'profile' %}">Personal Information</a>
                     <p class="text-secondary text-muted">_________________________________________</p>
-                    <div>
-                        <a href="{% url 'view_all_order' %}">My Orders</a>
-                    </div>
+                    <a href="{% url 'view_all_order' %}">My Orders</a>
                     <p class="text-secondary text-muted">_________________________________________</p>
-                    <div>
-                        <a href="{% url 'address' %}">Address</a>
-                    </div>
+                    <a href="{% url 'address' %}">Address</a>
                     <p class="text-secondary text-muted">_________________________________________</p>
-                    <div>
                     <a href="{% url 'wallet_view' %}" style="color: red;">Wallet</a>
-                    </div>
                     <p class="text-secondary text-muted">_________________________________________</p>
-                    
-                    <div>
-                      <a href="{% url 'referral' %}" id="changePasswordBtn">Refferral</a>
-                  </div>
-                  <p class="text-secondary text-muted">_________________________________________</p>
+                    <a href="{% url 'referral' %}" id="changePasswordBtn">Referral</a>
+                    <p class="text-secondary text-muted">_________________________________________</p>
                 </div>
-                <div class="col-lg-8">
-                    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-
-                        <script>
-                            {% if messages %}
-                            {% for message in messages %}
-                            {% if message.tags == 'error' %}
-                            swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
-                            {% elif message.tags == 'success' %}
-                            swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
-                            {% else %}
-                            swal("Message", "{{ message }}"); // Display general message
-                            {% endif %}
-                            {% endfor %}
-                            {% endif %}
-                        </script>
-                    <br>
-
-
-<!-- Wallet Amount Display -->
- <!-- Monthly Earnings -->
- <div class="card" style="width: 395px;">
-    <div class="card-body">
-      <div class="row alig n-items-start">
-        <div class="col-8">
-          <h5 class="card-title mb-9 fw-semibold"> WALLET BALANCE </h5>
-          <h4 class="fw-semibold mb-3">₹ {{ wallet.balance }}.00</h4>
-          <div class="d-flex align-items-center pb-1">
-            <span
-              class="me-2 rounded-circle bg-light-danger round-20 d-flex align-items-center justify-content-center">
-            </span>
-          </div>
-        </div>
-        <div class="col-4">
-          <div class="d-flex justify-content-end">
-            <div
-              class="text-white bg-secondary rounded-circle p-6 d-flex align-items-center justify-content-center">
-              <video style="height: 100px; width: 100px; background-color: #fff;" src="{% static 'img/c1.webm' %}" loop muted autoplay ></video>
             </div>
-          </div>
+            <div class="col-lg-9">
+                <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+                <script>
+                    {% if messages %}
+                    {% for message in messages %}
+                    {% if message.tags == 'error' %}
+                    swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
+                    {% elif message.tags == 'success' %}
+                    swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
+                    {% else %}
+                    swal("Message", "{{ message }}"); // Display general message
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                </script>
+
+                <!-- Wallet Amount Display -->
+                <div class="card mb-4" style="width: 410px;;">
+                    <div class="card-body" style="width: 410px;">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 class="card-title fw-semibold mb-4">WALLET BALANCE</h5>
+                                <h4 class="fw-semibold mb-3">₹ {{ wallet.balance }}.00</h4>
+                            </div>
+                            <div>
+                                <video style="height: 100px; width: 100px; background-color: #fff;" src="{% static 'img/c1.webm' %}" loop muted autoplay></video>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-semibold mb-4 text-center">Recent Transactions</h5>
+                        <div class="table-responsive">
+                            <table class="table text-nowrap mb-0 align-middle">
+                                <thead class="text-dark fs-4">
+                                    <tr>
+                                        <th class="border-bottom-0"><h6 class="fw-semibold mb-0">Id</h6></th>
+                                        <th class="border-bottom-0"><h6 class="fw-semibold mb-0">Transaction ID</h6></th>
+                                        <th class="border-bottom-0"><h6 class="fw-semibold mb-0">Transaction at</h6></th>
+                                        <th class="border-bottom-0"><h6 class="fw-semibold mb-0">Amount</h6></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in wallet_transactions %}
+                                    <tr>
+                                        <td class="border-bottom-0"><h6 class="fw-semibold mb-0">{{ forloop.counter }}</h6></td>
+                                        <td class="border-bottom-0"><h6 class="fw-semibold mb-1">{{ transaction.transaction_id }}</h6></td>
+                                        <td class="border-bottom-0"><p class="mb-0 fw-normal">{{ transaction.transaction_time }}</p></td>
+                                        {% if transaction.money_deposit %}
+                                        <td class="border-bottom-0"><h6 class="fw-semibold mb-0 fs-4 text-success">+ ₹ {{ transaction.money_deposit }}</h6></td>
+                                        {% elif transaction.money_withdrawn %}
+                                        <td class="border-bottom-0"><h6 class="fw-semibold mb-0 fs-4 text-danger">- ₹ {{ transaction.money_withdrawn }}</h6></td>
+                                        {% endif %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
-      </div>
     </div>
-    <div id="earning"></div>
-  </div>    
-
-</div>
-<div class="col-lg-8 d-flex align-items-stretch" style="margin-left: -17px; width: 100px;margin-top: -290px;">
-    <div class="card w-100">
-      <div class="card-body p-4">
-        <div class="d-flex justify-content-center ">
-          <h5 class="card-title fw-semibold mb-4">Recent Transactions</h5>
-        </div>
-        <div class="table-responsive">
-          <table class="table text-nowrap mb-0 align-middle">
-            <thead class="text-dark fs-4">
-              <tr>
-                <th class="border-bottom-0">
-                  <h6 class="fw-semibold mb-0">Id</h6>
-                </th>
-                <th class="border-bottom-0">
-                  <h6 class="fw-semibold mb-0">Transaction ID</h6>
-                </th>
-                <th class="border-bottom-0">
-                  <h6 class="fw-semibold mb-0">Transaction at</h6>
-                </th>
-                <th class="border-bottom-0">
-                  <h6 class="fw-semibold mb-0">Amount</h6>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for transaction in wallet_transactions %}
-              <tr>
-                  <td class="border-bottom-0"><h6 class="fw-semibold mb-0">{{ forloop.counter }}</h6></td>
-                  <td class="border-bottom-0">
-                      <h6 class="fw-semibold mb-1">{{ transaction.transaction_id }}</h6>
-                  </td>
-                  <td class="border-bottom-0">
-                      <p class="mb-0 fw-normal">{{ transaction.transaction_time }}</p>
-                  </td>
-                  {% if transaction.money_deposit %}
-                  <td class="border-bottom-0">
-                      <h6 class="fw-semibold mb-0 fs-4 text-success">+ ₹ {{ transaction.money_deposit }}</h6>
-                  </td>
-                  {% elif transaction.money_withdrawn %}
-                  <td class="border-bottom-0">
-                      <h6 class="fw-semibold mb-0 fs-4 text-danger">- ₹ {{ transaction.money_withdrawn }}</h6>
-                  </td>
-                  {% endif %}
-              </tr>
-              {% endfor %}
-          </tbody>
-          
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-</div>
-
-</div>
-
-</div>
-
-
-
+</section>
+<!-- Personal info Section End -->
 
 {% endblock content %}
