@@ -49,7 +49,7 @@
 
   .carousel-item img {
     width: 100%;
-    height: auto;
+    height: 405px;
   }
 
   .carousel-control-prev,
@@ -76,7 +76,7 @@
           <div id="carouselExample" style="width: 698px;margin-left: -69px;margin-top: -173px;" class="carousel slide">
             <div class="carousel-inner">
 
-              {% if banner %}
+              {% if banners %}
               {% for banner in banners %}
               <div class="carousel-item {% if forloop.first %}active{% endif %}">
                 <img src="{{ banner.banner_image.url }}" class="d-block w-100"

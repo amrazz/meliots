@@ -77,29 +77,14 @@
 
                     <td>{{ brand.name }}</td>
                     <td style="width: 430px;">{{ brand.description }}</td>
-                    
-
-                    
                     <td>
-                        {% if brand.is_listed %}
                         <form action="" method="post">
                             {% csrf_token %}
                             <div class="d-flex justify-content-center ">
-                                <a href=""
-                                    class="btn btn-outline-danger me-4">Delete</a>
-                                <button class="btn btn-outline-success" type="submit">Unlist</button>
+                                <a href="{% url 'delete_brand' brand.id %}"class="btn btn-outline-danger me-4">Delete</a>
+                                <a href="{% url 'edit_brand' brand.id %}"class="btn btn-outline-primary me-4">Edit</a>
                             </div>
                         </form>
-                        {% else %}
-                        <form action="" method="post">
-                            {% csrf_token %}
-                            <div class="d-flex justify-content-center ">
-                                <a href=""
-                                    class="btn btn-outline-danger me-4">Delete</a>
-                                <button class="btn btn-outline-primary" type="submit">List</button>
-                            </div>
-                        </form>
-                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

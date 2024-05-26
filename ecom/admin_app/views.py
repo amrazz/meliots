@@ -235,16 +235,24 @@ def add_category(request):
             name = request.POST.get("name")
             description = request.POST.get("description")
             image = request.FILES.get("image")
-            if not all([name, description, image]):
+            
+            if not name.strip():
+                messages.error(request, "Name cannot be empty.")
+                return redirect("add_category")
+            elif len(description) < 10:
+                messages.error(request, "Description must be at least 10 characters long.")
+                return redirect("add_category")
+            elif not all([name, description, image]):
                 messages.error(request, "All fields are required.")
                 return redirect("add_category")
-            if Category.objects.filter(name=name).exists():
+            elif Category.objects.filter(name=name).exists():
                 messages.error(request, "Category with this name already exists.")
                 return redirect("add_category")
-            create_category = Category.objects.create(
-                name=name, description=description, cat_image=image
-            )
-            create_category.save()
+            else:
+                create_category = Category.objects.create(
+                    name=name, description=description, cat_image=image
+                )
+                create_category.save()
             messages.success(request, "Category added successfully.")
             return redirect("category")
     return render(request, "category/add_category.html")
@@ -260,12 +268,27 @@ def edit_category(request, cat_id):
                 name = request.POST.get("editname")
                 description = request.POST.get("description")
                 image = request.FILES.get("editimage")
-                if not all([name, description]):
+                if not name.strip():
+                    messages.error(request, "Name cannot be empty.")
+                    return redirect("edit_category", cat_id=cat_id)
+                if len(description) < 10:
+                    messages.error(request, "Description must be at least 10 characters long.")
+                    return redirect("edit_category", cat_id=cat_id)
+
+                elif not all([name, description]):
                     messages.error(request, "Name and description are required.")
                     return redirect("edit_category", cat_id=cat_id)
-                if Category.objects.filter(name=name).exclude(id=cat_id).exists():
+                elif Category.objects.filter(name=name).exclude(id=cat_id).exists():
                     messages.error(request, "Category with this name already exists.")
                     return redirect("edit_category", cat_id=cat_id)
+                elif not name.strip():
+                    messages.error(request, "Name cannot be empty.")
+                    return redirect("edit_category", cat_id=cat_id)
+
+                if image:
+                    category.cat_image = image
+                    category.save()
+                    
 
                 category.name = name
                 category.description = description
@@ -296,11 +319,15 @@ def add_banner(request):
                 banner = form.save(commit=False)
                 product_color_image = form.cleaned_data["product_color_image"]
                 product = product_color_image.product
-                if product.percentage == 0:
+                if product.percentage < 5:
                     messages.error(
                         request,
-                        "The product percentage is 0 so give an offer and add banner.",
+                        "The product percentage is less than 5%. Please enter a valid percentage.",
                     )
+                    return redirect("add_banner")
+                elif not form.cleaned_data["name"].strip():
+                    messages.error(request, "Name cannot be empty.")
+                    return redirect("add_banner")
                 else:
                     banner.price = product.offer_price
                     banner.save()
@@ -355,6 +382,9 @@ def add_category_offer(request):
             if form.is_valid():
                 category = form.cleaned_data.get("category")
                 name = form.cleaned_data.get("offer_name")
+                if not name.strip():
+                    messages.error(request, "Offer name cannot be empty.")
+                    return redirect("add_category_offer")
                 discount_percentage = form.cleaned_data.get("discount_percentage")
                 is_active = form.cleaned_data.get("is_active")
                 end_date = form.cleaned_data.get("end_date")
@@ -362,9 +392,9 @@ def add_category_offer(request):
                 today = timezone.now().date()
                 if not all([category, name, discount_percentage, is_active, end_date]):
                     messages.error(request, "All fields are required.")
-                elif discount_percentage < 0 or discount_percentage > 100:
+                elif discount_percentage < 5 or discount_percentage > 100:
                     messages.error(
-                        request, "Discount percentage must be between 0 and 100."
+                        request, "Discount percentage must be between 5 and 100."
                     )
                 elif not Category.objects.filter(name=category).exists():
                     messages.error(request, "Category does not exist.")
@@ -513,8 +543,10 @@ def edit_product(request, product_id):
             percentage = request.POST.get("percentage")
             brand = request.POST.get("brand")
 
-            if int(percentage) < 0 or int(percentage) > 100:
-                messages.error(request, "The percentage must be between 0 and 100.")
+            if not name.strip()  or not type.strip() or not price.strip() or not percentage.strip() or not brand.strip():
+                messages.error(request, "All fields should contain valid data.")
+            if int(percentage) < 5 or int(percentage) > 100:
+                messages.error(request, "The percentage must be between 5 and 100.")
                 return redirect("product")
 
             exp_date = request.POST.get("exp_date")
@@ -634,15 +666,25 @@ def add_product(request):
             print(categories, brands)
             if request.method == "POST":
                 name = request.POST.get("name")
+                if not name.strip():
+                    messages.error(request, "Name cannot be empty.")
+                    return redirect("add_product")
                 category = request.POST.get("category")
                 type = request.POST.get("type")
+                if not type.strip():
+                    messages.error(request, "Type cannot be empty.")
+                    return redirect("add_product")
                 price = request.POST.get("price")
+                
                 percentage = request.POST.get("percentage")
                 exp_date = request.POST.get("exp_date")
                 brand = request.POST.get("brand")
+                
 
                 description = request.POST.get("description")
-
+                if len(description) < 10:
+                    messages.error(request, "Description must be at least 10 characters long.")
+                    return redirect("add_product")
                 if not all([name, type, price, description]):
                     messages.error(request, "All fields are required.")
                     return redirect("add_product")
@@ -657,13 +699,24 @@ def add_product(request):
                     return redirect("add_product")
                 try:
                     price = float(price)
-                    if price <= 0:
+                    if price <= 100:
                         raise ValueError
                 except ValueError:
                     messages.error(request, "Please enter a valid positive price.")
                     return redirect("add_product")
-                if not percentage:
-                    percentage = 0
+                try:
+                    if percentage:
+                        percentage = float(percentage)
+                        if percentage < 5:
+                            messages.error(request, "Percentage must be at least 5.")
+                            return redirect("add_product")
+                    else:
+                        percentage = 0
+                except ValueError:
+                    messages.error(request, "Please enter a valid percentage.")
+                    return redirect("add_product")
+                
+                
                 add_product = Product.objects.create(
                     name=name,
                     category_id=category,
@@ -704,20 +757,20 @@ def product_image(request):
                 image2 = request.FILES.get("image2")
                 image3 = request.FILES.get("image3")
                 image4 = request.FILES.get("image4")
-
-                if not is_valid_image(image1):
-                    messages.error(request, "This is not a valid image file.")
-                    return redirect("product")
-                elif not is_valid_image(image2):
-                    messages.error(request, "This is not a valid image file.")
-                    return redirect("product")
-                elif not is_valid_image(image3):
-                    messages.error(request, "This is not a valid image file.")
-                    return redirect("product")
-                elif not is_valid_image(image4):
-                    messages.error(request, "This is not a valid image file.")
-                    return redirect("product")
-
+                
+                if not all([product_id, color, image1, image2, image3, image4]):
+                    messages.error(request, "All fields are required.")
+                    return redirect("product_image")
+                if not color.strip():
+                    messages.error(request, "Color cannot be empty.")
+                    return redirect("product_image")
+                if color.isalpha():
+                    messages.error(request, "Color must contain only letters.")
+                    return redirect("product_image")
+                if not all([is_valid_image(img) for img in [image1, image2, image3, image4]]):
+                    messages.error(request, "All images must be valid image files.")
+                    return redirect("product_image")                
+                
                 product = get_object_or_404(Product, id=product_id)
                 if not all([product_id, color]):
                     messages.error(request, "Product and color are required.")
@@ -759,6 +812,18 @@ def product_size(request):
 
                 if ProductSize.objects.filter(productcolor=product_color, size=size).exists():
                     messages.error(request, "This size already exists for the selected product color.")
+                    return redirect("product_size")
+                if not all([product_color_id, size, quantity]):
+                    messages.error(request, "All fields are required.")
+                    return redirect("product_size")
+                if float(quantity) < 1:
+                    messages.error(request, "Quantity must be atleast 1.")
+                    return redirect("product_size")
+                if not ['S', 'M', 'L'] in [size]:
+                    messages.error(request, "Invalid size.")
+                    return redirect("product_size")
+                if not size.strip():
+                    messages.error(request, "Size cannot be empty.")
                     return redirect("product_size")
                 product_size = ProductSize.objects.create(
                     productcolor=product_color, size=size, quantity=quantity
@@ -802,12 +867,40 @@ def add_brand(request):
             if not name:
                 messages.error(request, "Brand name is required.")
                 return redirect(add_brand)
+            if not name.isalpha():
+                messages.error(request, "Brand name must contain only letters.")
+                return redirect(add_brand)
+            if not name.strip():
+                messages.error(request, "Brand name cannot contain only spaces.")
+                return redirect(add_brand)
+            if len(description) < 10:
+                messages.error(request, "Description must be at least 10 characters long.")
+                return redirect(add_brand)
             else:
-                create_brand = Brand.objects.create(name=name, description=description)
+                create_brand = Brand.objects.create(
+                    name=name,
+                    description=description
+                )
                 messages.success(request, "Brand added successfully.")
                 return redirect(view_brand)
 
         return render(request, "add_brand.html")
+    else:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect("admin_login")
+
+
+@never_cache
+def edit_brand(request, brand_id):
+    pass
+
+@never_cache
+def delete_brand(request, brand_id):
+    if request.user.superuser:
+        brand = get_object_or_404(Brand, id=brand_id)
+        brand.delete()
+        messages.success(request, "Brand deleted successfully.")
+        return redirect("view_brand")
     else:
         messages.error(request, "You do not have permission to access this page.")
         return redirect("admin_login")
@@ -1089,72 +1182,107 @@ def admin_coupon(request):
     else:
         return redirect("admin_login")
 
-
+@never_cache
 def add_coupon(request):
-    # try:
-    if request.user.is_superuser:
-        today = timezone.now().date()
+    try:
+        if request.user.is_superuser:
+            today = timezone.now().date()
+            if request.method == "POST":
+                code = request.POST.get("coupon_code", "").strip()
+                name = request.POST.get("name", "").strip()
+                dis = request.POST.get("discount_percentage", "").strip()
+                minimum_amount = request.POST.get("minimum_amount", "").strip()
+                maximum_amount = request.POST.get("maximum_amount", "").strip()
+                end_date = request.POST.get("end_date", "").strip()
+                usage_limit = request.POST.get("usage_limit", "").strip()
 
-        if request.method == "POST":
-            code = request.POST.get("coupon_code")
-            if Coupon.objects.filter(coupon_code=code).exists():
-                messages.error(
-                    request, "This coupon already exists. Please add a new one."
+                # Validate that all fields are provided
+                if not all([code, name, dis, minimum_amount, maximum_amount, end_date, usage_limit]):
+                    messages.error(request, "All fields are required for adding the coupon.")
+                    return redirect("add_coupon")
+
+                # Validate the coupon code
+                if not code:
+                    messages.error(request, "Coupon code cannot be empty.")
+                    return redirect("add_coupon")
+                if Coupon.objects.filter(coupon_code=code).exists():
+                    messages.error(request, "This coupon already exists. Please add a new one.")
+                    return redirect("add_coupon")
+
+                # Validate the coupon name
+                if not name:
+                    messages.error(request, "Coupon name cannot be empty.")
+                    return redirect("add_coupon")
+
+                # Validate the discount percentage
+                try:
+                    dis = float(dis)
+                    if dis < 5 or dis > 100:
+                        messages.error(request, "Please provide a valid discount between 5 and 100.")
+                        return redirect("add_coupon")
+                except ValueError:
+                    messages.error(request, "Please enter a valid discount percentage.")
+                    return redirect("add_coupon")
+
+                # Validate the minimum and maximum amounts
+                try:
+                    minimum_amount = float(minimum_amount)
+                    maximum_amount = float(maximum_amount)
+                    if minimum_amount < 100 or maximum_amount < 100:
+                        messages.error(request, "Price must be a positive value and at least 100.")
+                        return redirect("add_coupon")
+                    if minimum_amount > maximum_amount:
+                        messages.error(request, "Minimum amount cannot be greater than maximum amount.")
+                        return redirect("add_coupon")
+                except ValueError:
+                    messages.error(request, "Please enter valid amounts for minimum and maximum values.")
+                    return redirect("add_coupon")
+
+                # Validate the end date
+                try:
+                    end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date()
+                    if end_date < today:
+                        messages.error(request, "End date cannot be in the past.")
+                        return redirect("add_coupon")
+                except ValueError:
+                    messages.error(request, "Please enter a valid date in YYYY-MM-DD format.")
+                    return redirect("add_coupon")
+
+                # Validate the usage limit
+                try:
+                    usage_limit = int(usage_limit)
+                    if usage_limit < 1:
+                        messages.error(request, "Usage limit cannot be less than 1.")
+                        return redirect("add_coupon")
+                except ValueError:
+                    messages.error(request, "Please enter a valid usage limit.")
+                    return redirect("add_coupon")
+
+                # Create the coupon
+                coupon = Coupon.objects.create(
+                    coupon_code=code,
+                    coupon_name=name,
+                    discount_percentage=dis,
+                    minimum_amount=minimum_amount,
+                    maximum_amount=maximum_amount,
+                    expiry_date=end_date,
+                    usage_limit=usage_limit,
                 )
-                return redirect("add_coupon")
+                messages.success(request, "Coupon added successfully.")
+                return redirect("admin_coupon")
 
-            name = request.POST.get("name")
-            dis = request.POST.get("discount_percentage")
-
-            if float(dis) < 0 or float(dis) > 100:
-                messages.error(
-                    request, "Please provide a valid discount between 0 and 100."
-                )
-                return redirect("add_coupon")
-
-            minimum_amount = request.POST.get("minimum_amount")
-            maximum_amount = request.POST.get("maximum_amount")
-
-            if float(minimum_amount) < 0 or float(maximum_amount) < 0:
-                messages.error(request, "Price must be a positive value.")
-                return redirect("add_coupon")
-
-            end_date = request.POST.get("end_date")
-            print(end_date, "==", today)
-            usage_limit = request.POST.get("usage_limit")
-
-            if not all(
-                [code, name, dis, minimum_amount, maximum_amount, end_date, usage_limit]
-            ):
-                messages.error(
-                    request, "All fields are required for adding the coupon."
-                )
-                return redirect("add_coupon")
-            print("reached")
-            coupon = Coupon.objects.create(
-                coupon_code=code,
-                coupon_name=name,
-                discount_percentage=dis,
-                minimum_amount=minimum_amount,
-                maximum_amount=maximum_amount,
-                expiry_date=end_date,
-                usage_limit=usage_limit,
-            )
-            print(coupon)
-            print("oiii oiii")
-            messages.success(request, "Coupon added successfully.")
-            return redirect("admin_coupon")
-    else:
-        messages.error(request, "You do not have permission to access this page.")
-        return redirect("admin_login")
-    # except Exception as e:
-    #     messages.error(request, str(e))
-
-    return render(request, "coupon/add_coupon.html")
+            return render(request, "coupon/add_coupon.html")
+        else:
+            messages.error(request, "You do not have permission to access this page.")
+            return redirect("admin_login")
+    except Exception as e:
+        messages.error(request, str(e))
+        return render(request, "coupon/add_coupon.html")
 
 
 def edit_coupon(request, coupon_id):
     if request.user.is_superuser:
+        today = timezone.now()
         coupon = get_object_or_404(Coupon, id=coupon_id)
         if request.method == "POST":
             code = request.POST.get("coupon_code")
@@ -1165,33 +1293,45 @@ def edit_coupon(request, coupon_id):
             end_date = request.POST.get("end_date")
             usage_limit = request.POST.get("usage_limit")
 
+            if name:
+                if not name.strip():
+                    messages.error(request, "Name cannot be empty.")
+                    return redirect("edit_coupon", coupon_id=coupon_id)
+                coupon.coupon_name = name
             if dis:
-                if float(dis) < 0 or float(dis) > 100:
+                if float(dis) < 5 or float(dis) > 100:
                     messages.error(
                         request,
-                        "Please provide a valid discount percentage between 0 and 100.",
+                        "Please provide a valid discount percentage between 5 and 100.",
                     )
                     return redirect("edit_coupon", coupon_id=coupon_id)
                 coupon.discount_percentage = dis
 
             if min_amount:
-                if float(min_amount) < 0:
-                    messages.error(request, "Minimum amount must be a positive value.")
+                if float(min_amount) < 100:
+                    messages.error(request, "Minimum amount must be a valid value.")
                     return redirect("edit_coupon", coupon_id=coupon_id)
                 coupon.minimum_amount = min_amount
             if max_amount:
-                if float(max_amount) < 0:
-                    messages.error(request, "Maximum amount must be a positive value.")
+                if float(max_amount) < 1000:
+                    messages.error(request, "Maximum amount must be a greater than 1000.")
                     return redirect("edit_coupon", coupon_id=coupon_id)
                 coupon.maximum_amount = max_amount
 
             if code:
+                if not code.strip():
+                    messages.error(request, "Coupon code cannot be empty.")
+                    return redirect("edit_coupon", coupon_id=coupon_id)
                 coupon.coupon_code = code
-            if name:
-                coupon.coupon_name = name
             if end_date:
+                if end_date < today:
+                    messages.error(request, "End date cannot be in the past.")
+                    return redirect("edit_coupon", coupon_id=coupon_id)
                 coupon.expiry_date = end_date
             if usage_limit:
+                if int(usage_limit) < 1:
+                    messages.error(request, "Usage limit cannot be less than 1.")
+                    return redirect("edit_coupon", coupon_id=coupon_id)
                 coupon.usage_limit = usage_limit
 
             coupon.save()

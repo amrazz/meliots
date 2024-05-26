@@ -167,7 +167,10 @@
                     <div class="d-flex  justify-content-center ">
                     </div>
                     <ul class="navbar-nav flex-row ms-auto align-items-center justify-content-end">
-                        <a href="#" target="_blank" class="btn btn-primary">Download Report</a>
+                        <form action="{% url 'download_sales_report' %}">
+                            <input type="hidden" name="format" value="pdf" id="">
+                            <button type="submit" class="btn btn-primary">Download Report</button>
+                        </form>
                         <li class="nav-item dropdown">
                             <a class="nav-link nav-icon-hover" href="javascript:void(0)" id="drop2"
                                 data-bs-toggle="dropdown" aria-expanded="false"><img
@@ -176,17 +179,13 @@
                             <div class="dropdown-menu dropdown-menu-end dropdown-menu-animate-up"
                                 aria-labelledby="drop2">
                                 <div class="message-body">
-                                    <a href="javascript:void(0)"
-                                        class="d-flex align-items-center gap-2 dropdown-item">
-                                        <i class="ti ti-user fs-6"></i>
-                                        <p class="mb-0 fs-3">My Profile</p>
-                                    </a>
+                                    
                                     <a href="{% url 'index' %}"
                                         class="d-flex align-items-center gap-2 dropdown-item">
                                         <i class="ti ti-mail fs-6"></i>
                                         <p class="mb-0 fs-3">Ecommerce</p>
                                     </a>
-                                    <a href="javascript:void(0)"
+                                    <a href="{% url 'dashboard' %}"
                                         class="d-flex align-items-center gap-2 dropdown-item">
                                         <i class="ti ti-list-check fs-6"></i>
                                         <p class="mb-0 fs-3">My Task</p>

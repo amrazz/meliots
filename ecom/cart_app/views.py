@@ -839,10 +839,12 @@ def request_cancel_order(request, order_id):
     print(order_id)
     if request.user.is_authenticated:
         order_item = OrderItem.objects.get(pk=order_id)
+        total_price = order_item.each_price * order_item.qty
+
         if order_item.order.customer.user == request.user:
             order_item.request_cancel = True
             order_item.save()
-            return render(request, "view_status.html", {"order_items": order_item})
+            return render(request, "view_status.html", {"order_items": order_item, "total_price": total_price})
     return redirect("login")
 
 
@@ -851,6 +853,8 @@ def request_return_product(request, order_id):
         print("joiii")
         seven_days = timezone.now() - timedelta(days=7)
         order_item = OrderItem.objects.get(pk=order_id)
+        total_price = order_item.each_price * order_item.qty
+
         print(order_item)
 
         if order_item.created_at > seven_days and order_item.status == "Delivered":
@@ -858,7 +862,11 @@ def request_return_product(request, order_id):
             order_item.request_return = True
             order_item.save()
             print(order_item.request_return)
-            return redirect("view_status", order_id)
+            context = {
+                "order_items": order_item,
+                "total_price": total_price,
+            }
+            return redirect("view_status", order_id, context)
         else:
             messages.info(
                 request, "You can only request for return product within 7 days."
@@ -885,10 +893,11 @@ def wishlist_view(request):
 def wishlist_add(request, pro_id):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user=request.user)
+        print(customer)
         product = ProductColorImage.objects.get(id=pro_id)
 
-        if WishList.objects.filter(product=product).exists():
-            messages.info(request, "Product already in Wishlist.")
+        if WishList.objects.filter(customer=customer, product=product).exists():
+            messages.error(request, "Product already in Wishlist.")
             return redirect("product_detail", pro_id)
 
         wishlist_item, created = WishList.objects.get_or_create(

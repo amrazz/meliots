@@ -279,7 +279,6 @@
                         {% endif %}
                         {% if products_color.product.percentage == 0 %}
                         <div class=" " style="width: 150px; font-size:30px;margin-top: 20px;color: red;">
-                            
                         </div>
                         {% else %}
                         <div class=" " style="width: 150px; font-size:30px;margin-top: 20px;color: red;">
@@ -290,7 +289,7 @@
                     {% if products_color.product.percentage == 0 %}
                     <div class="product__details__price">₹ {{products_color.product.offer_price}}.00</div>
                         {% else %}
-                    <div class="product__details__price">₹ {{products_color.product.offer_price}}.00 <span>₹
+                    <div class="product__details__price">₹ {{products_color.product.offer_price}}.00<span>₹
                             {{ products_color.product.price }}</span></div>
                         {% endif %}
                        
@@ -334,7 +333,7 @@
                     </form>
                     <div class="d-flex justify-content-end " style="margin-top: -156px;margin-right: 90px;">
                         <a class="text-light" href="{% url 'wishlist_add' products_color.id %}"><button
-                                style="border-radius: 50px;padding: 14px 30px 9px;" type="submit"
+                                style="border-radius: 50px;padding: 14px 18px 9px;" type="submit"
                                 class="btn btn-primary wishlist-btn"><i class="fas fa-heart">
                                 </i>
                             </button></a>
@@ -400,7 +399,7 @@
                     </div> -->
                 </div>
             </div>
-            <div class="col-lg-12">
+            <div class="col-lg-12" style="margin-top: 82px;">
                 <div class="product__details__tab mt-5 ">
                     <ul class="nav nav-tabs" role="tablist">
                         <li class="nav-item">

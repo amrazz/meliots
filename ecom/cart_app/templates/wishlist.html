@@ -5,8 +5,28 @@
 {% block content %}
 
 <style>
+    .shop__cart__table {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .shop__cart__table table {
+        width: 100%;
+        min-width: 600px;
+        table-layout: auto;
+    }
+
+
+
+    .shop__cart__table th, .shop__cart__table td {
+        padding: 15px;
+        text-align: left;
+    }
+
     .shop__cart__table tbody tr .cart__product__item {
         overflow: hidden;
+        display: flex;
+        align-items: center;
     }
 
     .shop__cart__table tbody tr .cart__price {
@@ -34,26 +54,32 @@
         cursor: pointer;
     }
 
-    .shop__cart__table tbody tr .cart__product__item {
-        overflow: hidden;
-
+    input#number {
+        text-align: center;
+        border: white;
+        margin: 0px;
+        width: 40px;
+        height: 27px;
     }
 
-        input#number {
-            text-align: center;
-            border: white;
-            margin: 0px;
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    @media (max-width: 768px) {
+        .shop__cart__table th, .shop__cart__table td {
+            font-size: 14px;
+            padding: 10px;
+        }
+
+        .shop__cart__table tbody tr .cart__product__item img {
             width: 40px;
-            height: 27px;
+            height: 60px;
         }
-
-        input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
+    }
 </style>
-
 
 <!-- Breadcrumb Begin -->
 <div class="breadcrumb-option">
@@ -69,22 +95,23 @@
     </div>
 </div>
 <!-- Breadcrumb End -->
-    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
-                        <script>
-                            {% if messages %}
-                            {% for message in messages %}
-                            {% if message.tags == 'error' %}
-                            swal("Error!", "{{ message }}", "error");
-                            {% elif message.tags == 'success' %}
-                            swal("Success!", "{{ message }}", "success");
-                            {% else %}
-                            swal("Message", "{{ message }}"); 
-                            {% endif %}
-                            {% endfor %}
-                            {% endif %}
-                        </script>
-                    
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+<script>
+    {% if messages %}
+    {% for message in messages %}
+    {% if message.tags == 'error' %}
+    swal("Error!", "{{ message }}", "error");
+    {% elif message.tags == 'success' %}
+    swal("Success!", "{{ message }}", "success");
+    {% else %}
+    swal("Message", "{{ message }}");
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+</script>
+
 <!-- Shop Cart Section Begin -->
 <section class="shop-cart spad">
     <div class="container">
@@ -92,7 +119,8 @@
             <div class="col-lg-12">
                 <div class="d-flex justify-content-center ">
                     <h5><strong>WISH LIST</strong></h5>
-                </div><hr><br><br>
+                </div>
+                <hr><br><br>
                 <div class="shop__cart__table">
                     {% if wished_products %}
                     <table>
@@ -102,17 +130,18 @@
                                 <th>Product</th>
                                 <th>Size</th>
                                 <th>Price</th>
-
+                                <th></th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in wished_products %}
                             <tr>
-                                <td>{{forloop.counter}}</td>
+                                <td>{{ forloop.counter }}</td>
                                 <td class="cart__product__item">
-                                    <img style="width: 50px; height: 70px;" src="{{item.product.image1.url}}" alt="">
+                                    <img style="width: 50px; height: 70px;" src="{{ item.product.image1.url }}" alt="">
                                     <div class="cart__product__item__title">
-                                        <h6>{{item.product.product.name}}</h6>
+                                        <h6>{{ item.product.product.name }}</h6>
                                         <div class="rating">
                                             <i class="fa fa-star"></i>
                                             <i class="fa fa-star"></i>
@@ -123,24 +152,23 @@
                                     </div>
                                 </td>
                                 <form action="{% url 'add_to_cart' item.product.id %}" method="post">
-                                <td>
-                                    <select name="size" id="size_{{ item.id }}">
-                                        {%for size in item.product.size.all %}
-                                       <option value="{{ size.size }}">{{ size.size }}</option>    
-                                        {% endfor %}
-                                    </select>
-                                </td>
-                        
-                                <td class="cart__price">₹ {{item.product.product.offer_price}}.0</td>
+                                    <td>
+                                        <select name="size" id="size_{{ item.id }}">
+                                            {% for size in item.product.size.all %}
+                                            <option value="{{ size.size }}">{{ size.size }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td class="cart__price">₹ {{ item.product.product.offer_price }}.0</td>
                                     {% csrf_token %}
-                                   {% if item.product.is_listed %}
-                                   <td class="cart__close">
-                                    <input value="1" name="quantity" type="hidden">
-                                    <button style="margin-right: 110px;" class="btn" type="submit"><i class="fas fa-cart-plus"></i></button>
-                                </td>
-                                {% else %}
-                                <td><h6 style="margin-right: 11px;">The product is out of Stock</h6></td>
-                                {% endif %}
+                                    {% if item.product.is_listed %}
+                                    <td class="cart__close">
+                                        <input value="1" name="quantity" type="hidden">
+                                        <button class="btn" type="submit"><i class="fas fa-cart-plus"></i></button>
+                                    </td>
+                                    {% else %}
+                                    <td><h6>The product is out of Stock</h6></td>
+                                    {% endif %}
                                 </form>
                                 <td class="cart__close">
                                     <a href="{% url 'wishlist_del' item.id %}">
@@ -150,13 +178,12 @@
                             </tr>
                             {% endfor %}
                         </tbody>
-
                     </table>
                     {% else %}
-                    <br><div class="d-flex justify-content-center ">
-                        <h3>THERE IS NO PRODUCT IN WISH LIST </h3>
-                    </div><br><br><hr><br><br>
-
+                    <div class="d-flex justify-content-center">
+                        <h3>THERE IS NO PRODUCT IN WISH LIST</h3>
+                    </div>
+                    <hr><br><br>
                     {% endif %}
                 </div>
             </div>
@@ -173,36 +200,8 @@
                 </div>
             </div>
         </div>
-       
     </div>
 </section>
 <!-- Shop Cart Section End -->
-
-<!-- JavaScript to handle quantity update -->
-<script>
-    function updateQuantity(operation, cartItemId) {
-        var quantityInputId = 'number_' + cartItemId;
-        var totalPriceId = 'total_price_' + cartItemId;
-        var quantityInput = document.getElementById(quantityInputId);
-        var totalPriceElement = document.getElementById(totalPriceId);
-        var currentQuantity = parseInt(quantityInput.value, 10);
-        if (isNaN(currentQuantity)) {
-            currentQuantity = 1; // Default to 1 if the current value is not a number
-        }
-
-        if (operation === 'increase' && currentQuantity < 9) {
-            currentQuantity++;
-        } else if (operation === 'decrease' && currentQuantity > 1) {
-            currentQuantity--;
-        }
-
-        quantityInput.value = currentQuantity;
-
-        
-    }
-
-</script>
-
-
 
 {% endblock content %}

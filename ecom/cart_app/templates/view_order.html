@@ -22,7 +22,6 @@
         text-align: left;
         margin-right: auto;
         margin-top: 10px;
-        height: 500px;
     }
 
     .checkout__form__input input[type="date"] {
@@ -37,8 +36,63 @@
     .align-right-btn {
         float: right;
     }
-</style>
 
+    .order_table img {
+        width: 50px;
+        height: 70px;
+        border-radius: 7px;
+    }
+
+    @media (max-width: 768px) {
+        .path {
+            font-size: 16px;
+        }
+
+        .path a {
+            margin-bottom: 10px;
+        }
+
+        .order_table table {
+            width: 100%;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .order_table th, .order_table td {
+            font-size: 14px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .path {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .path a {
+            display: block;
+        }
+
+        .order_table img {
+            width: 40px;
+            height: 60px;
+        }
+
+        .order_table th, .order_table td {
+            font-size: 12px;
+        }
+
+        .order_table td {
+            display: block;
+            text-align: center;
+        }
+
+        .order_table tr {
+            display: block;
+            margin-bottom: 10px;
+        }
+    }
+</style>
 
 <!-- Breadcrumb Begin -->
 <div class="breadcrumb-option">
@@ -55,34 +109,30 @@
 </div>
 <!-- Breadcrumb End -->
 
-
-
-
-
 <!-- Personal info Section Begin -->
 <section class="checkout spad">
     <div class="container">
         <form action="#" class="checkout__form">
-            <div class="row d-flex justify-content-end">
-                <div class="path">
-                    <div class="l">
-                        <a href="{% url 'profile' %}">personal Information</a>
-
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="path">
+                        <div class="l">
+                            <a href="{% url 'profile' %}">Personal Information</a>
+                        </div>
+                        <p class="text-secondary text-muted">_________________________________________</p>
+                        <div>
+                            <a href="{% url 'view_all_order' %}" style="color: red;">My Orders</a>
+                        </div>
+                        <p class="text-secondary text-muted">_________________________________________</p>
+                        <div>
+                            <a href="{% url 'address' %}">Address</a>
+                        </div>
+                        <p class="text-secondary text-muted">_________________________________________</p>
+                        <div>
+                            <a href="{% url 'wallet_view' %}">Wallet</a>
+                        </div>
+                        <p class="text-secondary text-muted">_________________________________________</p>
                     </div>
-                    <p class="text-secondary text-muted">_________________________________________</p>
-                    <div>
-                        <a href="{% url 'view_all_order' %}" style="color: red;">My Orders</a>
-                    </div>
-                    <p class="text-secondary text-muted">_________________________________________</p>
-                    <div>
-                        <a href="{% url 'address' %}">Address</a>
-                    </div>
-                    <p class="text-secondary text-muted">_________________________________________</p>
-                    <div>
-                        <a href="{% url 'wallet_view' %}">Wallet</a>
-                    </div>
-                    <p class="text-secondary text-muted">_________________________________________</p>
-
                 </div>
                 <div class="col-lg-8">
                     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
@@ -120,13 +170,11 @@
                                 <tbody>
                                     {% for i in items %}
                                     <tr>
-                                        <td><img src="{{ i.product.image1.url }}" alt=""
-                                                style="width: 50px;height: 70px;border-radius: 7px;"></td>
+                                        <td><img src="{{ i.product.image1.url }}" alt=""></td>
                                         <td>{{ i.product.product.name }}</td>
-                                        <td style="color: red;display: flex;width: 90px;">₹
-                                            {{i.each_price }}</td>
+                                        <td style="color: red;">₹{{ i.each_price }}</td>
                                         <td>{{ i.size }}</td>
-                                        <td style="color: red;display: flex;width: 90px;">₹{{ i.order.total }}</td>
+                                        <td style="color: red;">₹{{ i.order.total }}</td>
                                         <td>
                                             <a href="{% url 'view_status' i.pk %}">
                                                 <div class="btn btn-outline-primary">Status</div>
@@ -134,29 +182,21 @@
                                         </td>
                                     </tr>
                                     {% endfor %}
-
-                                    
                                 </tbody>
-
-                               
                             </table>
                             {% else %}
-
-                            <div class="d-flex justify-content-center ">
+                            <div class="d-flex justify-content-center">
                                 <h5><b>YOU HAVEN'T ORDERED ANY PRODUCTS YET.</b></h5>
                             </div>
                             {% endif %}
                         </div>
-                        
                         <br><br>
                     </div>
-
                 </div>
             </div>
         </form>
     </div>
 </section>
 <!-- Personal info Section End -->
-
 
 {% endblock content %}
