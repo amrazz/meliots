@@ -51,7 +51,10 @@
             {% if message.tags == 'error' %}
             swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
             {% elif message.tags == 'success' %}
-            swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
+            swal("Success!", "{{ message }}", "success"); 
+            {% elif message.tags == 'info' %}
+            swal("Info!", "{{ message }}", "info");
+            // Display success message with a success icon
             {% else %}
             swal("Message", "{{ message }}"); // Display general message
             {% endif %}
