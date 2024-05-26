@@ -851,7 +851,7 @@ def product_size(request):
 @never_cache
 def view_brand(request):
     if request.user.is_superuser:
-        brands = Brand.objects.all()
+        brands = Brand.objects.filter(is_deleted = False, is_listed = True)
         return render(request, "view_brand.html", {"brands": brands})
     else:
         messages.error(request, "You do not have permission to access this page.")
@@ -891,14 +891,40 @@ def add_brand(request):
 
 
 @never_cache
+
 def edit_brand(request, brand_id):
-    pass
+    if request.user.is_superuser:
+        brand = get_object_or_404(Brand, id=brand_id)
+
+        if request.method == "POST":
+            name = request.POST.get("name")
+            description = request.POST.get("description")
+            
+            if name:
+                if not name.strip():
+                    messages.error(request, "Name cannot be empty.")
+                    return redirect("edit_brand", brand_id=brand_id)
+                brand.name = name
+            if description:
+                if len(description) < 10:
+                    messages.error(request, "Description must be at least 10 characters long.")
+                    return redirect("edit_brand", brand_id=brand_id)
+                elif not description.strip():
+                    messages.error(request, "Description cannot be empty.")
+                    return redirect("edit_brand", brand_id=brand_id)
+                brand.description = description
+            brand.save()
+            messages.success(request, "Brand updated successfully.")
+            return redirect("view_brand")
+    
+        return render(request, 'edit_brand.html', {"brand": brand})
 
 @never_cache
 def delete_brand(request, brand_id):
-    if request.user.superuser:
+    if request.user.is_superuser:
         brand = get_object_or_404(Brand, id=brand_id)
-        brand.delete()
+        brand.is_deleted = True
+        brand.save()
         messages.success(request, "Brand deleted successfully.")
         return redirect("view_brand")
     else:

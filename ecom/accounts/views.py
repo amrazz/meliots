@@ -1088,7 +1088,6 @@ def add_address(request):
                 )
                 return redirect("add_address")
 
-            # Postal code validation: only digits
             if not postal_code.isdigit():
                 messages.error(request, "Postal code must contain only digits.")
                 return redirect("add_address")
@@ -1166,19 +1165,17 @@ def edit_address(request, address_id):
 
 
 def delete_address(request, address_id):
-    # try:
-    if request.user.is_authenticated:
-        data = Address.objects.get(id=address_id)
-        data.is_deleted = True
-        data.save()
-        messages.success(request, "Address deleted successfully.")
+    try:
+        if request.user.is_authenticated:
+            data = Address.objects.get(id=address_id)
+            data.is_deleted = True
+            data.save()
+            messages.success(request, "Address deleted successfully.")
+            return redirect("address")
+        else:
+            return redirect("login")
+    except:
         return redirect("address")
-    else:
-        return redirect("login")
-
-
-# except:
-#     return redirect("address")
 
 
 # _______________________________________________X_________________________X__________________________
@@ -1209,7 +1206,7 @@ def invoice(request, product_id):
 
         # Define the configuration for pdfkit
         config = pdfkit.configuration(
-            wkhtmltopdf="C:\\Users\\DELL\\OneDrive\\Desktop\\Python\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"
+            wkhtmltopdf="/usr/bin/wkhtmltopdf"
         )
 
         pdf = pdfkit.from_string(html_string, False, configuration=config)
