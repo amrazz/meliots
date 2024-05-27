@@ -82,18 +82,12 @@
                         <p style="color: green;">{{order.status}}</p>
                         {% elif order.status == 'Returned' %}
                         <p style="color: rgb(248, 12, 4);">{{order.status}}</p>
-                        {% elif order.status == 'Refunded' %}
-                        <p style="color: rgb(255, 145, 1);">{{order.status}}</p>
                         {% elif order.status == 'Cancelled' %}
                         <p style="color: rgb(255, 0, 0);">{{order.status}}</p>
-                        {% elif order.status == 'Out for Delivery' %}
-                        <p style="color: rgb(0, 195, 255);">{{order.status}}</p>
-                        {% elif order.status == 'Shipped' %}
-                        <p style="color: rgb(166, 255, 0);">{{order.status}}</p>
                         {% elif order.status == 'Pending' %}
                         <p style="color: rgb(255, 145, 0);">{{order.status}}</p>
-                        {% elif order.status == 'Order Placed' %}
-                        <p style="color: rgb(255, 145, 0);">{{order.status}}</p>
+                        {% elif order.status == 'On Progress' %}
+                        <p style="color: green;">{{order.status}}</p>
                         {% endif %}
                     </div>
                     <div class="order-info">

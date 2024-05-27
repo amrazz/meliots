@@ -77,6 +77,8 @@ class Order(models.Model):
         ("Payment Failed", "Payment Failed"),
         ("Payment Successful", "Payment Successful"),
         ("Returned", "Returned"),
+        ("Cancelled", "Cancelled"),
+        ("On Progress", "On Progress"),
     )
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
@@ -107,6 +109,7 @@ class OrderItem(models.Model):
         ("Returned", "Returned"),
         ("Refunded", "Refunded"),
         ("Cancelled", "Cancelled"),
+        
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
     product = models.ForeignKey(
@@ -130,6 +133,24 @@ class OrderItem(models.Model):
 
     def total_price(self):
         return self.cart_item.total_price()
+    
+@receiver(post_save, sender = OrderItem)
+def change_order_status(sender, instance, created, **kwargs):
+    order = instance.order
+    order_items = OrderItem.objects.filter(order=order)
+    if all(item.status == "Delivered" for item in order_items):
+        order.status = "Delivered"
+        order.save()
+    elif all(item.status == 'Cancelled' for item in order_items):
+        order.status = 'Cancelled'
+        order.save()
+    elif all(item.status == 'Returned' for item in order_items):
+        order.status = 'Returned'
+        order.save()
+    else:
+        order.status = 'On Progress'
+        order.save()
+    print("order status changed successfully!! for all the orders.")
 
 
 class Wallet(models.Model):

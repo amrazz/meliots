@@ -1078,6 +1078,7 @@ def cancel_order(request, order_id):
         try:
             print("Starting cancel_order function")
             cancel = OrderItem.objects.get(id=order_id)
+
             main_order_id = cancel.order.id
             print(cancel)
 

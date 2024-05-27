@@ -577,7 +577,7 @@ def place_order(request):
                         discounted_price=discounted_price,
                         payment_transaction_id=order_id,
                         payment=payment,
-                        status="Payment Successful",
+                        status="On Progress",
                     )
                     for cart_item in cart:
                         OrderItem.objects.create(
@@ -653,7 +653,7 @@ def place_order(request):
                         discounted_price=discounted_price,
                         payment_transaction_id=transaction_id,
                         payment=payment,
-                        status="Payment Successful",
+                        status="On Progress",
                     )
                     for cart_item in cart:
                         order_item = OrderItem.objects.create(
@@ -715,7 +715,7 @@ def place_order(request):
                 coupon_name=coupon_name,
                 coupon_discount_percentage=coupon_discount_percentage,
                 discounted_price=discounted_price,
-                status="Pending",
+                status="On Progress",
             )
 
             for cart_item in cart:
@@ -866,7 +866,7 @@ def request_return_product(request, order_id):
                 "order_items": order_item,
                 "total_price": total_price,
             }
-            return redirect("view_status", order_id, context)
+            return render(request, "view_status.html", {"order_items": order_item, "total_price": total_price})
         else:
             messages.info(
                 request, "You can only request for return product within 7 days."
