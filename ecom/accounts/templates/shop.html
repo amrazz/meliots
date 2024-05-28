@@ -194,63 +194,70 @@
             </div>
             <div class="col-lg-9 col-md-9">
                 <div class="row">
-                    {% for color in products_color %}
+                    {% if products_color %}
+                        {% for color in products_color %}
 
-                    <div class="col-lg-4 col-md-6">
-                        <div class="product__item">
+                        <div class="col-lg-4 col-md-6">
+                            <div class="product__item">
 
-                            <div class="product__item__pic set-bg" >
-                                <a href="{% url 'product_detail' color.id %}"><img src="{{ color.image1.url }}"
-                                    alt=""></a>
-                                {% if color.is_listed and color.product.category.is_listed %}
-                                <div class="label new">New</div>
-                                {% else %}
-                                <div class="label new" style="background-color: red;">Out Of Stock</div>
-                                {% endif %}
+                                <div class="product__item__pic set-bg" >
+                                    <a href="{% url 'product_detail' color.id %}"><img src="{{ color.image1.url }}"
+                                        alt=""></a>
+                                    {% if color.is_listed and color.product.category.is_listed %}
+                                    <div class="label new">New</div>
+                                    {% else %}
+                                    <div class="label new" style="background-color: red;">Out Of Stock</div>
+                                    {% endif %}
 
 
-                                <ul class="product__hover">
-                                    <li><a href="{{ color.image1.url }}" class="image-popup"><span
-                                                class="arrow_expand"></span></a></li>
-                                    <li><form action="{% url 'wishlist_add' color.id %}" method="post">
-                                        {% csrf_token %}
-                                    <input type="hidden" name="size" value="S" id="">
-                                    <button class="btn" type="submit" style="
-                                        border-radius: 252px;
-                                        width: 48px;
-                                        height: 48px;
-                                        padding-left: 0px;
-                                        padding-top: 0px;
-                                    "><a href=""><span class="icon_heart_alt"></span></a></button>
-                                </form></li>
-                                </ul>
-                            </div>
-                            </a>
-                            <div class="product__item__text">
-                                <h6><a href="{% url 'product_detail' color.id %}">{{ color.product.name }}</a></h6>
-                                <!-- Product rating -->
-                                <div class="rating">
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
+                                    <ul class="product__hover">
+                                        <li><a href="{{ color.image1.url }}" class="image-popup"><span
+                                                    class="arrow_expand"></span></a></li>
+                                        <li><form action="{% url 'wishlist_add' color.id %}" method="post">
+                                            {% csrf_token %}
+                                        <input type="hidden" name="size" value="S" id="">
+                                        <button class="btn" type="submit" style="
+                                            border-radius: 252px;
+                                            width: 48px;
+                                            height: 48px;
+                                            padding-left: 0px;
+                                            padding-top: 0px;
+                                        "><a href=""><span class="icon_heart_alt"></span></a></button>
+                                    </form></li>
+                                    </ul>
                                 </div>
-                                <!-- Product price -->
-                                {% if color.product.percentage == 0 %}
-                                <div class="product__price">₹ {{color.product.offer_price}}
+                                </a>
+                                <div class="product__item__text">
+                                    <h6><a href="{% url 'product_detail' color.id %}">{{ color.product.name }}</a></h6>
+                                    <!-- Product rating -->
+                                    <div class="rating">
+                                        <i class="fa fa-star"></i>
+                                        <i class="fa fa-star"></i>
+                                        <i class="fa fa-star"></i>
+                                        <i class="fa fa-star"></i>
+                                        <i class="fa fa-star"></i>
+                                    </div>
+                                    <!-- Product price -->
+                                    {% if color.product.percentage == 0 %}
+                                    <div class="product__price">₹ {{color.product.offer_price}}
 
+                                    </div>
+                                    {% else %}
+                                    <div class="product__price">₹ {{color.product.offer_price}}
+                                        <a href="" class="text-muted text-decoration-line-through"
+                                            style="text-decoration: line-through;">{{color.product.price}}</a>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                                {% else %}
-                                <div class="product__price">₹ {{color.product.offer_price}}
-                                    <a href="" class="text-muted text-decoration-line-through"
-                                        style="text-decoration: line-through;">{{color.product.price}}</a>
-                                </div>
-                                {% endif %}
                             </div>
                         </div>
-                    </div>
-                    {% endfor %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-lg-12">
+                          <div class="d-flex justify-content-center">
+                            <h3>No Products Found</h3>
+                          </div>
+                    {% endif %}
                 </div><br>
                 <div class="d-flex justify-content-center">
                     {% if is_paginated %}
@@ -299,12 +306,5 @@
         return url.toString();
     }
 </script>
-
-
-
-
-
-
-
 
 {% endblock content %}

@@ -97,6 +97,20 @@ class Order(models.Model):
     def __str__(self) -> str:
         return f"Order ID: {self.id}, Tracking ID: {self.tracking_id}, Customer: {self.customer}"
 
+class Shipping_address(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=200, default=None)
+    last_name = models.CharField(max_length=200, default=None)
+    email = models.EmailField(default="user@gmail.com")
+    house_name = models.CharField(max_length=200)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=12)
+    
+    def __str__(self):
+        return f"{self.order.tracking_id}-{self.first_name}-{self.last_name}-{self.phone_number}"
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name="order", on_delete=models.CASCADE)

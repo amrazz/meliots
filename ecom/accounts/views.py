@@ -147,7 +147,8 @@ def register(request):
 
                 user_id = user_profile.user.pk 
                 otp, otp_generated_at = generate_otp_and_send_email(email)
-
+                print('This is the call for otp', otp, otp_generated_at)
+                print(otp, otp_generated_at)
                 store_user_data_in_session(request, user_id, otp, email, otp_generated_at)
 
             return JsonResponse({'success': True, 'message': f'Welcome {first_name}'})
@@ -340,7 +341,7 @@ def verify_email(request):
                 }
                 return redirect("verify_otp")
             else:
-                messages.error(request, "Something went wrong")
+                messages.error(request, "This email does not exists in our database.")
                 return redirect("verify_email")
 
     except Exception as e:

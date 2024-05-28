@@ -472,24 +472,28 @@
     <script>
         $("#zoom").elevateZoom()
     </script>
-
 <script>
     $(document).ready(function () {
         // Initialize the carousel
         var owl = $('.product__details__pic__slider').owlCarousel({
             // Your carousel options here
         });
+
         // Add click event listener to thumbnail images
         $('.product__details__pic__left .pt').on('click', function (e) {
             e.preventDefault(); // Prevent the default action
             var imgSrc = $(this).find('img').attr('src'); // Get the src of the clicked thumbnail
             $('.product__details__pic__slider .product__big__img').attr('src', imgSrc); // Update the main image viewer
-            $('.product__details__pic__slider .product__big__img').data('elevateZoom').swipeTracker.update(); // Update the zoom
+            $('.product__details__pic__slider .product__big__img').data('elevateZoom').swaptheimage(imgSrc, imgSrc); // Update the zoom
+        });
+
+        // Apply zoom to all images in the slider
+        $('.product__details__pic__slider img').each(function() {
+            $(this).elevateZoom();
         });
     });
-
-
 </script>
+
 <script>
     function updateQuantity(operation) {
         var quantityInput = document.getElementById('number');

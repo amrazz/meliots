@@ -392,16 +392,18 @@ def add_category_offer(request):
                 today = timezone.now().date()
                 if not all([category, name, discount_percentage, is_active, end_date]):
                     messages.error(request, "All fields are required.")
-                elif discount_percentage < 5 or discount_percentage > 100:
+                elif discount_percentage < 5 or discount_percentage > 90:
                     messages.error(
-                        request, "Discount percentage must be between 5 and 100."
+                        request, "Discount percentage must be between 5 and 90."
                     )
                 elif not Category.objects.filter(name=category).exists():
                     messages.error(request, "Category does not exist.")
-                elif end_date < today:
+                elif str(end_date) < str(today):
                     messages.error(
                         request, "End date must be greater than today's date."
                     )
+                elif str(end_date) and str(end_date) == str(today):
+                    messages.error(request, "End date must be greater than today's date.")
                 elif CategoryOffer.objects.filter(category__name=category).exists():
                     messages.error(
                         request, "Category offer already exists for this category."
@@ -867,9 +869,6 @@ def add_brand(request):
             if not name:
                 messages.error(request, "Brand name is required.")
                 return redirect(add_brand)
-            if not name.isalpha():
-                messages.error(request, "Brand name must contain only letters.")
-                return redirect(add_brand)
             if not name.strip():
                 messages.error(request, "Brand name cannot contain only spaces.")
                 return redirect(add_brand)
@@ -1047,8 +1046,9 @@ def admin_order(request, order_id):
         item = OrderItem.objects.filter(order=order).order_by("id")
         print(item)
         status_choices = dict(OrderItem.STATUS_CHOICES)
+        order_address = Shipping_address.objects.get(order=order)
 
-        context = {"item": item, "order": order, "status_choices": status_choices}
+        context = {"item": item, "order": order, "status_choices": status_choices, "address": order_address}
         return render(request, "order/order_detail.html", context)
     else:
         return redirect("admin_login")
@@ -1061,11 +1061,23 @@ def update_status(request):
 
         try:
             order_item = OrderItem.objects.get(id=order_item_id)
+            previous_status = order_item.status  # Store the previous status
             order_item.status = new_status
             order_item.save()
+
+            if new_status == "Cancelled" or new_status == "Returned":
+                if previous_status != new_status:
+                    product_size = ProductSize.objects.get(
+                        productcolor=order_item.product, size=order_item.size
+                    )
+                    product_size.quantity = F("quantity") + order_item.qty
+                    product_size.save()
+                    
             return JsonResponse({"status": "success"})
         except ObjectDoesNotExist:
             return JsonResponse({"status": "error", "message": "Order item not found."})
+        except ProductSize.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Product size not found."})
 
     return JsonResponse(
         {"status": "error", "message": "Unauthorized or invalid request."}
@@ -1119,8 +1131,13 @@ def cancel_order(request, order_id):
                     cancel.status = "Cancelled"
                     cancel.save()
                     messages.success(
-                        request, f"Amount of ₹{cancelled_amount} added to your Wallet."
+                        request, f"Amount of ₹{cancelled_amount} added to {cancel.order.customer.user.username}'s Wallet."
                     )
+                    product_size = ProductSize.objects.get(
+                        productcolor = cancel.product, size = cancel.size
+                    )
+                    product_size.quantity += cancel.qty
+                    product_size.save()
                 print("Redirecting to admin_order")
                 return redirect("admin_order", main_order_id)
             elif cancel.order.payment_method == "COD":
@@ -1187,8 +1204,13 @@ def return_order(request, return_id):
                 return_order.return_product = True
                 return_order.save()
                 messages.success(
-                    request, f"Amount of ₹{refund_amount} added to your Wallet."
+                    request, f"Amount of ₹{refund_amount} added to {return_order.order.customer.user.username} Wallet."
                 )
+                product_size = ProductSize.objects.get(
+                        productcolor = return_order.product, size = return_order.size
+                    )
+                product_size.quantity += return_order.qty
+                product_size.save()
                 print("Order returned successfully")
                 return redirect("admin_order", ord_id)
         messages.info(request, "Order has already been returned")
@@ -1268,8 +1290,11 @@ def add_coupon(request):
                 # Validate the end date
                 try:
                     end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date()
-                    if end_date < today:
+                    if str(end_date) < str(today):
                         messages.error(request, "End date cannot be in the past.")
+                        return redirect("add_coupon")
+                    elif str(end_date) and str(end_date) == str(today):
+                        messages.error(request, "End date cannot be today.")
                         return redirect("add_coupon")
                 except ValueError:
                     messages.error(request, "Please enter a valid date in YYYY-MM-DD format.")
@@ -1351,8 +1376,11 @@ def edit_coupon(request, coupon_id):
                     return redirect("edit_coupon", coupon_id=coupon_id)
                 coupon.coupon_code = code
             if end_date:
-                if end_date < today:
+                if str(end_date) < str(today):
                     messages.error(request, "End date cannot be in the past.")
+                    return redirect("edit_coupon", coupon_id=coupon_id)
+                elif str(end_date) and str(end_date) == str(today):
+                    messages.error(request, "End date cannot be today.")
                     return redirect("edit_coupon", coupon_id=coupon_id)
                 coupon.expiry_date = end_date
             if usage_limit:
