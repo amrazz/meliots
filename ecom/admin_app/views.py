@@ -867,9 +867,7 @@ def add_brand(request):
             if not name:
                 messages.error(request, "Brand name is required.")
                 return redirect(add_brand)
-            if not name.isalpha():
-                messages.error(request, "Brand name must contain only letters.")
-                return redirect(add_brand)
+            
             if not name.strip():
                 messages.error(request, "Brand name cannot contain only spaces.")
                 return redirect(add_brand)
