@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from .models import *
 from django.contrib import messages, auth
 from admin_app.models import *
+from accounts.models import *
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
@@ -96,6 +97,9 @@ def add_to_cart(request, pro_id):
 
             if size.quantity < quantity:
                 messages.error(request, "Selected quantity exceeds available stock.")
+                return redirect("product_detail", pro_id)
+            if size.quantity == 0:
+                messages.error(request, "Selected size is out of Stock.")
                 return redirect("product_detail", pro_id)
             if CartItem.objects.filter(user_cart = user_cart,product=product, product_size=selected_size).exists():
                 messages.error(request, "Product already in Cart.")
@@ -302,19 +306,22 @@ def checkout(request):
             order = OrderItem.objects.filter(order__customer=user)
             cart = CartItem.objects.filter(user_cart__customer=user)
             coupons = Coupon.objects.filter(is_active=True, expiry_date__gt=today)
-
+            
             if not cart.exists():
                 messages.error(request, "Your cart is empty.")
                 return redirect("shop_cart")
 
             for item in cart:
-                for i in item.product.size.all():
-                    if item.quantity > i.quantity:
-                        messages.error(
-                            request, "Selected quantity exceeds available stock."
-                        )
-                        return redirect("shop_cart")
+                try:
+                    product_size = ProductSize.objects.get(productcolor=item.product, size=item.product_size)
+                except ProductSize.DoesNotExist:
+                    messages.error(request, f"Size {item.product_size} for product {item.product.product.name} not found.")
+                    return redirect("shop_cart")
 
+                if item.quantity > product_size.quantity:
+                    messages.error(request, f"Selected quantity for {item.product.product.name} exceeds available stock.")
+                    return redirect("shop_cart")
+                
             sub_total = sum(price.total_price for price in cart)
             total = sub_total
             discount_amount = 0
@@ -371,7 +378,7 @@ def checkout(request):
                         ).exists():
                             messages.error(
                                 request,
-                                "You can only user one coupon. You have already used this coupon.",
+                                "You can only use one coupon. You have already used this coupon.",
                             )
                             return redirect("checkout")
 
@@ -400,8 +407,6 @@ def checkout(request):
             cart_items = CartItem.objects.filter(user_cart=user_cart)
             addresses = Address.objects.filter(user=request.user, is_deleted=False)
 
-
-
             context = {
                 "cartitems": cart_items,
                 "addresses": addresses,
@@ -417,8 +422,9 @@ def checkout(request):
         else:
             return redirect("login")
     except Exception as e:
-        messages.error(request, "Something went wrong please try again.")
+        messages.error(request, "Something went wrong. Please try again.")
         return redirect("checkout")
+
 
 
 def initiate_payment(items):
@@ -444,76 +450,57 @@ def initiate_payment(items):
 def place_order(request):
     if request.method == "POST":
         address_id = request.POST.get("select_address")
-        address = Address.objects.get(id=address_id)
-        pm = request.POST.get("payment_method")
+        payment_method = request.POST.get("payment_method")
 
         if not address_id:
             messages.error(request, "Please select an address.")
             return redirect("checkout")
-        if not pm:
+        if not payment_method:
             messages.error(request, "Please select a Payment Method.")
             return redirect("checkout")
 
+        address = Address.objects.get(id=address_id)
         customer = Customer.objects.get(user=request.user.pk)
         cart = CartItem.objects.filter(user_cart__customer=customer)
         subtotal = sum(item.total_price for item in cart)
         total_qty = sum(item.quantity for item in cart)
-
-        if total_qty <= 5:
-            shipping_fee = 99
-        else:
-            shipping_fee = 0
-        total = subtotal if total_qty > 5 else 99 + subtotal
+        shipping_fee = 99 if total_qty <= 5 else 0
+        total = subtotal + shipping_fee
 
         tk_id = get_random_string(10, "ABCDEFGHIJKLMOZ0123456789")
         while Order.objects.filter(tracking_id=tk_id).exists():
             tk_id = get_random_string(10, "ABCDEFGHIJKLMOZ0123456789")
 
-        coupon_applied = request.session.get("coupon_applied")
+        coupon_applied = request.session.get("coupon_applied", False)
         coupon_name = request.session.get("coupon_name")
-        coupon_discount_percentage = request.session.get("coupon_discount_percentage")
-        discounted_price = request.session.get("discounted_price")
+        coupon_discount_percentage = request.session.get("coupon_discount_percentage", 0)
+        discounted_price = request.session.get("discounted_price", 0)
 
-        if "coupon_applied" in request.session:
+        if coupon_applied:
             total -= discounted_price
             used_coupon = Coupon.objects.filter(coupon_name=coupon_name).first()
             if used_coupon:
                 used_coupon.used_count += 1
                 used_coupon.save()
-        else:
-            coupon_applied = False
-            coupon_name = None
-            coupon_discount_percentage = None
-            discounted_price = 0
 
-        if request.POST.get("payment_method") == "Razorpay":
-            items = [
-                {
-                    "amount": total * 100,
-                }
-            ]
+        if payment_method == "Razorpay":
+            items = [{"amount": total * 100}]
             order_id = initiate_payment(items)
-            payment = Payment.objects.create(
-                method_name=pm,
-                amount=total,
-                transaction_id=order_id,
-                paid_at=timezone.now(),
-                pending=False,
-                success=True,
-            )
-            if order_id is None:
-                print("hdhfjkshdjkfhdsf")
-                messages.error(request, "Payment initiation failed. Please try again.")
-                payment.success = False
-                payment.failed = True
-                payment.pending = True
-                payment.save()
-                print("dfh paymne  sussufillll")
 
+            if order_id is None:
+                payment = Payment.objects.create(
+                    method_name=payment_method,
+                    amount=total,
+                    transaction_id=tk_id,
+                    paid_at=timezone.now(),
+                    pending=True,
+                    success=False,
+                    failed=True,
+                )
                 order = Order.objects.create(
                     customer=customer,
                     address=address,
-                    payment_method=pm,
+                    payment_method=payment_method,
                     subtotal=subtotal,
                     shipping_charge=shipping_fee,
                     total=total,
@@ -526,6 +513,18 @@ def place_order(request):
                     payment=payment,
                     status="Payment Failed",
                 )
+                Shipping_address.objects.create(
+                    order=order,
+                    first_name=address.first_name,
+                    last_name=address.last_name,
+                    email=address.email,
+                    phone_number=address.phone_number,
+                    house_name=address.house_name,
+                    postal_code=address.postal_code,
+                    city=address.city,
+                    state=address.state,
+                    country=address.country,
+                )
                 for cart_item in cart:
                     OrderItem.objects.create(
                         order=order,
@@ -535,18 +534,10 @@ def place_order(request):
                         qty=cart_item.quantity,
                         size=cart_item.product_size,
                     )
-                    print("come hererefersdfasdfdsf")
-
-                    product = cart_item.product.pk
-                    print(product)
-                    product_size = ProductSize.objects.filter(productcolor__id=product)
-                    print(product_size)
-                    if product_size.exists():
-                        for qty in product_size:
-                            print("in the if product_size")
-                            qty.quantity -= cart_item.quantity
-                            qty.save()
-                    print("product quantity is reduced")
+                    product_size = ProductSize.objects.get(
+                        productcolor=cart_item.product, size=cart_item.product_size)
+                    product_size.quantity -= cart_item.quantity
+                    product_size.save()
 
                 cart.delete()
 
@@ -559,165 +550,48 @@ def place_order(request):
                 for key in keys_to_delete:
                     if key in request.session:
                         del request.session[key]
+
+                messages.error(request, "Payment initiation failed. Order has been created with 'Payment Failed' status.")
                 return redirect("payment_failure")
-            else:
-                try:
-                    order = Order.objects.create(
-                        customer=customer,
-                        address=address,
-                        payment_method=pm,
-                        subtotal=subtotal,
-                        shipping_charge=shipping_fee,
-                        total=total,
-                        paid=True,
-                        tracking_id=tk_id,
-                        coupon_applied=coupon_applied,
-                        coupon_name=coupon_name,
-                        coupon_discount_percentage=coupon_discount_percentage,
-                        discounted_price=discounted_price,
-                        payment_transaction_id=order_id,
-                        payment=payment,
-                        status="On Progress",
-                    )
-                    for cart_item in cart:
-                        OrderItem.objects.create(
-                            order=order,
-                            status="Order Placed",
-                            product=cart_item.product,
-                            each_price=cart_item.product.product.offer_price,
-                            qty=cart_item.quantity,
-                            size=cart_item.product_size,
-                        )
-                        product = cart_item.product.pk
-                        print(product)
-                        product_size = ProductSize.objects.filter(
-                            productcolor__id=product
-                        )
-                        print(product_size)
-                        if product_size.exists():
-                            for qty in product_size:
-                                print("in the if product_size")
-                                qty.quantity -= cart_item.quantity
-                                qty.save()
-                                print("product quantity is reduced")
 
-                    cart.delete()
+            payment = Payment.objects.create(
+                method_name=payment_method,
+                amount=total,
+                transaction_id=order_id,
+                paid_at=timezone.now(),
+                pending=False,
+                success=True,
+            )
 
-                    keys_to_delete = [
-                        "coupon_applied",
-                        "coupon_name",
-                        "coupon_discount_percentage",
-                        "discounted_price",
-                    ]
-                    for key in keys_to_delete:
-                        if key in request.session:
-                            del request.session[key]
-
-                    return redirect("order_detail")
-                except Exception:
-                    pass
-
-        if request.POST.get("payment_method") == "wallet":
-            user_customers = customer.user
-            balance = Wallet.objects.get(user=user_customers)
-            if balance.balance < total:
-                messages.error(request, "Insufficient balance in your wallet.")
-                return redirect("checkout")
-            else:
-                transaction_id = "WALLET_TRANSFER_" + get_random_string(
-                    4, "ABC123456789"
-                )
-                while Order.objects.filter(tracking_id=transaction_id).exists():
-                    transaction_id += get_random_string(4, "ABC123456789")
-                payment = Payment.objects.create(
-                    method_name=pm,
-                    amount=total,
-                    transaction_id=transaction_id,
-                    paid_at=timezone.now(),
-                    pending=False,
-                    success=True,
-                )
-                try:
-                    order = Order.objects.create(
-                        customer=customer,
-                        address=address,
-                        payment_method=pm,
-                        subtotal=subtotal,
-                        shipping_charge=shipping_fee,
-                        total=total,
-                        paid=True,
-                        tracking_id=tk_id,
-                        coupon_applied=coupon_applied,
-                        coupon_name=coupon_name,
-                        coupon_discount_percentage=coupon_discount_percentage,
-                        discounted_price=discounted_price,
-                        payment_transaction_id=transaction_id,
-                        payment=payment,
-                        status="On Progress",
-                    )
-                    for cart_item in cart:
-                        order_item = OrderItem.objects.create(
-                            order=order,
-                            status="Order Placed",
-                            product=cart_item.product,
-                            each_price=cart_item.product.product.offer_price,
-                            qty=cart_item.quantity,
-                            size=cart_item.product_size,
-                        )
-                        product = cart_item.product.pk
-                        print(product)
-                        product_size = ProductSize.objects.filter(
-                            productcolor__id=product
-                        )
-                        print(product_size)
-                        if product_size.exists():
-                            for qty in product_size:
-                                print("in the if product_size")
-                                qty.quantity -= cart_item.quantity
-                                qty.save()
-                                print("product quantity is reduced")
-                    balance.balance -= total
-                    balance.save()
-                    wallet_transaction = Wallet_transaction.objects.create(
-                        wallet=balance,
-                        order_item=order_item,
-                        transaction_id=transaction_id,
-                        money_withdrawn=total,
-                    )
-
-                    cart.delete()
-
-                    keys_to_delete = [
-                        "coupon_applied",
-                        "coupon_name",
-                        "coupon_discount_percentage",
-                        "discounted_price",
-                    ]
-                    for key in keys_to_delete:
-                        if key in request.session:
-                            del request.session[key]
-
-                    messages.success(request, "Order placed successfully.")
-                    return redirect("order_detail")
-                except Exception:
-                    return redirect("payment_failure")
-
-        elif request.POST.get("payment_method") == "COD":
             order = Order.objects.create(
                 customer=customer,
                 address=address,
-                payment_method=pm,
+                payment_method=payment_method,
                 subtotal=subtotal,
                 shipping_charge=shipping_fee,
                 total=total,
+                paid=True,
                 tracking_id=tk_id,
                 coupon_applied=coupon_applied,
                 coupon_name=coupon_name,
                 coupon_discount_percentage=coupon_discount_percentage,
                 discounted_price=discounted_price,
+                payment_transaction_id=order_id,
+                payment=payment,
                 status="On Progress",
             )
-
+            Shipping_address.objects.create(
+                order=order,
+                first_name=address.first_name,
+                last_name=address.last_name,
+                email=address.email,
+                phone_number=address.phone_number,
+                house_name=address.house_name,
+                postal_code=address.postal_code,
+                city=address.city,
+                state=address.state,
+                country=address.country,
+            )
             for cart_item in cart:
                 OrderItem.objects.create(
                     order=order,
@@ -727,18 +601,96 @@ def place_order(request):
                     qty=cart_item.quantity,
                     size=cart_item.product_size,
                 )
-                print("come hererefersdfasdfdsf")
+                product_size = ProductSize.objects.get(
+                    productcolor=cart_item.product, size=cart_item.product_size)
+                product_size.quantity -= cart_item.quantity
+                product_size.save()
 
-                product = cart_item.product.pk
-                print(product)
-                product_size = ProductSize.objects.filter(productcolor__id=product)
-                print(product_size)
-                if product_size.exists():
-                    for qty in product_size:
-                        print("in the if product_size")
-                        qty.quantity -= cart_item.quantity
-                        qty.save()
-                        print("product quantity is reduced")
+            cart.delete()
+
+            keys_to_delete = [
+                "coupon_applied",
+                "coupon_name",
+                "coupon_discount_percentage",
+                "discounted_price",
+            ]
+            for key in keys_to_delete:
+                if key in request.session:
+                    del request.session[key]
+
+            return redirect("order_detail")
+
+        elif payment_method == "wallet":
+            user_customers = customer.user
+            balance = Wallet.objects.get(user=user_customers)
+            if balance.balance < total:
+                messages.error(request, "Insufficient balance in your wallet.")
+                return redirect("checkout")
+
+            transaction_id = "WALLET_TRANSFER_" + get_random_string(4, "ABC123456789")
+            while Order.objects.filter(tracking_id=transaction_id).exists():
+                transaction_id = "WALLET_TRANSFER_" + get_random_string(4, "ABC123456789")
+
+            payment = Payment.objects.create(
+                method_name=payment_method,
+                amount=total,
+                transaction_id=transaction_id,
+                paid_at=timezone.now(),
+                pending=False,
+                success=True,
+            )
+
+            order = Order.objects.create(
+                customer=customer,
+                address=address,
+                payment_method=payment_method,
+                subtotal=subtotal,
+                shipping_charge=shipping_fee,
+                total=total,
+                paid=True,
+                tracking_id=tk_id,
+                coupon_applied=coupon_applied,
+                coupon_name=coupon_name,
+                coupon_discount_percentage=coupon_discount_percentage,
+                discounted_price=discounted_price,
+                payment_transaction_id=transaction_id,
+                payment=payment,
+                status="On Progress",
+            )
+            Shipping_address.objects.create(
+                order=order,
+                first_name=address.first_name,
+                last_name=address.last_name,
+                email=address.email,
+                phone_number=address.phone_number,
+                house_name=address.house_name,
+                postal_code=address.postal_code,
+                city=address.city,
+                state=address.state,
+                country=address.country,
+            )
+            for cart_item in cart:
+                order_item = OrderItem.objects.create(
+                    order=order,
+                    status="Order Placed",
+                    product=cart_item.product,
+                    each_price=cart_item.product.product.offer_price,
+                    qty=cart_item.quantity,
+                    size=cart_item.product_size,
+                )
+                product_size = ProductSize.objects.get(
+                    productcolor=cart_item.product, size=cart_item.product_size)
+                product_size.quantity -= cart_item.quantity
+                product_size.save()
+
+            balance.balance -= total
+            balance.save()
+            Wallet_transaction.objects.create(
+                wallet=balance,
+                order_item=order_item,
+                transaction_id=transaction_id,
+                money_withdrawn=total,
+            )
 
             cart.delete()
 
@@ -754,6 +706,63 @@ def place_order(request):
 
             messages.success(request, "Order placed successfully.")
             return redirect("order_detail")
+
+        elif payment_method == "COD":
+            order = Order.objects.create(
+                customer=customer,
+                address=address,
+                payment_method=payment_method,
+                subtotal=subtotal,
+                shipping_charge=shipping_fee,
+                total=total,
+                tracking_id=tk_id,
+                coupon_applied=coupon_applied,
+                coupon_name=coupon_name,
+                coupon_discount_percentage=coupon_discount_percentage,
+                discounted_price=discounted_price,
+                status="On Progress",
+            )
+            Shipping_address.objects.create(
+                order=order,
+                first_name=address.first_name,
+                last_name=address.last_name,
+                email=address.email,
+                phone_number=address.phone_number,
+                house_name=address.house_name,
+                postal_code=address.postal_code,
+                city=address.city,
+                state=address.state,
+                country=address.country,
+            )
+            for cart_item in cart:
+                OrderItem.objects.create(
+                    order=order,
+                    status="Order Placed",
+                    product=cart_item.product,
+                    each_price=cart_item.product.product.offer_price,
+                    qty=cart_item.quantity,
+                    size=cart_item.product_size,
+                )
+                product_size = ProductSize.objects.get(
+                    productcolor=cart_item.product, size=cart_item.product_size)
+                product_size.quantity -= cart_item.quantity
+                product_size.save()
+
+            cart.delete()
+
+            keys_to_delete = [
+                "coupon_applied",
+                "coupon_name",
+                "coupon_discount_percentage",
+                "discounted_price",
+            ]
+            for key in keys_to_delete:
+                if key in request.session:
+                    del request.session[key]
+
+            messages.success(request, "Order placed successfully.")
+            return redirect("order_detail")
+
         else:
             return redirect("checkout")
 
@@ -784,22 +793,28 @@ def payment_success(request):
 
 # ____________________________________________________________________________________________________________________
 def order_detail(request):
-    return render(request, "op.html")
+    if request.user.is_authenticated:
+        return render(request, "op.html")
+    else:
+        messages.error(request, "Please login first.")
+        return redirect("login")
 
 
 def payment_failure(request):
     return render(request, "opf.html")
 
 
+
 def view_all_order(request):
     if request.user.is_authenticated:
-        user = request.user
-        customer = Customer.objects.get(user=user)
+        customer = Customer.objects.get(user=request.user)
         orders = Order.objects.filter(customer=customer).order_by("-created_at")
-        return render(request, "view_all_order.html", {"orders": orders})
+        shipping_addresses = Shipping_address.objects.filter(order__in=orders).annotate(
+            num_orders=Count('order')).distinct()
+        
+        return render(request, "view_all_order.html", {"orders": orders, "order_addresses": shipping_addresses})
     else:
         return redirect("login")
-
 
 def view_order(request, ord_id):
     if request.user.is_authenticated:
@@ -811,26 +826,29 @@ def view_order(request, ord_id):
     else:
         return redirect("login")
 
-
+@never_cache
 def view_status(request, order_id):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user=request.user.pk)
         order_items = OrderItem.objects.get(pk=order_id)
-        total_price = order_items.each_price * order_items.qty
-        currentTime = timezone.now().date()
-        status_info = {
-            "Order Placed": {"color": "#009608", "label": "Order Placed"},
-            "Shipped": {"color": "#009608", "label": "Shipped"},
-            "Out for Delivery": {"color": "#009608", "label": "Out for Delivery"},
-            "Delivered": {"color": "#009608", "label": "Delivered"},
-        }
-        context = {
-            "order_items": order_items,
-            "status_info": status_info,
-            "currentTime": currentTime,
-            "total_price": total_price,
-        }
-        return render(request, "view_status.html", context)
+        if order_items.order.customer == customer:
+            total_price = order_items.each_price * order_items.qty
+            currentTime = timezone.now().date()
+            status_info = {
+                "Order Placed": {"color": "#009608", "label": "Order Placed"},
+                "Shipped": {"color": "#009608", "label": "Shipped"},
+                "Out for Delivery": {"color": "#009608", "label": "Out for Delivery"},
+                "Delivered": {"color": "#009608", "label": "Delivered"},
+            }
+            context = {
+                "order_items": order_items,
+                "status_info": status_info,
+                "currentTime": currentTime,
+                "total_price": total_price,
+            }
+            return render(request, "view_status.html", context)
+        else:
+            return redirect("index")
     else:
         return redirect("login")
 
@@ -854,9 +872,7 @@ def request_return_product(request, order_id):
         seven_days = timezone.now() - timedelta(days=7)
         order_item = OrderItem.objects.get(pk=order_id)
         total_price = order_item.each_price * order_item.qty
-
         print(order_item)
-
         if order_item.created_at > seven_days and order_item.status == "Delivered":
             print("reached here")
             order_item.request_return = True

@@ -10,6 +10,10 @@
         border-radius: 20px;
         padding: 27px;
         transition: all 0.3s ease;
+        width: calc(50% - 20px); /* Adjust width to fit two orders in a row */
+        margin-right: 20px; /* Add margin between orders */
+        margin-bottom: 20px; /* Add margin bottom for space between rows */
+        box-sizing: border-box;
     }
 
     .order-overview:hover {
@@ -24,52 +28,15 @@
         margin-bottom: 10px;
     }
 
-    .order-details.order-id {
-        font-weight: bold;
-    }
-
-    .order-details.product-name {
-        font-weight: bold;
-    }
-
-    .order-details.total-price {
-        font-weight: bold;
-    }
-
-    .path a {
-        margin-bottom: 5px;
-        color: #000;
-        text-decoration: none;
-    }
-
-    .path a:hover {
-        color: red;
-        transition-duration: 0.6s;
-    }
-
-    .path {
-        font-family: Montserrat, sans-serif;
-        font-size: 19px;
-        text-align: left;
-        margin-right: auto;
-        margin-top: 10px;
-        height: 500px;
-    }
-
-    .checkout__form__input input[type="date"] {
-        cursor: pointer;
-    }
-
-    .gender-inputs input[type="radio"] {
-        cursor: pointer;
-    }
-
-    .align-right-btn {
-        float: right;
-    }
-
     .product-details {
         padding-top: 20px;
+    }
+
+    /* Clearfix to ensure proper alignment */
+    .clearfix::after {
+        content: "";
+        display: table;
+        clear: both;
     }
 </style>
 
@@ -80,7 +47,7 @@
             <div class="col-lg-12">
                 <div class="breadcrumb__links">
                     <a href="{% url 'index' %}"><i class="fa fa-home"></i> Home</a>
-                    <a href="{% url 'view_all_order' %}"><i></i>Orders</a>
+                    <a href="{% url 'view_all_order' %}"><i></i> Orders</a>
                 </div>
             </div>
         </div>
@@ -95,7 +62,7 @@
             <div class="row d-flex justify-content-end">
                 <div class="path">
                     <div class="l">
-                        <a href="{% url 'profile' %}">personal Information</a>
+                        <a href="{% url 'profile' %}">Personal Information</a>
                     </div>
                     <p class="text-secondary text-muted">_________________________________________</p>
                     <div>
@@ -111,7 +78,7 @@
                     </div>
                     <p class="text-secondary text-muted">_________________________________________</p>
                     <div>
-                        <a href="{% url 'referral' %}" id="changePasswordBtn">Refferral</a>
+                        <a href="{% url 'referral' %}" id="changePasswordBtn">Referral</a>
                     </div>
                     <p class="text-secondary text-muted">_________________________________________</p>
                 </div>
@@ -133,40 +100,41 @@
                     <br>
                     <h5 class="d-flex justify-content-center">MY ORDERS</h5>
                     <!-- Table containing order details -->
-                    {% if orders %}
-                    {% for order in orders %}
-                    {% if forloop.counter0|divisibleby:2 %}
-                    <div class="row">
-                    {% endif %}
-                    <div class="col-md-6" style="padding-bottom: 21px;">
-                        <div class="order-overview">
-                            <div class="order-details d-inline-block">
-                                <div class="d-flex justify-content-between">
-                                    <span class="order-id">Order ID: <br> {{ order.tracking_id }}</span>
-                                    <a href="{% url 'view_order' order.id %}" class="btn btn-outline-secondary" style="margin-bottom: 10px;">View details</a>
-                                </div>
-                                <br>
-                                <hr>
-                                <div class="product-details">
-                                    <span class="total-price">Total: ₹{{ order.total }}</span><br>
-                                    <span class="order-date">Order Date: {{ order.created_at }}</span><br>
-                                    <span class="order-status">Payment method : {{ order.payment_method }}</span><br>
-                                    {% if order.coupon_applied %}
-                                    <span class="coupon-details">Coupon: {{ order.coupon_name }}, Discounted Price: ₹{{ order.discounted_price }}</span><br>
-                                    {% endif %}
+                    <div class="clearfix"> <!-- Add clearfix to clear floats -->
+                        {% if orders %}
+                        {% for order in orders %}
+                        <div class="col-md-6" style="float: left;"> <!-- Adjust width and float left for two orders in a row -->
+                            <div class="order-overview" style="width: 355px;">
+                                <div class="order-details d-inline-block">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="order-id">Order ID: <br> {{ order.tracking_id }}</span>
+                                        <a href="{% url 'view_order' order.id %}" class="btn btn-outline-secondary" style="margin-bottom: 10px;">View details</a>
+                                    </div>
+                                    <br>
+                                    <hr>
+                                    <div class="product-details">
+                                        <span class="total-price">Total: ₹{{ order.total }}</span><br>
+                                        <span class="order-date">Order Date: {{ order.created_at }}</span><br>
+                                        <span class="order-status">Payment method : {{ order.payment_method }}</span><br>
+                                        {% if order.coupon_applied %}
+                                        <span class="coupon-details">Coupon: {{ order.coupon_name }}, Discounted Price: ₹{{ order.discounted_price }}</span><br>
+                                        {% endif %}
+                                        {% for address in order_addresses %}
+                                            {% if address.order_id == order.id %}
+                                                <span class="address-details">Address: {{ address.house_name }}, {{ address.first_name }}</span><br>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="d-flex justify-content-center ">
+                            <h5><b>YOU HAVEN'T ORDERED ANYTHING YET.</b></h5>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% if forloop.last or forloop.counter0|add:1|divisibleby:2 %}
-                    </div>
-                    {% endif %}
-                    {% endfor %}
-                    {% else %}
-                    <div class="d-flex justify-content-center ">
-                        <h5><b>YOU HAVEN'T ORDERED ANYTHING YET.</b></h5>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </form>
