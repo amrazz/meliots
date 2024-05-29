@@ -696,10 +696,9 @@ def add_product(request):
                 percentage = request.POST.get("percentage")
                 exp_date = request.POST.get("exp_date")
                 brand = request.POST.get("brand")
-<<<<<<< HEAD
 
-=======
->>>>>>> d9813d87f1d478fddffde01cbd39d46a863c6cc9
+
+
 
                 description = request.POST.get("description")
                 if len(description) < 10:
@@ -738,10 +737,10 @@ def add_product(request):
                     messages.error(request, "Please enter a valid percentage.")
                     return redirect("add_product")
 
-<<<<<<< HEAD
 
-=======
->>>>>>> d9813d87f1d478fddffde01cbd39d46a863c6cc9
+
+
+
                 add_product = Product.objects.create(
                     name=name,
                     category_id=category,
@@ -946,12 +945,11 @@ def edit_brand(request, brand_id):
             messages.success(request, "Brand updated successfully.")
             return redirect("view_brand")
 
-<<<<<<< HEAD
-        return render(request, 'edit_brand.html', {"brand": brand})
-=======
+
+
         return render(request, "edit_brand.html", {"brand": brand})
 
->>>>>>> d9813d87f1d478fddffde01cbd39d46a863c6cc9
+
 
 @never_cache
 def delete_brand(request, brand_id):
