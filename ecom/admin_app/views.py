@@ -292,7 +292,6 @@ def edit_category(request, cat_id):
                 if image:
                     category.cat_image = image
                     category.save()
-
                 category.name = name
                 category.description = description
                 category.cat_image = image
@@ -743,10 +742,10 @@ def add_product(request):
                     add_product.per_expiry_date = exp_date
                 add_product.save()
                 if brand:
-                    add_product.brand = (brand,)
+                    add_product.brand = brand
                 add_product.save()
-
-                print("product added successfully")
+                
+                messages.success(request, "Product added successfully.")
                 return redirect("product_image")
             return render(
                 request,
@@ -799,7 +798,8 @@ def product_image(request):
                     image4=image4,
                 )
                 create_product.save()
-                return redirect("product_size")
+                messages.success(request, "Product image added successfully.")
+                return redirect("product_image")
             else:
                 return render(
                     request, "product/product_image.html", {"products": products}
