@@ -57,9 +57,19 @@
                 </div>
             </div>
         
-            <br><br>          
-            <a href="{% url 'product_image' %}"><button type="submit" class="btn btn-primary d-flex justify-content-end">Add Product Image</button></a>
+            <br><br>        
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'product_image' %}"><button type="submit" class="btn btn-primary d-flex justify-content-end">Add Product Image</button></a>
+            </div>  
+
         </form>
+        <div class="d-flex justify-content-end" style="font-size: large;margin-top: -36px;">
+        <div>
+            <a href="{% url 'product_size' %}"><button type="submit" class="btn btn-primary d-flex justify-content-end"><i class="fa-solid fa-angles-right"></i></button></a>
+
+        </div>
+        </div>
+
         <br>
         <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
