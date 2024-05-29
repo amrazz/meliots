@@ -393,6 +393,13 @@
     document.addEventListener('DOMContentLoaded', function () {
         var form = document.querySelector('.checkout__form');
 
+        // Add hidden input for payment status
+        var paymentStatusInput = document.createElement('input');
+        paymentStatusInput.type = 'hidden';
+        paymentStatusInput.name = 'payment_status';
+        paymentStatusInput.value = 'success'; // Default to success
+        form.appendChild(paymentStatusInput);
+
         form.addEventListener('submit', function (event) {
             var paymentMethod = document.querySelector('input[name="payment_method"]:checked');
 
@@ -402,32 +409,38 @@
                 var totalAmountText = totalAmountElement.textContent;
                 var totalAmount = totalAmountText.match(/\d+/)[0];
 
-                // Initialize Razorpay payment
                 initializeRazorpay(totalAmount);
             }
         });
 
         function initializeRazorpay(totalAmount) {
-            console.log(totalAmount)
             // Initialize Razorpay payment options
             var options = {
                 "key": "rzp_test_i5YPKuq85Rzcc0",
-                "amount": totalAmount * 100,     
+                "amount": totalAmount * 100,
                 "currency": "INR",
                 "name": "MELIOTIS",
                 "description": "Order payment",
-                "order_id": "{{ razorpay_order_id }}", 
+                "order_id": "{{ razorpay_order_id }}",
                 "handler": function (response) {
-                    // Handle Razorpay payment success response
-                    form.submit();
+                    if (response.error) {
+                        paymentStatusInput.value = 'failed';
+                        form.submit(); // Submit form with payment failed status
+                    } else {
+                        paymentStatusInput.value = 'success';
+                        form.submit(); // Submit form with payment success status
+                    }
                 },
-
                 "theme": {
-                    "color": "#ca1515" 
+                    "color": "#ca1515"
                 }
             };
 
             var rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (response) {
+                paymentStatusInput.value = 'failed';
+                form.submit(); // Submit form with payment failed status
+            });
             rzp.open();
         }
     });

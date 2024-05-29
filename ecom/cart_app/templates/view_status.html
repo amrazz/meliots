@@ -69,7 +69,7 @@
                     <h4 class="mt-3 mb-4 bold"> <span class="mt-5">&#x20B9;</span>
                         {{total_price}} {% if order_items.order.shipping_charge %} + ₹{{order_items.order.shipping_charge}} {% endif %}<span class="small text-muted"> via
                             ({{order_items.order.payment_method}}) </span></h4>
-                    {% if order_items.order.payment_method == 'Razorpay' %}
+                    {% if order_items.order.payment_method == 'Razorpay' and order_items.order.payment_transaction_id  %}
                     <div class="d-flex">
                         <p><b>Transaction ID :</b> </p>
                     <p>{{ order_items.order.payment_transaction_id }}</p>
@@ -247,6 +247,38 @@
                     <h5>Delivered</h5>
                     
                 </div><br><h3>Your Order has been Returned.</h3>
+                {% else %}
+                <div class="track-step">
+                    <div class="track_dot"
+                        style=" width: 20px;height: 20px;background-color: #b0b8c1;border-radius: 50%;">
+                    </div>
+                    <h5>Order Placed</h5>
+                </div>
+                <div class="track_line" style="width: 2px;height: 100px;background-color: #b0b8c1;margin-left: 9px;">
+                </div>
+                <div class="track-step">
+                    <div class="track_dot"
+                        style=" width: 20px;height: 20px;background-color: #b0b8c1;border-radius: 50%;">
+                    </div>
+                    <h5>Shipped</h5>
+                </div>
+                <div class="track_line" style="width: 2px;height: 100px;background-color: #b0b8c1;margin-left: 9px;">
+                </div>
+                <div class="track-step">
+                    <div class="track_dot"
+                        style=" width: 20px;height: 20px;background-color: #b0b8c1;border-radius: 50%;">
+                    </div>
+                    <h5>Out of Delivery</h5>
+                </div>
+                <div class="track_line" style="width: 2px;height: 100px;background-color: #b0b8c1;margin-left: 9px;">
+                </div>
+                <div class="track-step">
+                    <div class="track_dot"
+                        style=" width: 20px;height: 20px;background-color: #b0b8c1;border-radius: 50%;">
+                    </div>
+                    <h5>Delivered</h5>
+                </div>
+               
                 {% endif %}
             </div><br><br>      
             <div class="d-flex justify-content-center ">

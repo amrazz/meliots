@@ -4,8 +4,9 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/3.0.8/css/elevatezoom.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/3.0.8/jquery.elevatezoom.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/2.2.3/jquery.elevatezoom.min.js"></script>
+
 <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
 
@@ -262,7 +263,7 @@
                                 alt="">
                         </div>
                     </div>
-                </div>
+                </div>s
             </div>
             <div class="col-lg-6">
                 <div class="product__details__text">
@@ -328,8 +329,7 @@
                                     <option value="{{ size.size }}">{{ size.size }}</option>
                                     {% endfor %}
                                 </select>
-                            </div>
-                        
+                            </div> 
                     </form>
                     <div class="d-flex justify-content-end " style="margin-top: -156px;margin-right: 90px;">
                         <a class="text-light" href="{% url 'wishlist_add' products_color.id %}"><button
@@ -341,62 +341,7 @@
 
 
 
-                    <!-- <div class="product__details__widget">
-                        <ul>
-                            <li>
-                                <span>Availability:</span>
-                                <div class="stock__checkbox">
-                                    <label for="stockin">
-                                        In Stock
-                                        <input type="checkbox" id="stockin">
-                                        <span class="checkmark"></span>
-                                    </label>
-                                </div>
-                            </li>
-                            <li>
-                                <span>Available color:</span>
-                                <div class="color__checkbox">
-                                    <label for="red">
-                                        <input type="radio" name="color__radio" id="red" checked>
-                                        <span class="checkmark"></span>
-                                    </label>
-                                    <label for="black">
-                                        <input type="radio" name="color__radio" id="black">
-                                        <span class="checkmark black-bg"></span>
-                                    </label>
-                                    <label for="grey">
-                                        <input type="radio" name="color__radio" id="grey">
-                                        <span class="checkmark grey-bg"></span>
-                                    </label>
-                                </div>
-                            </li>
-                            <li>
-                                <span>Available size:</span>
-                                <div class="size__btn">
-                                    <label for="xs-btn" class="active">
-                                        <input type="radio" id="xs-btn">
-                                        xs
-                                    </label>
-                                    <label for="s-btn">
-                                        <input type="radio" id="s-btn">
-                                        s
-                                    </label>
-                                    <label for="m-btn">
-                                        <input type="radio" id="m-btn">
-                                        m
-                                    </label>
-                                    <label for="l-btn">
-                                        <input type="radio" id="l-btn">
-                                        l
-                                    </label>
-                                </div>
-                            </li>
-                            <li>
-                                <span>Promotions:</span>
-                                <p>Free shipping</p>
-                            </li>
-                        </ul>
-                    </div> -->
+                    
                 </div>
             </div>
             <div class="col-lg-12" style="margin-top: 82px;">
@@ -462,55 +407,41 @@
         </div>
 </section>
 <!-- Product Details Section End -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/2.2.3/jquery.elevatezoom.min.js"></script>
 
-    <script
+<script
     
-        src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/2.2.3/jquery.elevatezoom.min.js">
-        
-    </script>
+src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/2.2.3/jquery.elevatezoom.min.js">
 
-    <script>
-        $("#zoom").elevateZoom()
-    </script>
-<script>
-    $(document).ready(function () {
-        // Initialize the carousel
-        var owl = $('.product__details__pic__slider').owlCarousel({
-            // Your carousel options here
-        });
-
-        // Add click event listener to thumbnail images
-        $('.product__details__pic__left .pt').on('click', function (e) {
-            e.preventDefault(); // Prevent the default action
-            var imgSrc = $(this).find('img').attr('src'); // Get the src of the clicked thumbnail
-            $('.product__details__pic__slider .product__big__img').attr('src', imgSrc); // Update the main image viewer
-            $('.product__details__pic__slider .product__big__img').data('elevateZoom').swaptheimage(imgSrc, imgSrc); // Update the zoom
-        });
-
-        // Apply zoom to all images in the slider
-        $('.product__details__pic__slider img').each(function() {
-            $(this).elevateZoom();
-        });
-    });
 </script>
 
 <script>
-    function updateQuantity(operation) {
-        var quantityInput = document.getElementById('number');
-        var currentQuantity = parseInt(quantityInput.value, 10);
-        if (isNaN(currentQuantity)) {
-            currentQuantity = 0; // Default to 0 if the current value is not a number
-        }
-
-        if (operation === 'increase' && currentQuantity < 9) {
-            currentQuantity++;
-        } else if (operation === 'decrease' && currentQuantity > 0) {
-            currentQuantity--;
-        }
-
-        quantityInput.value = currentQuantity;
-    }
+$("#zoom").elevateZoom()
 </script>
+<script>
+$(document).ready(function () {
+// Initialize the carousel
+var owl = $('.product__details__pic__slider').owlCarousel({
+    // Your carousel options here
+});
+
+// Add click event listener to thumbnail images
+$('.product__details__pic__left .pt').on('click', function (e) {
+    e.preventDefault(); // Prevent the default action
+    var imgSrc = $(this).find('img').attr('src'); // Get the src of the clicked thumbnail
+    $('.product__details__pic__slider .product__big__img').attr('src', imgSrc); // Update the main image viewer
+    $('.product__details__pic__slider .product__big__img').data('elevateZoom').swaptheimage(imgSrc, imgSrc); // Update the zoom
+});
+
+// Apply zoom to all images in the slider
+$('.product__details__pic__slider img').each(function() {
+    $(this).elevateZoom();
+});
+});
+</script>
+
+
 <script>
     function updateQuantity(operation) {
         var quantityInput = document.getElementById('number');

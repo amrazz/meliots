@@ -42,14 +42,13 @@ class Customer(models.Model):
     def __str__(self):
         return self.user.username
 
+
 class User_profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     is_verified = models.BooleanField(default=False)
-    
+
     def __str__(self) -> str:
         return f"{self.user.id} - {self.user.username}"
-
-
 
 
 @receiver(post_save, sender=User)

@@ -16,6 +16,8 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from datetime import timedelta
 import re
+import logging
+
 
 # authorize razorpay client with API Keys.
 
@@ -101,11 +103,12 @@ def add_to_cart(request, pro_id):
             if size.quantity == 0:
                 messages.error(request, "Selected size is out of Stock.")
                 return redirect("product_detail", pro_id)
-            if CartItem.objects.filter(user_cart = user_cart,product=product, product_size=selected_size).exists():
+            if CartItem.objects.filter(
+                user_cart=user_cart, product=product, product_size=selected_size
+            ).exists():
                 messages.error(request, "Product already in Cart.")
                 return redirect("product_detail", pro_id)
 
-            
             cart_item = CartItem.objects.create(
                 user_cart=user_cart,
                 product=product,
@@ -143,11 +146,13 @@ def update_total_price(request):
             )
 
             if new_quantity > product_size.quantity:
-                return JsonResponse({
-                    'error': f"There is only {product_size.quantity} quantity of this product size {cart_item.product_size} available."
-                }, status=400)
+                return JsonResponse(
+                    {
+                        "error": f"There is only {product_size.quantity} quantity of this product size {cart_item.product_size} available."
+                    },
+                    status=400,
+                )
 
-            
             cart_item.quantity = new_quantity
             cart_item.save()
 
@@ -171,12 +176,14 @@ def update_total_price(request):
             else:
                 total = sub_total + shipping_fee
 
-            return JsonResponse({
-                "new_total_price": cart_item.total_price,
-                "subtotal": sub_total,
-                "total": total,
-                "shipping_fee": shipping_fee,
-            })
+            return JsonResponse(
+                {
+                    "new_total_price": cart_item.total_price,
+                    "subtotal": sub_total,
+                    "total": total,
+                    "shipping_fee": shipping_fee,
+                }
+            )
         except CartItem.DoesNotExist:
             return JsonResponse({"error": "Cart item does not exist"}, status=404)
         except ProductSize.DoesNotExist:
@@ -195,7 +202,7 @@ def check_stock(request):
             product_size = ProductSize.objects.get(
                 productcolor=cart_item.product, size=cart_item.product_size
             )
-            return JsonResponse({'available_quantity': product_size.quantity})
+            return JsonResponse({"available_quantity": product_size.quantity})
         except CartItem.DoesNotExist:
             return JsonResponse({"error": "Cart item does not exist"}, status=404)
         except ProductSize.DoesNotExist:
@@ -204,99 +211,95 @@ def check_stock(request):
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Invalid request"}, status=400)
 
+
 @never_cache
 def add_address_checkout(request):
     if request.method == "POST":
-            user = User.objects.get(pk=request.user.pk)
-            first_name = request.POST.get("first_name")
-            last_name = request.POST.get("last_name")
-            email = request.POST.get("email")
-            city = request.POST.get("city")
-            state = request.POST.get("state")
-            country = request.POST.get("country")
-            postal_code = request.POST.get("postal_code")
-            house_name = request.POST.get("house_name")
-            mobile_number = request.POST.get("mobile_number")
+        user = User.objects.get(pk=request.user.pk)
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        email = request.POST.get("email")
+        city = request.POST.get("city")
+        state = request.POST.get("state")
+        country = request.POST.get("country")
+        postal_code = request.POST.get("postal_code")
+        house_name = request.POST.get("house_name")
+        mobile_number = request.POST.get("mobile_number")
 
-            if not all(
-                [
-                    first_name,
-                    last_name,
-                    email,
-                    city,
-                    state,
-                    country,
-                    postal_code,
-                    house_name,
-                    mobile_number,
-                ]
-            ):
-                messages.error(request, "Please fill up all the fields.")
-                return redirect("checkout")
-
-            # Name validation: only letters and single spaces between words
-            name_pattern = r"^[a-zA-Z]+(?:\s[a-zA-Z]+)*$"
-            if not re.match(name_pattern, first_name):
-                messages.error(
-                    request, "First name must contain only letters and single spaces."
-                )
-                return redirect("checkout")
-
-            if not re.match(name_pattern, last_name):
-                messages.error(
-                    request, "Last name must contain only letters and single spaces."
-                )
-                return redirect("checkout")
-
-            # Mobile number length validation
-            if len(mobile_number) < 10 or len(mobile_number) > 12:
-                messages.error(request, "Mobile number is not valid.")
-                return redirect("checkout")
-
-            location_pattern = r"^[a-zA-Z\s]+$"
-            if not re.match(location_pattern, city):
-                messages.error(
-                    request, "City name must contain only letters and spaces."
-                )
-                return redirect("checkout")
-
-            if not re.match(location_pattern, state):
-                messages.error(
-                    request, "State name must contain only letters and spaces."
-                )
-                return redirect("checkout")
-
-            if not re.match(location_pattern, country):
-                messages.error(
-                    request, "Country name must contain only letters and spaces."
-                )
-                return redirect("checkout")
-
-            if not re.match(location_pattern, house_name):
-                messages.error(
-                    request, "House name must contain only letters and spaces."
-                )
-                return redirect("checkout")
-
-            # Postal code validation: only digits
-            if not postal_code.isdigit():
-                messages.error(request, "Postal code must contain only digits.")
-                return redirect("checkout")
-            
-            address = Address.objects.create(
-                user=user,
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                city=city,
-                state=state,
-                country=country,
-                postal_code=postal_code,
-                house_name=house_name,
-                phone_number=mobile_number,
-            )
-            messages.success(request, "user address created successfully.")
+        if not all(
+            [
+                first_name,
+                last_name,
+                email,
+                city,
+                state,
+                country,
+                postal_code,
+                house_name,
+                mobile_number,
+            ]
+        ):
+            messages.error(request, "Please fill up all the fields.")
             return redirect("checkout")
+
+        # Name validation: only letters and single spaces between words
+        name_pattern = r"^[a-zA-Z]+(?:\s[a-zA-Z]+)*$"
+        if not re.match(name_pattern, first_name):
+            messages.error(
+                request, "First name must contain only letters and single spaces."
+            )
+            return redirect("checkout")
+
+        if not re.match(name_pattern, last_name):
+            messages.error(
+                request, "Last name must contain only letters and single spaces."
+            )
+            return redirect("checkout")
+
+        # Mobile number length validation
+        if len(mobile_number) < 10 or len(mobile_number) > 12:
+            messages.error(request, "Mobile number is not valid.")
+            return redirect("checkout")
+
+        location_pattern = r"^[a-zA-Z\s]+$"
+        if not re.match(location_pattern, city):
+            messages.error(request, "City name must contain only letters and spaces.")
+            return redirect("checkout")
+
+        if not re.match(location_pattern, state):
+            messages.error(request, "State name must contain only letters and spaces.")
+            return redirect("checkout")
+
+        if not re.match(location_pattern, country):
+            messages.error(
+                request, "Country name must contain only letters and spaces."
+            )
+            return redirect("checkout")
+
+        if not re.match(location_pattern, house_name):
+            messages.error(request, "House name must contain only letters and spaces.")
+            return redirect("checkout")
+
+        # Postal code validation: only digits
+        if not postal_code.isdigit():
+            messages.error(request, "Postal code must contain only digits.")
+            return redirect("checkout")
+
+        address = Address.objects.create(
+            user=user,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            city=city,
+            state=state,
+            country=country,
+            postal_code=postal_code,
+            house_name=house_name,
+            phone_number=mobile_number,
+        )
+        messages.success(request, "user address created successfully.")
+        return redirect("checkout")
+
 
 def checkout(request):
     try:
@@ -305,23 +308,30 @@ def checkout(request):
             user = Customer.objects.get(user=request.user.pk)
             order = OrderItem.objects.filter(order__customer=user)
             cart = CartItem.objects.filter(user_cart__customer=user)
-            coupons = Coupon.objects.filter(is_active=True, expiry_date__gt=today)
-            
+
             if not cart.exists():
                 messages.error(request, "Your cart is empty.")
                 return redirect("shop_cart")
 
             for item in cart:
                 try:
-                    product_size = ProductSize.objects.get(productcolor=item.product, size=item.product_size)
+                    product_size = ProductSize.objects.get(
+                        productcolor=item.product, size=item.product_size
+                    )
                 except ProductSize.DoesNotExist:
-                    messages.error(request, f"Size {item.product_size} for product {item.product.product.name} not found.")
+                    messages.error(
+                        request,
+                        f"Size {item.product_size} for product {item.product.product.name} not found.",
+                    )
                     return redirect("shop_cart")
 
                 if item.quantity > product_size.quantity:
-                    messages.error(request, f"Selected quantity for {item.product.product.name} exceeds available stock.")
+                    messages.error(
+                        request,
+                        f"Selected quantity for {item.product.product.name} exceeds available stock.",
+                    )
                     return redirect("shop_cart")
-                
+
             sub_total = sum(price.total_price for price in cart)
             total = sub_total
             discount_amount = 0
@@ -333,6 +343,13 @@ def checkout(request):
             elif cart_qty <= 5:
                 shipping_fee = 99
                 total = sub_total + shipping_fee
+                
+            coupons = Coupon.objects.filter(
+                is_active=True,
+                expiry_date__gt=today,
+                minimum_amount__lte=total,
+                maximum_amount__gte=total,
+            )
 
             if request.method == "POST":
                 get_coupon = request.POST.get("coupon_code")
@@ -426,7 +443,6 @@ def checkout(request):
         return redirect("checkout")
 
 
-
 def initiate_payment(items):
     data = {
         "currency": "INR",
@@ -449,6 +465,8 @@ def initiate_payment(items):
 @transaction.atomic
 def place_order(request):
     if request.method == "POST":
+        payment_status = request.POST.get('payment_status', 'failed')
+        print(payment_status, "this is payment status")
         address_id = request.POST.get("select_address")
         payment_method = request.POST.get("payment_method")
 
@@ -473,7 +491,9 @@ def place_order(request):
 
         coupon_applied = request.session.get("coupon_applied", False)
         coupon_name = request.session.get("coupon_name")
-        coupon_discount_percentage = request.session.get("coupon_discount_percentage", 0)
+        coupon_discount_percentage = request.session.get(
+            "coupon_discount_percentage", 0
+        )
         discounted_price = request.session.get("discounted_price", 0)
 
         if coupon_applied:
@@ -487,7 +507,8 @@ def place_order(request):
             items = [{"amount": total * 100}]
             order_id = initiate_payment(items)
 
-            if order_id is None:
+            if payment_status == 'failed':
+                print("payment failed" ,"====", payment_status)
                 payment = Payment.objects.create(
                     method_name=payment_method,
                     amount=total,
@@ -496,7 +517,8 @@ def place_order(request):
                     pending=True,
                     success=False,
                     failed=True,
-                )
+                    )
+                print(payment , "this is the mayment object")
                 order = Order.objects.create(
                     customer=customer,
                     address=address,
@@ -511,7 +533,82 @@ def place_order(request):
                     coupon_discount_percentage=coupon_discount_percentage,
                     discounted_price=discounted_price,
                     payment=payment,
-                    status="Payment Failed",
+                    status = "Payment Failed"
+                    )
+                
+
+                shipping_address = Shipping_address.objects.create(
+                        order=order,
+                        first_name=address.first_name,
+                        last_name=address.last_name,
+                        email=address.email,
+                        phone_number=address.phone_number,
+                        house_name=address.house_name,
+                        postal_code=address.postal_code,
+                        city=address.city,
+                        state=address.state,
+                        country=address.country,
+                    )
+                for cart_item in cart:
+                    OrderItem.objects.create(
+                        order=order,
+                        status="Pending",
+                        product=cart_item.product,
+                        each_price=cart_item.product.product.offer_price,
+                        qty=cart_item.quantity,
+                        size=cart_item.product_size,
+                    )
+                    product_size = ProductSize.objects.get(
+                        productcolor=cart_item.product, size=cart_item.product_size
+                    )
+                    product_size.quantity -= cart_item.quantity
+                    product_size.save()
+
+                cart.delete()
+
+                keys_to_delete = [
+                    "coupon_applied",
+                    "coupon_name",
+                    "coupon_discount_percentage",
+                    "discounted_price",
+                ]
+                for key in keys_to_delete:
+                    if key in request.session:
+                        del request.session[key]
+
+                messages.error(
+                    request,
+                    "Payment initiation failed. Order has been created with Payment Failed status.")
+                created_order = Order.objects.get(id=order.id)
+                print(f"Order ID: {created_order.id}, Status: {created_order.status}")
+                return redirect("payment_failure")
+            else:
+
+                payment = Payment.objects.create(
+                    method_name=payment_method,
+                    amount=total,
+                    transaction_id=order_id,
+                    paid_at=timezone.now(),
+                    pending=False,
+                    success=True,
+                )
+
+                order = Order.objects.create(
+                    customer=customer,
+                    address=address,
+                    payment_method=payment_method,
+                    subtotal=subtotal,
+                    shipping_charge=shipping_fee,
+                    total=total,
+                    paid=True,
+                    tracking_id=tk_id,
+                    coupon_applied=coupon_applied,
+                    coupon_name=coupon_name,
+                    coupon_discount_percentage=coupon_discount_percentage,
+                    discounted_price=discounted_price,
+                    payment_transaction_id=order_id,
+                    payment=payment,
+                    status="On Progress",
                 )
                 Shipping_address.objects.create(
                     order=order,
@@ -528,14 +625,15 @@ def place_order(request):
                 for cart_item in cart:
                     OrderItem.objects.create(
                         order=order,
-                        status="Pending",
+                        status="Order Placed",
                         product=cart_item.product,
                         each_price=cart_item.product.product.offer_price,
                         qty=cart_item.quantity,
                         size=cart_item.product_size,
                     )
                     product_size = ProductSize.objects.get(
-                        productcolor=cart_item.product, size=cart_item.product_size)
+                        productcolor=cart_item.product, size=cart_item.product_size
+                    )
                     product_size.quantity -= cart_item.quantity
                     product_size.save()
 
@@ -551,74 +649,7 @@ def place_order(request):
                     if key in request.session:
                         del request.session[key]
 
-                messages.error(request, "Payment initiation failed. Order has been created with 'Payment Failed' status.")
-                return redirect("payment_failure")
-
-            payment = Payment.objects.create(
-                method_name=payment_method,
-                amount=total,
-                transaction_id=order_id,
-                paid_at=timezone.now(),
-                pending=False,
-                success=True,
-            )
-
-            order = Order.objects.create(
-                customer=customer,
-                address=address,
-                payment_method=payment_method,
-                subtotal=subtotal,
-                shipping_charge=shipping_fee,
-                total=total,
-                paid=True,
-                tracking_id=tk_id,
-                coupon_applied=coupon_applied,
-                coupon_name=coupon_name,
-                coupon_discount_percentage=coupon_discount_percentage,
-                discounted_price=discounted_price,
-                payment_transaction_id=order_id,
-                payment=payment,
-                status="On Progress",
-            )
-            Shipping_address.objects.create(
-                order=order,
-                first_name=address.first_name,
-                last_name=address.last_name,
-                email=address.email,
-                phone_number=address.phone_number,
-                house_name=address.house_name,
-                postal_code=address.postal_code,
-                city=address.city,
-                state=address.state,
-                country=address.country,
-            )
-            for cart_item in cart:
-                OrderItem.objects.create(
-                    order=order,
-                    status="Order Placed",
-                    product=cart_item.product,
-                    each_price=cart_item.product.product.offer_price,
-                    qty=cart_item.quantity,
-                    size=cart_item.product_size,
-                )
-                product_size = ProductSize.objects.get(
-                    productcolor=cart_item.product, size=cart_item.product_size)
-                product_size.quantity -= cart_item.quantity
-                product_size.save()
-
-            cart.delete()
-
-            keys_to_delete = [
-                "coupon_applied",
-                "coupon_name",
-                "coupon_discount_percentage",
-                "discounted_price",
-            ]
-            for key in keys_to_delete:
-                if key in request.session:
-                    del request.session[key]
-
-            return redirect("order_detail")
+                return redirect("order_detail")
 
         elif payment_method == "wallet":
             user_customers = customer.user
@@ -629,7 +660,9 @@ def place_order(request):
 
             transaction_id = "WALLET_TRANSFER_" + get_random_string(4, "ABC123456789")
             while Order.objects.filter(tracking_id=transaction_id).exists():
-                transaction_id = "WALLET_TRANSFER_" + get_random_string(4, "ABC123456789")
+                transaction_id = "WALLET_TRANSFER_" + get_random_string(
+                    4, "ABC123456789"
+                )
 
             payment = Payment.objects.create(
                 method_name=payment_method,
@@ -679,7 +712,8 @@ def place_order(request):
                     size=cart_item.product_size,
                 )
                 product_size = ProductSize.objects.get(
-                    productcolor=cart_item.product, size=cart_item.product_size)
+                    productcolor=cart_item.product, size=cart_item.product_size
+                )
                 product_size.quantity -= cart_item.quantity
                 product_size.save()
 
@@ -744,7 +778,8 @@ def place_order(request):
                     size=cart_item.product_size,
                 )
                 product_size = ProductSize.objects.get(
-                    productcolor=cart_item.product, size=cart_item.product_size)
+                    productcolor=cart_item.product, size=cart_item.product_size
+                )
                 product_size.quantity -= cart_item.quantity
                 product_size.save()
 
@@ -765,6 +800,7 @@ def place_order(request):
 
         else:
             return redirect("checkout")
+    return render(request, 'op.html')
 
 
 def payment_success(request):
@@ -776,14 +812,14 @@ def payment_success(request):
         messages.error(
             request, "Something went wrong in the payment section please try again."
         )
-        
+
         return redirect("checkout")
     params_dict = {
         "razorpay_order_id": order_id,
         "razorpay_payment_id": payment_id,
         "razorpay_signature": signature,
     }
-    
+
     try:
         razorpay_client.utility.verify_payment_signature(params_dict)
         return render(request, "op.html")
@@ -804,17 +840,24 @@ def payment_failure(request):
     return render(request, "opf.html")
 
 
-
 def view_all_order(request):
     if request.user.is_authenticated:
         customer = Customer.objects.get(user=request.user)
         orders = Order.objects.filter(customer=customer).order_by("-created_at")
-        shipping_addresses = Shipping_address.objects.filter(order__in=orders).annotate(
-            num_orders=Count('order')).distinct()
-        
-        return render(request, "view_all_order.html", {"orders": orders, "order_addresses": shipping_addresses})
+        shipping_addresses = (
+            Shipping_address.objects.filter(order__in=orders)
+            .annotate(num_orders=Count("order"))
+            .distinct()
+        )
+
+        return render(
+            request,
+            "view_all_order.html",
+            {"orders": orders, "order_addresses": shipping_addresses},
+        )
     else:
         return redirect("login")
+
 
 def view_order(request, ord_id):
     if request.user.is_authenticated:
@@ -825,6 +868,7 @@ def view_order(request, ord_id):
         return render(request, "view_order.html", context)
     else:
         return redirect("login")
+
 
 @never_cache
 def view_status(request, order_id):
@@ -862,7 +906,11 @@ def request_cancel_order(request, order_id):
         if order_item.order.customer.user == request.user:
             order_item.request_cancel = True
             order_item.save()
-            return render(request, "view_status.html", {"order_items": order_item, "total_price": total_price})
+            return render(
+                request,
+                "view_status.html",
+                {"order_items": order_item, "total_price": total_price},
+            )
     return redirect("login")
 
 
@@ -882,7 +930,11 @@ def request_return_product(request, order_id):
                 "order_items": order_item,
                 "total_price": total_price,
             }
-            return render(request, "view_status.html", {"order_items": order_item, "total_price": total_price})
+            return render(
+                request,
+                "view_status.html",
+                {"order_items": order_item, "total_price": total_price},
+            )
         else:
             messages.info(
                 request, "You can only request for return product within 7 days."
@@ -942,6 +994,35 @@ def wishlist_del(request, pro_id):
         return redirect("login")
 
 
-# ___________________________________________________________________________________________________________________________________________________________________
+@csrf_exempt
+def retry_payment(request):
+    if request.method == "POST":
+        order_id = request.POST.get('order_id')
+        payment_id = request.POST.get('razorpay_payment_id')
+        try:
+            # Update payment and order details
+            order = Order.objects.get(id=order_id)
+            payment = order.payment
+            payment.transaction_id = payment_id
+            payment.paid_at = timezone.now()
+            payment.pending = False
+            payment.success = True
+            payment.failed = False
+            payment.save()
 
-#                                                   COUPONS SECTION
+            order.status = "On Progress"
+            order.payment_transaction_id = payment_id
+            order.paid = True
+            order.save()
+            items = OrderItem.objects.filter(order=order)
+            for i in items:
+                i.status = "Order Placed"
+                i.save()
+
+            return JsonResponse({'status': 'success'})
+        except Order.DoesNotExist:
+            return JsonResponse({'status': 'failure', 'message': 'Order not found'})
+        except Exception as e:
+            return JsonResponse({'status': 'failure', 'message': str(e)})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})

@@ -46,5 +46,4 @@ urlpatterns = [
     ),
     path("referral/", views.referral, name="referral"),
     path("invoice/<int:product_id>/", views.invoice, name="invoice"),
-    
 ]
