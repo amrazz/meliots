@@ -240,7 +240,9 @@ def add_category(request):
                 messages.error(request, "Name cannot be empty.")
                 return redirect("add_category")
             elif len(description) < 10:
-                messages.error(request, "Description must be at least 10 characters long.")
+                messages.error(
+                    request, "Description must be at least 10 characters long."
+                )
                 return redirect("add_category")
             elif not all([name, description, image]):
                 messages.error(request, "All fields are required.")
@@ -272,7 +274,9 @@ def edit_category(request, cat_id):
                     messages.error(request, "Name cannot be empty.")
                     return redirect("edit_category", cat_id=cat_id)
                 if len(description) < 10:
-                    messages.error(request, "Description must be at least 10 characters long.")
+                    messages.error(
+                        request, "Description must be at least 10 characters long."
+                    )
                     return redirect("edit_category", cat_id=cat_id)
 
                 elif not all([name, description]):
@@ -288,7 +292,10 @@ def edit_category(request, cat_id):
                 if image:
                     category.cat_image = image
                     category.save()
+<<<<<<< HEAD
 
+=======
+>>>>>>> d9813d87f1d478fddffde01cbd39d46a863c6cc9
 
                 category.name = name
                 category.description = description
@@ -403,7 +410,9 @@ def add_category_offer(request):
                         request, "End date must be greater than today's date."
                     )
                 elif str(end_date) and str(end_date) == str(today):
-                    messages.error(request, "End date must be greater than today's date.")
+                    messages.error(
+                        request, "End date must be greater than today's date."
+                    )
                 elif CategoryOffer.objects.filter(category__name=category).exists():
                     messages.error(
                         request, "Category offer already exists for this category."
@@ -545,7 +554,13 @@ def edit_product(request, product_id):
             percentage = request.POST.get("percentage")
             brand = request.POST.get("brand")
 
-            if not name.strip()  or not type.strip() or not price.strip() or not percentage.strip() or not brand.strip():
+            if (
+                not name.strip()
+                or not type.strip()
+                or not price.strip()
+                or not percentage.strip()
+                or not brand.strip()
+            ):
                 messages.error(request, "All fields should contain valid data.")
             if int(percentage) < 5 or int(percentage) > 100:
                 messages.error(request, "The percentage must be between 5 and 100.")
@@ -681,11 +696,16 @@ def add_product(request):
                 percentage = request.POST.get("percentage")
                 exp_date = request.POST.get("exp_date")
                 brand = request.POST.get("brand")
+<<<<<<< HEAD
 
+=======
+>>>>>>> d9813d87f1d478fddffde01cbd39d46a863c6cc9
 
                 description = request.POST.get("description")
                 if len(description) < 10:
-                    messages.error(request, "Description must be at least 10 characters long.")
+                    messages.error(
+                        request, "Description must be at least 10 characters long."
+                    )
                     return redirect("add_product")
                 if not all([name, type, price, description]):
                     messages.error(request, "All fields are required.")
@@ -718,7 +738,10 @@ def add_product(request):
                     messages.error(request, "Please enter a valid percentage.")
                     return redirect("add_product")
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> d9813d87f1d478fddffde01cbd39d46a863c6cc9
                 add_product = Product.objects.create(
                     name=name,
                     category_id=category,
@@ -769,7 +792,9 @@ def product_image(request):
                 if not color.isalpha():
                     messages.error(request, "Color must contain only letters.")
                     return redirect("product_image")
-                if not all([is_valid_image(img) for img in [image1, image2, image3, image4]]):
+                if not all(
+                    [is_valid_image(img) for img in [image1, image2, image3, image4]]
+                ):
                     messages.error(request, "All images must be valid image files.")
                     return redirect("product_image")
 
@@ -812,8 +837,13 @@ def product_size(request):
                     ProductColorImage, id=product_color_id
                 )
 
-                if ProductSize.objects.filter(productcolor=product_color, size=size).exists():
-                    messages.error(request, "This size already exists for the selected product color.")
+                if ProductSize.objects.filter(
+                    productcolor=product_color, size=size
+                ).exists():
+                    messages.error(
+                        request,
+                        "This size already exists for the selected product color.",
+                    )
                     return redirect("product_size")
                 if not all([product_color_id, size, quantity]):
                     messages.error(request, "All fields are required.")
@@ -821,7 +851,7 @@ def product_size(request):
                 if float(quantity) < 1:
                     messages.error(request, "Quantity must be atleast 1.")
                     return redirect("product_size")
-                if size not in ['S', 'M', 'L']:
+                if size not in ["S", "M", "L"]:
                     messages.error(request, "Size must be S, M or L.")
                     return redirect("product_size")
                 if not size.strip():
@@ -853,7 +883,7 @@ def product_size(request):
 @never_cache
 def view_brand(request):
     if request.user.is_superuser:
-        brands = Brand.objects.filter(is_deleted = False, is_listed = True)
+        brands = Brand.objects.filter(is_deleted=False, is_listed=True)
         return render(request, "view_brand.html", {"brands": brands})
     else:
         messages.error(request, "You do not have permission to access this page.")
@@ -873,13 +903,12 @@ def add_brand(request):
                 messages.error(request, "Brand name cannot contain only spaces.")
                 return redirect(add_brand)
             if len(description) < 10:
-                messages.error(request, "Description must be at least 10 characters long.")
+                messages.error(
+                    request, "Description must be at least 10 characters long."
+                )
                 return redirect(add_brand)
             else:
-                create_brand = Brand.objects.create(
-                    name=name,
-                    description=description
-                )
+                create_brand = Brand.objects.create(name=name, description=description)
                 messages.success(request, "Brand added successfully.")
                 return redirect(view_brand)
 
@@ -890,7 +919,6 @@ def add_brand(request):
 
 
 @never_cache
-
 def edit_brand(request, brand_id):
     if request.user.is_superuser:
         brand = get_object_or_404(Brand, id=brand_id)
@@ -906,7 +934,9 @@ def edit_brand(request, brand_id):
                 brand.name = name
             if description:
                 if len(description) < 10:
-                    messages.error(request, "Description must be at least 10 characters long.")
+                    messages.error(
+                        request, "Description must be at least 10 characters long."
+                    )
                     return redirect("edit_brand", brand_id=brand_id)
                 elif not description.strip():
                     messages.error(request, "Description cannot be empty.")
@@ -916,7 +946,12 @@ def edit_brand(request, brand_id):
             messages.success(request, "Brand updated successfully.")
             return redirect("view_brand")
 
+<<<<<<< HEAD
         return render(request, 'edit_brand.html', {"brand": brand})
+=======
+        return render(request, "edit_brand.html", {"brand": brand})
+
+>>>>>>> d9813d87f1d478fddffde01cbd39d46a863c6cc9
 
 @never_cache
 def delete_brand(request, brand_id):
@@ -1048,7 +1083,12 @@ def admin_order(request, order_id):
         status_choices = dict(OrderItem.STATUS_CHOICES)
         order_address = Shipping_address.objects.get(order=order)
 
-        context = {"item": item, "order": order, "status_choices": status_choices, "address": order_address}
+        context = {
+            "item": item,
+            "order": order,
+            "status_choices": status_choices,
+            "address": order_address,
+        }
         return render(request, "order/order_detail.html", context)
     else:
         return redirect("admin_login")
@@ -1061,7 +1101,7 @@ def update_status(request):
 
         try:
             order_item = OrderItem.objects.get(id=order_item_id)
-            previous_status = order_item.status  # Store the previous status
+            previous_status = order_item.status  
             order_item.status = new_status
             order_item.save()
 
@@ -1077,7 +1117,9 @@ def update_status(request):
         except ObjectDoesNotExist:
             return JsonResponse({"status": "error", "message": "Order item not found."})
         except ProductSize.DoesNotExist:
-            return JsonResponse({"status": "error", "message": "Product size not found."})
+            return JsonResponse(
+                {"status": "error", "message": "Product size not found."}
+            )
 
     return JsonResponse(
         {"status": "error", "message": "Unauthorized or invalid request."}
@@ -1131,10 +1173,11 @@ def cancel_order(request, order_id):
                     cancel.status = "Cancelled"
                     cancel.save()
                     messages.success(
-                        request, f"Amount of ₹{cancelled_amount} added to {cancel.order.customer.user.username}'s Wallet."
+                        request,
+                        f"Amount of ₹{cancelled_amount} added to {cancel.order.customer.user.username}'s Wallet.",
                     )
                     product_size = ProductSize.objects.get(
-                        productcolor = cancel.product, size = cancel.size
+                        productcolor=cancel.product, size=cancel.size
                     )
                     product_size.quantity += cancel.qty
                     product_size.save()
@@ -1204,11 +1247,12 @@ def return_order(request, return_id):
                 return_order.return_product = True
                 return_order.save()
                 messages.success(
-                    request, f"Amount of ₹{refund_amount} added to {return_order.order.customer.user.username} Wallet."
+                    request,
+                    f"Amount of ₹{refund_amount} added to {return_order.order.customer.user.username} Wallet.",
                 )
                 product_size = ProductSize.objects.get(
-                        productcolor = return_order.product, size = return_order.size
-                    )
+                    productcolor=return_order.product, size=return_order.size
+                )
                 product_size.quantity += return_order.qty
                 product_size.save()
                 print("Order returned successfully")
@@ -1231,6 +1275,7 @@ def admin_coupon(request):
     else:
         return redirect("admin_login")
 
+
 @never_cache
 def add_coupon(request):
     try:
@@ -1246,8 +1291,20 @@ def add_coupon(request):
                 usage_limit = request.POST.get("usage_limit", "").strip()
 
                 # Validate that all fields are provided
-                if not all([code, name, dis, minimum_amount, maximum_amount, end_date, usage_limit]):
-                    messages.error(request, "All fields are required for adding the coupon.")
+                if not all(
+                    [
+                        code,
+                        name,
+                        dis,
+                        minimum_amount,
+                        maximum_amount,
+                        end_date,
+                        usage_limit,
+                    ]
+                ):
+                    messages.error(
+                        request, "All fields are required for adding the coupon."
+                    )
                     return redirect("add_coupon")
 
                 # Validate the coupon code
@@ -1255,7 +1312,9 @@ def add_coupon(request):
                     messages.error(request, "Coupon code cannot be empty.")
                     return redirect("add_coupon")
                 if Coupon.objects.filter(coupon_code=code).exists():
-                    messages.error(request, "This coupon already exists. Please add a new one.")
+                    messages.error(
+                        request, "This coupon already exists. Please add a new one."
+                    )
                     return redirect("add_coupon")
 
                 # Validate the coupon name
@@ -1267,7 +1326,10 @@ def add_coupon(request):
                 try:
                     dis = float(dis)
                     if dis < 5 or dis > 100:
-                        messages.error(request, "Please provide a valid discount between 5 and 100.")
+                        messages.error(
+                            request,
+                            "Please provide a valid discount between 5 and 100.",
+                        )
                         return redirect("add_coupon")
                 except ValueError:
                     messages.error(request, "Please enter a valid discount percentage.")
@@ -1278,13 +1340,21 @@ def add_coupon(request):
                     minimum_amount = float(minimum_amount)
                     maximum_amount = float(maximum_amount)
                     if minimum_amount < 100 or maximum_amount < 100:
-                        messages.error(request, "Price must be a positive value and at least 100.")
+                        messages.error(
+                            request, "Price must be a positive value and at least 100."
+                        )
                         return redirect("add_coupon")
                     if minimum_amount > maximum_amount:
-                        messages.error(request, "Minimum amount cannot be greater than maximum amount.")
+                        messages.error(
+                            request,
+                            "Minimum amount cannot be greater than maximum amount.",
+                        )
                         return redirect("add_coupon")
                 except ValueError:
-                    messages.error(request, "Please enter valid amounts for minimum and maximum values.")
+                    messages.error(
+                        request,
+                        "Please enter valid amounts for minimum and maximum values.",
+                    )
                     return redirect("add_coupon")
 
                 # Validate the end date
@@ -1297,7 +1367,9 @@ def add_coupon(request):
                         messages.error(request, "End date cannot be today.")
                         return redirect("add_coupon")
                 except ValueError:
-                    messages.error(request, "Please enter a valid date in YYYY-MM-DD format.")
+                    messages.error(
+                        request, "Please enter a valid date in YYYY-MM-DD format."
+                    )
                     return redirect("add_coupon")
 
                 # Validate the usage limit
@@ -1366,7 +1438,9 @@ def edit_coupon(request, coupon_id):
                 coupon.minimum_amount = min_amount
             if max_amount:
                 if float(max_amount) < 1000:
-                    messages.error(request, "Maximum amount must be a greater than 1000.")
+                    messages.error(
+                        request, "Maximum amount must be a greater than 1000."
+                    )
                     return redirect("edit_coupon", coupon_id=coupon_id)
                 coupon.maximum_amount = max_amount
 

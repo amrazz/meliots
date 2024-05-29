@@ -30,7 +30,7 @@ from django.contrib.auth.hashers import check_password
 from django.db.models import F, ExpressionWrapper, DecimalField
 from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth import authenticate, login, logout,get_backends
+from django.contrib.auth import authenticate, login, logout, get_backends
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
 
@@ -39,45 +39,50 @@ PRODUCT_PER_PAGE = 9
 
 @csrf_exempt
 def validate_register(request):
-    field_name = request.POST.get('field_name')
-    field_value = request.POST.get('field_value')
-    response = {'valid': True, 'error': ''}
+    field_name = request.POST.get("field_name")
+    field_value = request.POST.get("field_value")
+    response = {"valid": True, "error": ""}
 
     try:
-        if field_name in ['f_name', 'l_name']:
+        if field_name in ["f_name", "l_name"]:
             if not field_value.isalpha():
-                raise ValidationError('Name must contain only letters')
+                raise ValidationError("Name must contain only letters")
             elif len(field_value) < 2:
-                raise ValidationError('Name must be at least 2 characters long')
-        
-        if field_name == 'username':
+                raise ValidationError("Name must be at least 2 characters long")
+
+        if field_name == "username":
             if User.objects.filter(username=field_value).exists():
-                raise ValidationError('The username is already taken')
+                raise ValidationError("The username is already taken")
             if not field_value.strip():
-                raise ValidationError('The username is not valid')
+                raise ValidationError("The username is not valid")
 
-        elif field_name == 'email':
+        elif field_name == "email":
             if User.objects.filter(email=field_value).exists():
-                raise ValidationError('This email is already registered')
+                raise ValidationError("This email is already registered")
             if not re.match(r"^[\w\.-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", field_value):
-                raise ValidationError('Please enter a valid email address')
+                raise ValidationError("Please enter a valid email address")
 
-        elif field_name == 'pass1':
+        elif field_name == "pass1":
             validate_password(field_value, user=User)
             if len(field_value) < 6:
-                raise ValidationError('The password should be at least 6 characters')
+                raise ValidationError("The password should be at least 6 characters")
             if not any(char.isupper() for char in field_value):
-                raise ValidationError('Password must contain at least one uppercase letter')
+                raise ValidationError(
+                    "Password must contain at least one uppercase letter"
+                )
             if not any(char.islower() for char in field_value):
-                raise ValidationError('Password must contain at least one lowercase letter')
+                raise ValidationError(
+                    "Password must contain at least one lowercase letter"
+                )
             if not any(char.isdigit() for char in field_value):
-                raise ValidationError('Password must contain at least one digit')
+                raise ValidationError("Password must contain at least one digit")
 
     except ValidationError as e:
-        response['valid'] = False
-        response['error'] = ', '.join(e.messages)
+        response["valid"] = False
+        response["error"] = ", ".join(e.messages)
 
     return JsonResponse(response)
+
 
 @never_cache
 def register(request):
@@ -101,43 +106,65 @@ def register(request):
 
             if referral_code:
                 if not Customer.objects.filter(referral_code=referral_code).exists():
-                    return JsonResponse({'success': False, 'message': 'Invalid Referral Code'})
+                    return JsonResponse(
+                        {"success": False, "message": "Invalid Referral Code"}
+                    )
                 else:
                     request.session["referral_code"] = referral_code
 
             if not all([first_name, last_name, username, email, password1, password2]):
-                return JsonResponse({'success': False, 'message': 'Please fill up all the fields.'})
+                return JsonResponse(
+                    {"success": False, "message": "Please fill up all the fields."}
+                )
 
             if User.objects.filter(username=username).exists():
-                return JsonResponse({'success': False, 'message': 'The username is already taken'})
+                return JsonResponse(
+                    {"success": False, "message": "The username is already taken"}
+                )
 
             if len(password1) < 6:
-                return JsonResponse({'success': False, 'message': 'The password should be at least 6 characters'})
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "message": "The password should be at least 6 characters",
+                    }
+                )
 
             if password1 != password2:
-                return JsonResponse({'success': False, 'message': 'The passwords do not match'})
+                return JsonResponse(
+                    {"success": False, "message": "The passwords do not match"}
+                )
 
             if not first_name.isalpha():
-                return JsonResponse({'success': False, 'message': 'First name must contain only letters'})
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "message": "First name must contain only letters",
+                    }
+                )
 
             if not last_name.isalpha():
-                return JsonResponse({'success': False, 'message': 'Last name must contain only letters'})
+                return JsonResponse(
+                    {"success": False, "message": "Last name must contain only letters"}
+                )
 
             try:
                 validate_password(password1, user=User)
             except ValidationError as e:
-                return JsonResponse({'success': False, 'message': str(e)})
+                return JsonResponse({"success": False, "message": str(e)})
 
             if User.objects.filter(email=email).exists():
-                return JsonResponse({'success': False, 'message': 'This email is already registered'})
+                return JsonResponse(
+                    {"success": False, "message": "This email is already registered"}
+                )
 
             with transaction.atomic():
                 user = User.objects.create_user(
-                    first_name=first_name, 
-                    last_name=last_name, 
-                    username=username, 
-                    email=email, 
-                    password=password1
+                    first_name=first_name,
+                    last_name=last_name,
+                    username=username,
+                    email=email,
+                    password=password1,
                 )
                 user.save()
 
@@ -145,21 +172,24 @@ def register(request):
                 user_profile.user.is_active = False
                 user_profile.save()
 
-                user_id = user_profile.user.pk 
+                user_id = user_profile.user.pk
                 otp, otp_generated_at = generate_otp_and_send_email(email)
-                print('This is the call for otp', otp, otp_generated_at)
+                print("This is the call for otp", otp, otp_generated_at)
                 print(otp, otp_generated_at)
-                store_user_data_in_session(request, user_id, otp, email, otp_generated_at)
+                store_user_data_in_session(
+                    request, user_id, otp, email, otp_generated_at
+                )
 
-            return JsonResponse({'success': True, 'message': f'Welcome {first_name}'})
+            return JsonResponse({"success": True, "message": f"Welcome {first_name}"})
         else:
             form_data = request.session.get("form_data", {})
             return render(request, "register.html", {"form_data": form_data})
 
     except ValidationError as e:
-        return JsonResponse({'success': False, 'message': str(e)})
+        return JsonResponse({"success": False, "message": str(e)})
     except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)})
+        return JsonResponse({"success": False, "message": str(e)})
+
 
 def generate_otp_and_send_email(email):
     otp = random.randint(1000, 9999)
@@ -174,6 +204,7 @@ def generate_otp_and_send_email(email):
     )
     return otp, otp_generated_at
 
+
 def store_user_data_in_session(request, user_id, otp, email, otp_generated_at):
     request.session["user_data"] = {
         "user_id": user_id,
@@ -181,6 +212,7 @@ def store_user_data_in_session(request, user_id, otp, email, otp_generated_at):
         "email": email,
         "otp_generated_at": otp_generated_at,
     }
+
 
 @never_cache
 def otp(request):
@@ -207,7 +239,10 @@ def otp(request):
             except ValueError:
                 otp_generated_at_datetime = None
 
-            if otp_generated_at_datetime and otp_generated_at_datetime + timedelta(minutes=5) < timezone.now():
+            if (
+                otp_generated_at_datetime
+                and otp_generated_at_datetime + timedelta(minutes=5) < timezone.now()
+            ):
                 messages.error(request, "OTP has expired. Please try again.")
                 return redirect("register")
 
@@ -224,19 +259,29 @@ def otp(request):
                 user.backend = f"{backend.__module__}.{backend.__class__.__name__}"
 
                 if referral_code:
-                    referred_customer = Customer.objects.get(referral_code=referral_code)
+                    referred_customer = Customer.objects.get(
+                        referral_code=referral_code
+                    )
                     referred_customer.referral_count += 1
                     referred_customer.save()
 
                     referred_customer_user = referred_customer.user
-                    referred_customer_credit, created = Wallet.objects.get_or_create(user=referred_customer_user)
+                    referred_customer_credit, created = Wallet.objects.get_or_create(
+                        user=referred_customer_user
+                    )
                     referred_customer_credit.balance += 100
                     referred_customer_credit.referral_deposit += 100
                     referred_customer_credit.save()
 
-                    referred_transaction_id = "REFERRAL_" + get_random_string(4, "MOZ0123456789")
-                    while Wallet_transaction.objects.filter(transaction_id=referred_transaction_id).exists():
-                        referred_transaction_id = "REFERRAL_" + get_random_string(4, "MOZ0123456789")
+                    referred_transaction_id = "REFERRAL_" + get_random_string(
+                        4, "MOZ0123456789"
+                    )
+                    while Wallet_transaction.objects.filter(
+                        transaction_id=referred_transaction_id
+                    ).exists():
+                        referred_transaction_id = "REFERRAL_" + get_random_string(
+                            4, "MOZ0123456789"
+                        )
 
                     Wallet_transaction.objects.create(
                         wallet=referred_customer_credit,
@@ -248,14 +293,22 @@ def otp(request):
                     customer.referred_person = referred_customer_user.username
                     customer.save()
 
-                    referring_customer_credit, created = Wallet.objects.get_or_create(user=customer.user)
+                    referring_customer_credit, created = Wallet.objects.get_or_create(
+                        user=customer.user
+                    )
                     referring_customer_credit.balance += 50
                     referring_customer_credit.referral_deposit += 50
                     referring_customer_credit.save()
 
-                    referring_transaction_id = "REFERRAL_" + get_random_string(4, "MOZ0123456789")
-                    while Wallet_transaction.objects.filter(transaction_id=referring_transaction_id).exists():
-                        referring_transaction_id = "REFERRAL_" + get_random_string(4, "MOZ0123456789")
+                    referring_transaction_id = "REFERRAL_" + get_random_string(
+                        4, "MOZ0123456789"
+                    )
+                    while Wallet_transaction.objects.filter(
+                        transaction_id=referring_transaction_id
+                    ).exists():
+                        referring_transaction_id = "REFERRAL_" + get_random_string(
+                            4, "MOZ0123456789"
+                        )
 
                     Wallet_transaction.objects.create(
                         wallet=referring_customer_credit,
@@ -280,6 +333,7 @@ def otp(request):
         messages.error(request, str(e))
         return redirect("register")
 
+
 @never_cache
 def resend_otp(request):
     try:
@@ -302,6 +356,7 @@ def resend_otp(request):
     except Exception as e:
         messages.error(request, str(e))
         return redirect("my_otp")
+
 
 @never_cache
 def log_in(request):
@@ -727,8 +782,6 @@ def shop_page(request):
         for category in categories_filter:
             category_filters |= Q(product__category__name=category)
         products_color = products_color.filter(category_filters)
-        
-    
 
     if ordering == "name":
         products_color = products_color.order_by("product__name")
@@ -808,7 +861,7 @@ def filtered_products_cat(request):
         | Q(product__brand__in=selected_brand_ids)
         | Q(color__in=selected_color_ids)
     ).distinct()
-    
+
     if selected_category_ids and selected_color_ids:
         products = ProductColorImage.objects.filter(
             Q(product__category__in=selected_category_ids)
@@ -825,7 +878,6 @@ def filtered_products_cat(request):
             & Q(product__brand__in=selected_brand_ids)
             & Q(color__in=selected_color_ids)
         ).distinct()
-        
 
     selected_category_ids = [int(category_id) for category_id in selected_category_ids]
     selected_brand_ids = [int(brand_id) for brand_id in selected_brand_ids]
@@ -1005,7 +1057,7 @@ def change_password(request, pass_id):
 def address(request):
     try:
         if request.user.is_authenticated:
-            address = Address.objects.filter(user=request.user.pk, is_deleted = False)
+            address = Address.objects.filter(user=request.user.pk, is_deleted=False)
             next_page = request.GET.get("next", "")
             context = {"address": address, "next_page": next_page}
             return render(request, "address.html", context)
@@ -1206,9 +1258,7 @@ def invoice(request, product_id):
         html_string = render_to_string("invoice.html", context)
 
         # Define the configuration for pdfkit
-        config = pdfkit.configuration(
-            wkhtmltopdf="/usr/bin/wkhtmltopdf"
-        )
+        config = pdfkit.configuration(wkhtmltopdf="/usr/bin/wkhtmltopdf")
 
         pdf = pdfkit.from_string(html_string, False, configuration=config)
         response = HttpResponse(pdf, content_type="application/pdf")

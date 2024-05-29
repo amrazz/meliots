@@ -12,8 +12,7 @@ urlpatterns = [
         views.delete_cart_items,
         name="delete_cart_items",
     ),
-    path('check_stock/', views.check_stock, name='check_stock'),
-
+    path("check_stock/", views.check_stock, name="check_stock"),
     path("update_total_price/", views.update_total_price, name="update_total_price"),
     path("checkout/", views.checkout, name="checkout"),
     path("place_order/", views.place_order, name="place_order"),
@@ -37,5 +36,6 @@ urlpatterns = [
     path("view_all_order/", views.view_all_order, name="view_all_order"),
     path("payment_failure/", views.payment_failure, name="payment_failure"),
     path("add_address_checkout/", views.add_address_checkout, name="add_address_"),
+    path('retry-payment/', views.retry_payment, name='retry_payment'),
 
 ]
