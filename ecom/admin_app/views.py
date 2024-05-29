@@ -292,10 +292,10 @@ def edit_category(request, cat_id):
                 if image:
                     category.cat_image = image
                     category.save()
-<<<<<<< HEAD
 
-=======
->>>>>>> d9813d87f1d478fddffde01cbd39d46a863c6cc9
+
+
+
 
                 category.name = name
                 category.description = description
