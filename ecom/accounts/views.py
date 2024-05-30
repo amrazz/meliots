@@ -751,7 +751,11 @@ def kids_page(request):
 @never_cache
 def shop_page(request):
     ordering = request.GET.get("ordering", "name")
-    products_color = ProductColorImage.objects.filter(is_listed=True, is_deleted=False)
+    products_color = ProductColorImage.objects.filter(
+        Q(product__category__is_deleted=False)
+        & Q(is_deleted=False)
+    )
+
     colors = ProductColorImage.objects.filter(
         is_listed=True, is_deleted=False
     ).distinct("color")

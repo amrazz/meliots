@@ -203,11 +203,12 @@
                                 <div class="product__item__pic set-bg" >
                                     <a href="{% url 'product_detail' color.id %}"><img src="{{ color.image1.url }}"
                                         alt=""></a>
-                                    {% if color.is_listed and color.product.category.is_listed %}
-                                    <div class="label new">New</div>
-                                    {% else %}
-                                    <div class="label new" style="background-color: red;">Out Of Stock</div>
-                                    {% endif %}
+                                        {% if color.is_listed and color.product.category.is_listed %}
+                                        <div class="label new">New</div>
+                                        {% else %}
+                                        <div class="label new" style="background-color: red;">Out Of Stock</div>
+                                        {% endif %}
+        
 
 
                                     <ul class="product__hover">
