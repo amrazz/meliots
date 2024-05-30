@@ -1096,7 +1096,7 @@ def update_status(request):
 
         try:
             order_item = OrderItem.objects.get(id=order_item_id)
-            previous_status = order_item.status  
+            previous_status = order_item.status
             order_item.status = new_status
             order_item.save()
 

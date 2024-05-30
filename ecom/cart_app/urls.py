@@ -36,6 +36,5 @@ urlpatterns = [
     path("view_all_order/", views.view_all_order, name="view_all_order"),
     path("payment_failure/", views.payment_failure, name="payment_failure"),
     path("add_address_checkout/", views.add_address_checkout, name="add_address_"),
-    path('retry-payment/', views.retry_payment, name='retry_payment'),
-
+    path("retry-payment/", views.retry_payment, name="retry_payment"),
 ]
