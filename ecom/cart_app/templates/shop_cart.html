@@ -191,6 +191,14 @@
                                     <img style="width: 50px; height: 70px;" src="{{item.product.image1.url}}" alt="">
                                     <div class="cart__product__item__title">
                                         <h6>{{item.product.product.name}}</h6>
+                                        
+                                            {% if item.product.is_listed %}
+                                            <span class="badge bg-success text-white rounded-pill px-2 py-1">In Stock</span>
+                                            {% else %}
+                                            <span class="badge text-white rounded-pill px-2 py-1" style="background-color: red;">Out of Stock</span>
+                                            {% endif %}
+                                        
+                                        
                                         <div class="rating">
                                             <i class="fa fa-star"></i>
                                             <i class="fa fa-star"></i>
