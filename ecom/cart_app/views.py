@@ -350,6 +350,13 @@ def checkout(request):
                 minimum_amount__lte=total,
                 maximum_amount__gte=total,
             )
+            for i in cart:
+                if i.product.is_listed == False:
+                    messages.error(
+                        request,
+                        f"Product {i.product.product.name} is not available for checkout.",
+                    )
+                    return redirect("shop_cart")
 
             if request.method == "POST":
                 get_coupon = request.POST.get("coupon_code")
