@@ -343,7 +343,7 @@ def checkout(request):
             elif cart_qty <= 5:
                 shipping_fee = 99
                 total = sub_total + shipping_fee
-                
+
             coupons = Coupon.objects.filter(
                 is_active=True,
                 expiry_date__gt=today,
@@ -472,7 +472,7 @@ def initiate_payment(items):
 @transaction.atomic
 def place_order(request):
     if request.method == "POST":
-        payment_status = request.POST.get('payment_status', 'failed')
+        payment_status = request.POST.get("payment_status", "failed")
         print(payment_status, "this is payment status")
         address_id = request.POST.get("select_address")
         payment_method = request.POST.get("payment_method")
@@ -514,8 +514,8 @@ def place_order(request):
             items = [{"amount": total * 100}]
             order_id = initiate_payment(items)
 
-            if payment_status == 'failed':
-                print("payment failed" ,"====", payment_status)
+            if payment_status == "failed":
+                print("payment failed", "====", payment_status)
                 payment = Payment.objects.create(
                     method_name=payment_method,
                     amount=total,
@@ -524,8 +524,8 @@ def place_order(request):
                     pending=True,
                     success=False,
                     failed=True,
-                    )
-                print(payment , "this is the mayment object")
+                )
+                print(payment, "this is the mayment object")
                 order = Order.objects.create(
                     customer=customer,
                     address=address,
@@ -540,22 +540,21 @@ def place_order(request):
                     coupon_discount_percentage=coupon_discount_percentage,
                     discounted_price=discounted_price,
                     payment=payment,
-                    status = "Payment Failed"
-                    )
-                
+                    status="Payment Failed",
+                )
 
                 shipping_address = Shipping_address.objects.create(
-                        order=order,
-                        first_name=address.first_name,
-                        last_name=address.last_name,
-                        email=address.email,
-                        phone_number=address.phone_number,
-                        house_name=address.house_name,
-                        postal_code=address.postal_code,
-                        city=address.city,
-                        state=address.state,
-                        country=address.country,
-                    )
+                    order=order,
+                    first_name=address.first_name,
+                    last_name=address.last_name,
+                    email=address.email,
+                    phone_number=address.phone_number,
+                    house_name=address.house_name,
+                    postal_code=address.postal_code,
+                    city=address.city,
+                    state=address.state,
+                    country=address.country,
+                )
                 for cart_item in cart:
                     OrderItem.objects.create(
                         order=order,
@@ -585,7 +584,8 @@ def place_order(request):
 
                 messages.error(
                     request,
-                    "Payment initiation failed. Order has been created with Payment Failed status.")
+                    "Payment initiation failed. Order has been created with Payment Failed status.",
+                )
                 created_order = Order.objects.get(id=order.id)
                 print(f"Order ID: {created_order.id}, Status: {created_order.status}")
                 return redirect("payment_failure")
@@ -807,7 +807,7 @@ def place_order(request):
 
         else:
             return redirect("checkout")
-    return render(request, 'op.html')
+    return render(request, "op.html")
 
 
 def payment_success(request):
@@ -1004,8 +1004,8 @@ def wishlist_del(request, pro_id):
 @csrf_exempt
 def retry_payment(request):
     if request.method == "POST":
-        order_id = request.POST.get('order_id')
-        payment_id = request.POST.get('razorpay_payment_id')
+        order_id = request.POST.get("order_id")
+        payment_id = request.POST.get("razorpay_payment_id")
         try:
             # Update payment and order details
             order = Order.objects.get(id=order_id)
@@ -1026,10 +1026,10 @@ def retry_payment(request):
                 i.status = "Order Placed"
                 i.save()
 
-            return JsonResponse({'status': 'success'})
+            return JsonResponse({"status": "success"})
         except Order.DoesNotExist:
-            return JsonResponse({'status': 'failure', 'message': 'Order not found'})
+            return JsonResponse({"status": "failure", "message": "Order not found"})
         except Exception as e:
-            return JsonResponse({'status': 'failure', 'message': str(e)})
+            return JsonResponse({"status": "failure", "message": str(e)})
 
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+    return JsonResponse({"status": "error", "message": "Invalid request method"})

@@ -255,8 +255,7 @@ def otp(request):
 
                 del request.session["user_data"]
 
-                backend = get_backends()[0]
-                user.backend = f"{backend.__module__}.{backend.__class__.__name__}"
+                
 
                 if referral_code:
                     referred_customer = Customer.objects.get(
@@ -315,11 +314,14 @@ def otp(request):
                         transaction_id=referring_transaction_id,
                         money_deposit=50,
                     )
+                    backend = get_backends()[0]
+                    user.backend = f"{backend.__module__}.{backend.__class__.__name__}"
 
                     messages.success(request, f"{user.username} created successfully.")
                     login(request, user)
                     return redirect("index")
-
+                backend = get_backends()[0]
+                user.backend = f"{backend.__module__}.{backend.__class__.__name__}"
                 messages.success(request, f"{user.username} created successfully.")
                 login(request, user)
                 return redirect("index")
@@ -752,8 +754,7 @@ def kids_page(request):
 def shop_page(request):
     ordering = request.GET.get("ordering", "name")
     products_color = ProductColorImage.objects.filter(
-        Q(product__category__is_deleted=False)
-        & Q(is_deleted=False)
+        Q(product__category__is_deleted=False) & Q(is_deleted=False)
     )
 
     colors = ProductColorImage.objects.filter(

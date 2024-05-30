@@ -6,7 +6,7 @@ from . import views
 urlpatterns = [
     path("", views.index, name="index"),
     path("register/", views.register, name="register"),
-    path('validate_register/', views.validate_register, name="validate_register"),
+    path("validate_register/", views.validate_register, name="validate_register"),
     path("login/", views.log_in, name="login"),
     path("otp/", views.otp, name="my_otp"),
     path("resend_otp/", views.resend_otp, name="resend_otp"),
